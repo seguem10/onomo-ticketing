@@ -1,15 +1,112 @@
-/* Centralized UI language layer. JSON files are the editable source of translations. */
+/* Centralized UI language layer - translates the complete visible interface. */
 (function(){
-  const fallback={fr:{app_name:'Onomo Support IT',support_it:'Support IT',login:'Connexion',logout:'Déconnexion',email:'Adresse email',password:'Mot de passe',dashboard:'Tableau de bord',tickets:'Tickets',my_tickets:'Mes tickets',new_ticket:'Nouveau ticket',settings:'Paramètres',users:'Utilisateurs',roles:'Rôles et permissions',reports:'Rapports',profile:'Mon profil',open:'Ouvert',in_progress:'En cours',pending:'En attente',resolved:'Résolu',closed:'Fermé',search:'Rechercher un ticket…',access_denied:'Accès non autorisé.'},en:{app_name:'Onomo Support IT',support_it:'IT Support',login:'Sign in',logout:'Sign out',email:'Email address',password:'Password',dashboard:'Dashboard',tickets:'Tickets',my_tickets:'My tickets',new_ticket:'New ticket',settings:'Settings',users:'Users',roles:'Roles and permissions',reports:'Reports',profile:'My profile',open:'Open',in_progress:'In progress',pending:'Pending',resolved:'Resolved',closed:'Closed',search:'Search a ticket…',access_denied:'Access denied.'},ar:{app_name:'أونومو دعم تقنية المعلومات',support_it:'دعم تقنية المعلومات',login:'تسجيل الدخول',logout:'تسجيل الخروج',email:'البريد الإلكتروني',password:'كلمة المرور',dashboard:'لوحة التحكم',tickets:'التذاكر',my_tickets:'تذاكري',new_ticket:'تذكرة جديدة',settings:'الإعدادات',users:'المستخدمون',roles:'الأدوار والصلاحيات',reports:'التقارير',profile:'ملفي الشخصي',open:'مفتوح',in_progress:'قيد المعالجة',pending:'قيد الانتظار',resolved:'تم الحل',closed:'مغلق',search:'البحث عن تذكرة…',access_denied:'غير مسموح بالوصول.'}};
+  const fallback={fr:{app_name:'Onomo Support IT',support_it:'Support IT'},en:{app_name:'Onomo Support IT',support_it:'IT Support'},ar:{app_name:'أونومو دعم تقنية المعلومات',support_it:'دعم تقنية المعلومات'}};
   let dictionary=window.OnomoLocaleData||fallback,active='fr';
   const normalize=value=>['fr','en','ar'].includes(value)?value:'fr';
-  const detect=()=>normalize((navigator.language||'fr').split('-')[0]);
-  const t=(key)=>dictionary[active]?.[key]||dictionary.fr[key]||key;
-  const phrases={"Tableau de bord":'dashboard',Dashboard:'dashboard',"لوحة التحكم":'dashboard',Tickets:'tickets',"Mes tickets":'my_tickets',"My tickets":'my_tickets',"تذاكري":'my_tickets',"Nouveau ticket":'new_ticket',"New ticket":'new_ticket',"تذكرة جديدة":'new_ticket',Paramètres:'settings',Settings:'settings',"الإعدادات":'settings',Utilisateurs:'users',Users:'users',"المستخدمون":'users',Rapports:'reports',Reports:'reports',"التقارير":'reports',"Mon profil":'profile',"My profile":'profile',"ملفي الشخصي":'profile',Connexion:'login',"Sign in":'login',"تسجيل الدخول":'login',Déconnexion:'logout',"Sign out":'logout',"تسجيل الخروج":'logout',Ouvert:'open',Open:'open',"مفتوح":'open',"En cours":'in_progress',"In progress":'in_progress',"قيد المعالجة":'in_progress',"En attente":'pending',Pending:'pending',"قيد الانتظار":'pending',Résolu:'resolved',Resolved:'resolved',"تم الحل":'resolved',Fermé:'closed',Closed:'closed',"مغلق":'closed',Principal:'principal',Main:'principal',"الرئيسية":'principal',"Tous les tickets":'all_tickets',"All tickets":'all_tickets',"كل التذاكر":'all_tickets',Urgents:'urgent',Urgent:'urgent',"عاجل":'urgent',"Vue globale":'global_view',"Global overview":'global_view',"نظرة شاملة":'global_view',"Par hôtel":'by_hotel',"By hotel":'by_hotel',"حسب الفندق":'by_hotel',"Par agent":'by_agent',"By agent":'by_agent',"حسب الموظف":'by_agent',Hôtels:'hotels',Hotels:'hotels',"الفنادق":'hotels',"Tickets récents":'recent_tickets',"Recent tickets":'recent_tickets',"أحدث التذاكر":'recent_tickets',"Par catégorie":'by_category',"By category":'by_category',"حسب الفئة":'by_category',"Activité récente":'recent_activity',"Recent activity":'recent_activity',"النشاط الأخير":'recent_activity',"Aucune activité":'no_activity',"No activity":'no_activity',"لا يوجد نشاط":'no_activity',"Aucun ticket trouvé":'no_ticket',"No ticket found":'no_ticket',"لم يتم العثور على تذكرة":'no_ticket',Tous:'all',All:'all',"الكل":'all',Nouveau:'new',New:'new',"جديد":'new',Maintenance:'maintenance',Chambres:'rooms',Rooms:'rooms',"الغرف":'rooms',Restauration:'restaurant',Restaurant:'restaurant',"المطعم":'restaurant',Sécurité:'security',Security:'security',"الأمن":'security',Ménage:'housekeeping',Housekeeping:'housekeeping',"التدبير المنزلي":'housekeeping',Autre:'other',Other:'other',"أخرى":'other'};
-  function translateLegacy(root=document.body){const entries=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length);const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(node=>{const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','OPTION','TEXTAREA'].includes(parent.tagName))return;let value=node.nodeValue,changed=false;for(const [source,key] of entries){if(value.includes(source)){const target=t(key);if(target!==source){value=value.split(source).join(target);changed=true;}}}if(changed)node.nodeValue=value;});}
-  function updateStatic(){document.documentElement.lang=active;document.documentElement.dir=active==='ar'?'rtl':'ltr';document.title=t('app_name');document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent=t('support_it'));translateLegacy();}
-  async function setLanguage(value,persist=true){active=normalize(value);try{const response=await fetch(`locales/${active}.json`);if(response.ok)dictionary={...dictionary,[active]:await response.json()};}catch(_){/* file:// uses the built-in fallback */}if(persist)localStorage.setItem('onomo_language',active);if(persist&&window.currentUser){currentUser.language=active;if(window.sbOK?.())window.sbUpdateUser(currentUser.id,{language:active});}updateStatic();}
-  function selector(){const build=location=>{if(document.getElementById(`languageSelector-${location}`))return;const select=document.createElement('select');select.id=`languageSelector-${location}`;select.className='language-selector';select.setAttribute('aria-label','Language');select.innerHTML='<option value="fr">FR</option><option value="en">EN</option><option value="ar">العربية</option>';select.value=active;select.addEventListener('change',event=>setLanguage(event.target.value));document.querySelector(location==='login'?'.login-brand':'.topbar')?.append(select);};build('login');build('app');}
-  window.OnomoI18n={t,setLanguage,get language(){return active},validate(){const keys=Object.keys(dictionary.fr);return ['en','ar'].flatMap(lang=>keys.filter(key=>!(key in dictionary[lang])).map(key=>`${lang}:${key}`));}};
-  document.addEventListener('DOMContentLoaded',()=>{active=normalize(localStorage.getItem('onomo_language')||detect());selector();setLanguage(active,false);new MutationObserver(()=>translateLegacy()).observe(document.body,{childList:true,subtree:true});});
+  const detect=()=>normalize((navigator.languages?.[0]||navigator.language||'fr').split('-')[0].toLowerCase());
+  const t=key=>dictionary[active]?.[key]??dictionary.fr?.[key]??key;
+
+  /* Extra homepage/system phrases not necessarily present as data-i18n keys. */
+  const extra={
+    fr:{
+      'Onomo Support IT':'Onomo Support IT','Support Desk · Hôtellerie':'Support IT','Support Desk':'Support IT','Service Desk':'Service Desk',
+      'Bienvenue':'Bienvenue','Bienvenue sur votre espace Support IT':'Bienvenue sur votre espace Support IT','Vue d’ensemble':'Vue d’ensemble','Vue globale':'Vue globale',
+      'Créer un ticket':'Créer un ticket','Nouveau rôle':'Nouveau rôle','Enregistrer':'Enregistrer','Annuler':'Annuler','Créer':'Créer','Modifier':'Modifier','Supprimer':'Supprimer',
+      'Détails':'Détails','Détail du ticket':'Détail du ticket','Historique':'Historique','Historique du ticket':'Historique du ticket','Ajouter un commentaire':'Ajouter un commentaire',
+      'Envoyer':'Envoyer','Actualiser':'Actualiser','Filtrer':'Filtrer','Réinitialiser':'Réinitialiser','Sélectionner':'Sélectionner','Sélectionner l’hôtel':'Sélectionner l’hôtel',
+      'Hôtel concerné':'Hôtel concerné','Demandeur':'Demandeur','Administrateur':'Administrateur','IT Regional':'IT Regional','IT Hotel':'IT Hotel','Directeur':'Directeur',
+      'Aucune permission':'Aucune permission','Accès complet':'Accès complet','Système':'Système','Nom du rôle :':'Nom du rôle :','Ce rôle existe déjà.':'Ce rôle existe déjà.',
+      'Les rôles système ne peuvent pas être supprimés.':'Les rôles système ne peuvent pas être supprimés.','Dicter automatiquement':'Dicter automatiquement','Arrêter la dictée':'Arrêter la dictée',
+      'La dictée vocale n’est pas disponible dans ce navigateur.':'La dictée vocale n’est pas disponible dans ce navigateur.','Écoute active — détection automatique en cours.':'Écoute active — détection automatique en cours.','Dictée arrêtée.':'Dictée arrêtée.',
+      'Votre session a expiré.':'Votre session a expiré.','Veuillez sélectionner l’hôtel concerné.':'Veuillez sélectionner l’hôtel concerné.','Langue':'Langue','Language':'Langue','العربية':'العربية'
+    },
+    en:{
+      'Onomo Support IT':'Onomo Support IT','Support Desk · Hôtellerie':'IT Support','Support Desk':'IT Support','Service Desk':'Service Desk',
+      'Bienvenue':'Welcome','Bienvenue sur votre espace Support IT':'Welcome to your IT Support area','Vue d’ensemble':'Overview','Vue globale':'Global overview',
+      'Créer un ticket':'Create ticket','Nouveau rôle':'New role','Enregistrer':'Save','Annuler':'Cancel','Créer':'Create','Modifier':'Edit','Supprimer':'Delete',
+      'Détails':'Details','Détail du ticket':'Ticket details','Historique':'History','Historique du ticket':'Ticket history','Ajouter un commentaire':'Add a comment',
+      'Envoyer':'Send','Actualiser':'Refresh','Filtrer':'Filter','Réinitialiser':'Reset','Sélectionner':'Select','Sélectionner l’hôtel':'Select hotel',
+      'Hôtel concerné':'Concerned hotel','Demandeur':'Requester','Administrateur':'Administrator','IT Regional':'Regional IT','IT Hotel':'Hotel IT','Directeur':'Director',
+      'Aucune permission':'No permission','Accès complet':'Full access','Système':'System','Nom du rôle :':'Role name:','Ce rôle existe déjà.':'This role already exists.',
+      'Les rôles système ne peuvent pas être supprimés.':'System roles cannot be deleted.','Dicter automatiquement':'Dictate automatically','Arrêter la dictée':'Stop dictation',
+      'La dictée vocale n’est pas disponible dans ce navigateur.':'Voice dictation is not available in this browser.','Écoute active — détection automatique en cours.':'Listening — automatic detection is active.','Dictée arrêtée.':'Dictation stopped.',
+      'Votre session a expiré.':'Your session has expired.','Veuillez sélectionner l’hôtel concerné.':'Please select the concerned hotel.','Langue':'Language','Language':'Language','العربية':'Arabic'
+    },
+    ar:{
+      'Onomo Support IT':'أونومو دعم تقنية المعلومات','Support Desk · Hôtellerie':'دعم تقنية المعلومات','Support Desk':'دعم تقنية المعلومات','Service Desk':'مكتب الخدمة',
+      'Bienvenue':'مرحباً','Bienvenue sur votre espace Support IT':'مرحباً بكم في مساحة دعم تقنية المعلومات','Vue d’ensemble':'نظرة عامة','Vue globale':'نظرة شاملة',
+      'Créer un ticket':'إنشاء تذكرة','Nouveau rôle':'دور جديد','Enregistrer':'حفظ','Annuler':'إلغاء','Créer':'إنشاء','Modifier':'تعديل','Supprimer':'حذف',
+      'Détails':'التفاصيل','Détail du ticket':'تفاصيل التذكرة','Historique':'السجل','Historique du ticket':'سجل التذكرة','Ajouter un commentaire':'إضافة تعليق',
+      'Envoyer':'إرسال','Actualiser':'تحديث','Filtrer':'تصفية','Réinitialiser':'إعادة تعيين','Sélectionner':'اختيار','Sélectionner l’hôtel':'اختيار الفندق',
+      'Hôtel concerné':'الفندق المعني','Demandeur':'طالب الخدمة','Administrateur':'المسؤول','IT Regional':'تقنية المعلومات الإقليمية','IT Hotel':'تقنية معلومات الفندق','Directeur':'المدير',
+      'Aucune permission':'لا توجد صلاحيات','Accès complet':'صلاحيات كاملة','Système':'النظام','Nom du rôle :':'اسم الدور:','Ce rôle existe déjà.':'هذا الدور موجود بالفعل.',
+      'Les rôles système ne peuvent pas être supprimés.':'لا يمكن حذف أدوار النظام.','Dicter automatiquement':'الإملاء تلقائياً','Arrêter la dictée':'إيقاف الإملاء',
+      'La dictée vocale n’est pas disponible dans ce navigateur.':'الإملاء الصوتي غير متاح في هذا المتصفح.','Écoute active — détection automatique en cours.':'الاستماع نشط — جارٍ الكشف التلقائي.','Dictée arrêtée.':'تم إيقاف الإملاء.',
+      'Votre session a expiré.':'انتهت صلاحية جلستك.','Veuillez sélectionner l’hôtel concerné.':'يرجى اختيار الفندق المعني.','Langue':'اللغة','Language':'اللغة','العربية':'العربية'
+    }
+  };
+
+  const buildEntries=()=>{
+    const entries=[];
+    ['fr','en','ar'].forEach(lang=>Object.entries(dictionary[lang]||{}).forEach(([key,value])=>{if(typeof value==='string'&&value.trim())entries.push([value,key]);}));
+    Object.entries(extra[active]||{}).forEach(([source,target])=>entries.push([source,target]));
+    /* Prefer longer phrases first to avoid partial replacements. */
+    const seen=new Set();
+    return entries.filter(([source])=>{if(seen.has(source))return false;seen.add(source);return true;}).sort((a,b)=>b[0].length-a[0].length);
+  };
+
+  function translateValue(value,entries){
+    if(!value||typeof value!=='string')return value;
+    let out=value;
+    for(const [source,targetOrKey] of entries){
+      const target=typeof targetOrKey==='string'&&dictionary[active]?.[targetOrKey]!==undefined?t(targetOrKey):targetOrKey;
+      if(source&&target&&source!==target&&out.includes(source))out=out.split(source).join(target);
+    }
+    return out;
+  }
+
+  function translateLegacy(root=document.body){
+    if(!root)return;
+    const entries=buildEntries();
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','TEXTAREA'].includes(parent.tagName))return;const next=translateValue(node.nodeValue,entries);if(next!==node.nodeValue)node.nodeValue=next;});
+    root.querySelectorAll('input,textarea,select,button,[title],[aria-label],[placeholder]').forEach(el=>{
+      ['placeholder','title','aria-label'].forEach(attr=>{if(el.hasAttribute(attr)){const old=el.getAttribute(attr),next=translateValue(old,entries);if(next!==old)el.setAttribute(attr,next);}});
+      if(el.tagName==='OPTION')el.textContent=translateValue(el.textContent,entries);
+    });
+  }
+
+  function updateStatic(){
+    document.documentElement.lang=active;
+    document.documentElement.dir=active==='ar'?'rtl':'ltr';
+    document.title=t('app_name');
+    document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));
+    document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent=t('support_it'));
+    translateLegacy();
+  }
+
+  async function setLanguage(value,persist=true){
+    active=normalize(value);
+    try{const response=await fetch(`locales/${active}.json`);if(response.ok){const loaded=await response.json();dictionary={...dictionary,[active]:loaded};}}catch(_){/* built-in fallback */}
+    if(persist)localStorage.setItem('onomo_language',active);
+    if(persist&&window.currentUser){currentUser.language=active;if(window.sbOK?.())window.sbUpdateUser(currentUser.id,{language:active});}
+    updateStatic();
+    document.querySelectorAll('.language-selector').forEach(el=>el.value=active);
+  }
+
+  function selector(){
+    const build=location=>{if(document.getElementById(`languageSelector-${location}`))return;const select=document.createElement('select');select.id=`languageSelector-${location}`;select.className='language-selector';select.setAttribute('aria-label','Language');select.innerHTML='<option value="fr">FR</option><option value="en">EN</option><option value="ar">العربية</option>';select.value=active;select.addEventListener('change',event=>setLanguage(event.target.value));document.querySelector(location==='login'?'.login-brand':'.topbar')?.append(select);};
+    build('login');build('app');
+  }
+
+  window.OnomoI18n={t,setLanguage,get language(){return active},validate(){const keys=Object.keys(dictionary.fr||{});return ['en','ar'].flatMap(lang=>keys.filter(key=>!(key in (dictionary[lang]||{}))).map(key=>`${lang}:${key}`));}};
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    active=normalize(localStorage.getItem('onomo_language')||detect());
+    selector();
+    setLanguage(active,false);
+    new MutationObserver(mutations=>{if(mutations.some(m=>m.addedNodes.length))translateLegacy();}).observe(document.body,{childList:true,subtree:true});
+  });
 })();
