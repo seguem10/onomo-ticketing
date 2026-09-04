@@ -5,108 +5,23 @@
   const normalize=value=>['fr','en','ar'].includes(value)?value:'fr';
   const detect=()=>normalize((navigator.languages?.[0]||navigator.language||'fr').split('-')[0].toLowerCase());
   const t=key=>dictionary[active]?.[key]??dictionary.fr?.[key]??key;
-
-  /* Extra homepage/system phrases not necessarily present as data-i18n keys. */
   const extra={
-    fr:{
-      'Onomo Support IT':'Onomo Support IT','Support Desk · Hôtellerie':'Support IT','Support Desk':'Support IT','Service Desk':'Service Desk',
-      'Bienvenue':'Bienvenue','Bienvenue sur votre espace Support IT':'Bienvenue sur votre espace Support IT','Vue d’ensemble':'Vue d’ensemble','Vue globale':'Vue globale',
-      'Créer un ticket':'Créer un ticket','Nouveau rôle':'Nouveau rôle','Enregistrer':'Enregistrer','Annuler':'Annuler','Créer':'Créer','Modifier':'Modifier','Supprimer':'Supprimer',
-      'Détails':'Détails','Détail du ticket':'Détail du ticket','Historique':'Historique','Historique du ticket':'Historique du ticket','Ajouter un commentaire':'Ajouter un commentaire',
-      'Envoyer':'Envoyer','Actualiser':'Actualiser','Filtrer':'Filtrer','Réinitialiser':'Réinitialiser','Sélectionner':'Sélectionner','Sélectionner l’hôtel':'Sélectionner l’hôtel',
-      'Hôtel concerné':'Hôtel concerné','Demandeur':'Demandeur','Administrateur':'Administrateur','IT Regional':'IT Regional','IT Hotel':'IT Hotel','Directeur':'Directeur',
-      'Aucune permission':'Aucune permission','Accès complet':'Accès complet','Système':'Système','Nom du rôle :':'Nom du rôle :','Ce rôle existe déjà.':'Ce rôle existe déjà.',
-      'Les rôles système ne peuvent pas être supprimés.':'Les rôles système ne peuvent pas être supprimés.','Dicter automatiquement':'Dicter automatiquement','Arrêter la dictée':'Arrêter la dictée',
-      'La dictée vocale n’est pas disponible dans ce navigateur.':'La dictée vocale n’est pas disponible dans ce navigateur.','Écoute active — détection automatique en cours.':'Écoute active — détection automatique en cours.','Dictée arrêtée.':'Dictée arrêtée.',
-      'Votre session a expiré.':'Votre session a expiré.','Veuillez sélectionner l’hôtel concerné.':'Veuillez sélectionner l’hôtel concerné.','Langue':'Langue','Language':'Langue','العربية':'العربية'
-    },
-    en:{
-      'Onomo Support IT':'Onomo Support IT','Support Desk · Hôtellerie':'IT Support','Support Desk':'IT Support','Service Desk':'Service Desk',
-      'Bienvenue':'Welcome','Bienvenue sur votre espace Support IT':'Welcome to your IT Support area','Vue d’ensemble':'Overview','Vue globale':'Global overview',
-      'Créer un ticket':'Create ticket','Nouveau rôle':'New role','Enregistrer':'Save','Annuler':'Cancel','Créer':'Create','Modifier':'Edit','Supprimer':'Delete',
-      'Détails':'Details','Détail du ticket':'Ticket details','Historique':'History','Historique du ticket':'Ticket history','Ajouter un commentaire':'Add a comment',
-      'Envoyer':'Send','Actualiser':'Refresh','Filtrer':'Filter','Réinitialiser':'Reset','Sélectionner':'Select','Sélectionner l’hôtel':'Select hotel',
-      'Hôtel concerné':'Concerned hotel','Demandeur':'Requester','Administrateur':'Administrator','IT Regional':'Regional IT','IT Hotel':'Hotel IT','Directeur':'Director',
-      'Aucune permission':'No permission','Accès complet':'Full access','Système':'System','Nom du rôle :':'Role name:','Ce rôle existe déjà.':'This role already exists.',
-      'Les rôles système ne peuvent pas être supprimés.':'System roles cannot be deleted.','Dicter automatiquement':'Dictate automatically','Arrêter la dictée':'Stop dictation',
-      'La dictée vocale n’est pas disponible dans ce navigateur.':'Voice dictation is not available in this browser.','Écoute active — détection automatique en cours.':'Listening — automatic detection is active.','Dictée arrêtée.':'Dictation stopped.',
-      'Votre session a expiré.':'Your session has expired.','Veuillez sélectionner l’hôtel concerné.':'Please select the concerned hotel.','Langue':'Language','Language':'Language','العربية':'Arabic'
-    },
-    ar:{
-      'Onomo Support IT':'أونومو دعم تقنية المعلومات','Support Desk · Hôtellerie':'دعم تقنية المعلومات','Support Desk':'دعم تقنية المعلومات','Service Desk':'مكتب الخدمة',
-      'Bienvenue':'مرحباً','Bienvenue sur votre espace Support IT':'مرحباً بكم في مساحة دعم تقنية المعلومات','Vue d’ensemble':'نظرة عامة','Vue globale':'نظرة شاملة',
-      'Créer un ticket':'إنشاء تذكرة','Nouveau rôle':'دور جديد','Enregistrer':'حفظ','Annuler':'إلغاء','Créer':'إنشاء','Modifier':'تعديل','Supprimer':'حذف',
-      'Détails':'التفاصيل','Détail du ticket':'تفاصيل التذكرة','Historique':'السجل','Historique du ticket':'سجل التذكرة','Ajouter un commentaire':'إضافة تعليق',
-      'Envoyer':'إرسال','Actualiser':'تحديث','Filtrer':'تصفية','Réinitialiser':'إعادة تعيين','Sélectionner':'اختيار','Sélectionner l’hôtel':'اختيار الفندق',
-      'Hôtel concerné':'الفندق المعني','Demandeur':'طالب الخدمة','Administrateur':'المسؤول','IT Regional':'تقنية المعلومات الإقليمية','IT Hotel':'تقنية معلومات الفندق','Directeur':'المدير',
-      'Aucune permission':'لا توجد صلاحيات','Accès complet':'صلاحيات كاملة','Système':'النظام','Nom du rôle :':'اسم الدور:','Ce rôle existe déjà.':'هذا الدور موجود بالفعل.',
-      'Les rôles système ne peuvent pas être supprimés.':'لا يمكن حذف أدوار النظام.','Dicter automatiquement':'الإملاء تلقائياً','Arrêter la dictée':'إيقاف الإملاء',
-      'La dictée vocale n’est pas disponible dans ce navigateur.':'الإملاء الصوتي غير متاح في هذا المتصفح.','Écoute active — détection automatique en cours.':'الاستماع نشط — جارٍ الكشف التلقائي.','Dictée arrêtée.':'تم إيقاف الإملاء.',
-      'Votre session a expiré.':'انتهت صلاحية جلستك.','Veuillez sélectionner l’hôtel concerné.':'يرجى اختيار الفندق المعني.','Langue':'اللغة','Language':'اللغة','العربية':'العربية'
-    }
+    fr:{'Onomo Support IT':'Onomo Support IT','Support Desk · Hôtellerie':'Support IT','Support Desk':'Support IT','Service Desk':'Service Desk','Bienvenue':'Bienvenue','Bienvenue sur votre espace Support IT':'Bienvenue sur votre espace Support IT','Vue d’ensemble':'Vue d’ensemble','Vue globale':'Vue globale','Créer un ticket':'Créer un ticket','Nouveau rôle':'Nouveau rôle','Enregistrer':'Enregistrer','Annuler':'Annuler','Créer':'Créer','Modifier':'Modifier','Supprimer':'Supprimer','Détails':'Détails','Détail du ticket':'Détail du ticket','Historique':'Historique','Historique du ticket':'Historique du ticket','Ajouter un commentaire':'Ajouter un commentaire','Envoyer':'Envoyer','Actualiser':'Actualiser','Filtrer':'Filtrer','Réinitialiser':'Réinitialiser','Sélectionner':'Sélectionner','Sélectionner l’hôtel':'Sélectionner l’hôtel','Hôtel concerné':'Hôtel concerné','Demandeur':'Demandeur','Administrateur':'Administrateur','IT Regional':'IT Regional','IT Hotel':'IT Hotel','Directeur':'Directeur','Aucune permission':'Aucune permission','Accès complet':'Accès complet','Système':'Système','Nom du rôle :':'Nom du rôle :','Ce rôle existe déjà.':'Ce rôle existe déjà.','Les rôles système ne peuvent pas être supprimés.':'Les rôles système ne peuvent pas être supprimés.','Dicter automatiquement':'Dicter automatiquement','Arrêter la dictée':'Arrêter la dictée','La dictée vocale n’est pas disponible dans ce navigateur.':'La dictée vocale n’est pas disponible dans ce navigateur.','Écoute active — détection automatique en cours.':'Écoute active — détection automatique en cours.','Dictée arrêtée.':'Dictée arrêtée.','Votre session a expiré.':'Votre session a expiré.','Veuillez sélectionner l’hôtel concerné.':'Veuillez sélectionner l’hôtel concerné.','Langue':'Langue','Language':'Langue','العربية':'العربية'},
+    en:{'Onomo Support IT':'Onomo Support IT','Support Desk · Hôtellerie':'IT Support','Support Desk':'IT Support','Service Desk':'Service Desk','Bienvenue':'Welcome','Bienvenue sur votre espace Support IT':'Welcome to your IT Support area','Vue d’ensemble':'Overview','Vue globale':'Global overview','Créer un ticket':'Create ticket','Nouveau rôle':'New role','Enregistrer':'Save','Annuler':'Cancel','Créer':'Create','Modifier':'Edit','Supprimer':'Delete','Détails':'Details','Détail du ticket':'Ticket details','Historique':'History','Historique du ticket':'Ticket history','Ajouter un commentaire':'Add a comment','Envoyer':'Send','Actualiser':'Refresh','Filtrer':'Filter','Réinitialiser':'Reset','Sélectionner':'Select','Sélectionner l’hôtel':'Select hotel','Hôtel concerné':'Concerned hotel','Demandeur':'Requester','Administrateur':'Administrator','IT Regional':'Regional IT','IT Hotel':'Hotel IT','Directeur':'Director','Aucune permission':'No permission','Accès complet':'Full access','Système':'System','Nom du rôle :':'Role name:','Ce rôle existe déjà.':'This role already exists.','Les rôles système ne peuvent pas être supprimés.':'System roles cannot be deleted.','Dicter automatiquement':'Dictate automatically','Arrêter la dictée':'Stop dictation','La dictée vocale n’est pas disponible dans ce navigateur.':'Voice dictation is not available in this browser.','Écoute active — détection automatique en cours.':'Listening — automatic detection is active.','Dictée arrêtée.':'Dictation stopped.','Votre session a expiré.':'Your session has expired.','Veuillez sélectionner l’hôtel concerné.':'Please select the concerned hotel.','Langue':'Language','Language':'Language','العربية':'Arabic'},
+    ar:{'Onomo Support IT':'أونومو دعم تقنية المعلومات','Support Desk · Hôtellerie':'دعم تقنية المعلومات','Support Desk':'دعم تقنية المعلومات','Service Desk':'مكتب الخدمة','Bienvenue':'مرحباً','Bienvenue sur votre espace Support IT':'مرحباً بكم في مساحة دعم تقنية المعلومات','Vue d’ensemble':'نظرة عامة','Vue globale':'نظرة شاملة','Créer un ticket':'إنشاء تذكرة','Nouveau rôle':'دور جديد','Enregistrer':'حفظ','Annuler':'إلغاء','Créer':'إنشاء','Modifier':'تعديل','Supprimer':'حذف','Détails':'التفاصيل','Détail du ticket':'تفاصيل التذكرة','Historique':'السجل','Historique du ticket':'سجل التذكرة','Ajouter un commentaire':'إضافة تعليق','Envoyer':'إرسال','Actualiser':'تحديث','Filtrer':'تصفية','Réinitialiser':'إعادة تعيين','Sélectionner':'اختيار','Sélectionner l’hôtel':'اختيار الفندق','Hôtel concerné':'الفندق المعني','Demandeur':'طالب الخدمة','Administrateur':'المسؤول','IT Regional':'تقنية المعلومات الإقليمية','IT Hotel':'تقنية معلومات الفندق','Directeur':'المدير','Aucune permission':'لا توجد صلاحيات','Accès complet':'صلاحيات كاملة','Système':'النظام','Nom du rôle :':'اسم الدور:','Ce rôle existe déjà.':'هذا الدور موجود بالفعل.','Les rôles système ne peuvent pas être supprimés.':'لا يمكن حذف أدوار النظام.','Dicter automatiquement':'الإملاء تلقائياً','Arrêter la dictée':'إيقاف الإملاء','La dictée vocale n’est pas disponible dans ce navigateur.':'الإملاء الصوتي غير متاح في هذا المتصفح.','Écoute active — détection automatique en cours.':'الاستماع نشط — جارٍ الكشف التلقائي.','Dictée arrêtée.':'تم إيقاف الإملاء.','Votre session a expiré.':'انتهت صلاحية جلستك.','Veuillez sélectionner l’hôtel concerné.':'يرجى اختيار الفندق المعني.','Langue':'اللغة','Language':'اللغة','العربية':'العربية'}
   };
-
-  const buildEntries=()=>{
-    const entries=[];
-    ['fr','en','ar'].forEach(lang=>Object.entries(dictionary[lang]||{}).forEach(([key,value])=>{if(typeof value==='string'&&value.trim())entries.push([value,key]);}));
-    Object.entries(extra[active]||{}).forEach(([source,target])=>entries.push([source,target]));
-    /* Prefer longer phrases first to avoid partial replacements. */
-    const seen=new Set();
-    return entries.filter(([source])=>{if(seen.has(source))return false;seen.add(source);return true;}).sort((a,b)=>b[0].length-a[0].length);
-  };
-
-  function translateValue(value,entries){
-    if(!value||typeof value!=='string')return value;
-    let out=value;
-    for(const [source,targetOrKey] of entries){
-      const target=typeof targetOrKey==='string'&&dictionary[active]?.[targetOrKey]!==undefined?t(targetOrKey):targetOrKey;
-      if(source&&target&&source!==target&&out.includes(source))out=out.split(source).join(target);
-    }
-    return out;
-  }
-
-  function translateLegacy(root=document.body){
-    if(!root)return;
-    const entries=buildEntries();
-    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
-    nodes.forEach(node=>{const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','TEXTAREA'].includes(parent.tagName))return;const next=translateValue(node.nodeValue,entries);if(next!==node.nodeValue)node.nodeValue=next;});
-    root.querySelectorAll('input,textarea,select,button,[title],[aria-label],[placeholder]').forEach(el=>{
-      ['placeholder','title','aria-label'].forEach(attr=>{if(el.hasAttribute(attr)){const old=el.getAttribute(attr),next=translateValue(old,entries);if(next!==old)el.setAttribute(attr,next);}});
-      if(el.tagName==='OPTION')el.textContent=translateValue(el.textContent,entries);
-    });
-  }
-
-  function updateStatic(){
-    document.documentElement.lang=active;
-    document.documentElement.dir=active==='ar'?'rtl':'ltr';
-    document.title=t('app_name');
-    document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));
-    document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent=t('support_it'));
-    translateLegacy();
-  }
-
-  async function setLanguage(value,persist=true){
-    active=normalize(value);
-    try{const response=await fetch(`locales/${active}.json`);if(response.ok){const loaded=await response.json();dictionary={...dictionary,[active]:loaded};}}catch(_){/* built-in fallback */}
-    if(persist)localStorage.setItem('onomo_language',active);
-    if(persist&&window.currentUser){currentUser.language=active;if(window.sbOK?.())window.sbUpdateUser(currentUser.id,{language:active});}
-    updateStatic();
-    document.querySelectorAll('.language-selector').forEach(el=>el.value=active);
-  }
-
+  const buildEntries=()=>{const entries=[];['fr','en','ar'].forEach(lang=>Object.entries(dictionary[lang]||{}).forEach(([key,value])=>{if(typeof value==='string'&&value.trim())entries.push([value,key]);}));Object.entries(extra[active]||{}).forEach(([source,target])=>entries.push([source,target]));const seen=new Set();return entries.filter(([source])=>{if(seen.has(source))return false;seen.add(source);return true;}).sort((a,b)=>b[0].length-a[0].length);};
+  function translateValue(value,entries){if(!value||typeof value!=='string')return value;let out=value;for(const [source,targetOrKey] of entries){const target=typeof targetOrKey==='string'&&dictionary[active]?.[targetOrKey]!==undefined?t(targetOrKey):targetOrKey;if(source&&target&&source!==target&&out.includes(source))out=out.split(source).join(target);}return out;}
+  function translateLegacy(root=document.body){if(!root)return;const entries=buildEntries();const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(node=>{const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','TEXTAREA'].includes(parent.tagName))return;const next=translateValue(node.nodeValue,entries);if(next!==node.nodeValue)node.nodeValue=next;});root.querySelectorAll('input,textarea,select,button,[title],[aria-label],[placeholder]').forEach(el=>{['placeholder','title','aria-label'].forEach(attr=>{if(el.hasAttribute(attr)){const old=el.getAttribute(attr),next=translateValue(old,entries);if(next!==old)el.setAttribute(attr,next);}});if(el.tagName==='OPTION')el.textContent=translateValue(el.textContent,entries);});}
+  function updateStatic(){document.documentElement.lang=active;document.documentElement.dir=active==='ar'?'rtl':'ltr';document.title=t('app_name');document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent=t('support_it'));translateLegacy();}
+  async function setLanguage(value,persist=true){active=normalize(value);try{const response=await fetch(`locales/${active}.json`);if(response.ok){const loaded=await response.json();dictionary={...dictionary,[active]:loaded};}}catch(_){}if(persist)localStorage.setItem('onomo_language',active);if(persist&&window.currentUser){currentUser.language=active;if(window.sbOK?.())window.sbUpdateUser(currentUser.id,{language:active});}updateStatic();document.querySelectorAll('.language-selector').forEach(el=>el.value=active);}
   function selector(){
-    const build=location=>{if(document.getElementById(`languageSelector-${location}`))return;const select=document.createElement('select');select.id=`languageSelector-${location}`;select.className='language-selector';select.setAttribute('aria-label','Language');select.innerHTML='<option value="fr">FR</option><option value="en">EN</option><option value="ar">العربية</option>';select.value=active;select.addEventListener('change',event=>setLanguage(event.target.value));document.querySelector(location==='login'?'.login-brand':'.topbar')?.append(select);};
-    build('login');build('app');
+    /* Language selector is intentionally displayed ONLY on the homepage/login screen. */
+    if(document.getElementById('languageSelector-login'))return;
+    const select=document.createElement('select');select.id='languageSelector-login';select.className='language-selector';select.setAttribute('aria-label','Language');select.innerHTML='<option value="fr">FR</option><option value="en">EN</option><option value="ar">العربية</option>';select.value=active;select.addEventListener('change',event=>setLanguage(event.target.value));
+    document.querySelector('.login-brand')?.append(select);
+    /* The existing styling keeps this selector at the top-right on the homepage only. */
   }
-
   window.OnomoI18n={t,setLanguage,get language(){return active},validate(){const keys=Object.keys(dictionary.fr||{});return ['en','ar'].flatMap(lang=>keys.filter(key=>!(key in (dictionary[lang]||{}))).map(key=>`${lang}:${key}`));}};
-
-  document.addEventListener('DOMContentLoaded',()=>{
-    active=normalize(localStorage.getItem('onomo_language')||detect());
-    selector();
-    setLanguage(active,false);
-    new MutationObserver(mutations=>{if(mutations.some(m=>m.addedNodes.length))translateLegacy();}).observe(document.body,{childList:true,subtree:true});
-  });
+  document.addEventListener('DOMContentLoaded',()=>{active=normalize(localStorage.getItem('onomo_language')||detect());selector();setLanguage(active,false);new MutationObserver(mutations=>{if(mutations.some(m=>m.addedNodes.length))translateLegacy();}).observe(document.body,{childList:true,subtree:true});});
 })();
