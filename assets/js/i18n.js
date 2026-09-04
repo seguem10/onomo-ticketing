@@ -28,10 +28,12 @@
       const loginSelect=makeSelector('languageSelector-login');
       document.querySelector('.login-brand')?.append(loginSelect);
     }
-    /* App: language selector is placed directly next to the New Ticket button. */
+    /* App: language selector goes between notifications and the ticket search field. */
     if(!document.getElementById('languageSelector-app')){
-      const newTicket=document.querySelector('.btn-gold[onclick="openNewTicket()"]');
-      if(newTicket){
+      const app=document.getElementById('appScreen');
+      const topbar=app?.querySelector('.topbar');
+      const search=topbar?.querySelector('.search-box');
+      if(topbar&&search){
         const appSelect=makeSelector('languageSelector-app');
         appSelect.style.setProperty('position','static','important');
         appSelect.style.setProperty('top','auto','important');
@@ -39,12 +41,12 @@
         appSelect.style.setProperty('left','auto','important');
         appSelect.style.setProperty('bottom','auto','important');
         appSelect.style.setProperty('z-index','auto','important');
-        appSelect.style.setProperty('margin','0','important');
+        appSelect.style.setProperty('margin','0 4px','important');
         appSelect.style.setProperty('width','auto','important');
         appSelect.style.setProperty('min-width','82px','important');
         appSelect.style.setProperty('height','36px','important');
         appSelect.style.setProperty('display','inline-block','important');
-        newTicket.parentElement.insertBefore(appSelect,newTicket);
+        topbar.insertBefore(appSelect,search);
       }
     }
   }
