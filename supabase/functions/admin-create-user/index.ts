@@ -24,13 +24,29 @@ const roleMap: Record<string, string> = {
   Demandeur: 'Demandeur',
 }
 
+function getSecretKey() {
+  const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (legacy) return legacy
+  const single = Deno.env.get('SUPABASE_SECRET_KEY')
+  if (single && !single.trim().startsWith('{')) return single
+  const many = Deno.env.get('SUPABASE_SECRET_KEYS')
+  if (many) {
+    try {
+      const parsed = JSON.parse(many)
+      const first = Object.values(parsed || {})[0]
+      if (typeof first === 'string' && first) return first
+    } catch (_) {}
+  }
+  return null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'Méthode non autorisée' }, 405)
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const publishableKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SECRET_KEY')
+  const serviceRoleKey = getSecretKey()
   if (!serviceRoleKey) return json({ error: 'Clé serveur Supabase manquante' }, 500)
 
   const authHeader = req.headers.get('Authorization') || ''
