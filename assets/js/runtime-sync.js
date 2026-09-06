@@ -18,9 +18,6 @@
     catch(error){console.warn('Lecture session Supabase impossible',error);return null;}
   }
 
-  /* The legacy REST helper used the publishable key as Bearer token. That
-     authenticates the API key but not the logged-in user, so RLS saw anon.
-     This replacement sends the Supabase Auth access token. */
   function installAuthenticatedSbFetch(){
     if(window.__onomoAuthenticatedSbFetchInstalled||typeof window.sbFetch!=='function')return;
     window.__onomoAuthenticatedSbFetchInstalled=true;
@@ -94,11 +91,57 @@
   const previousComment=window.addComment;window.addComment=async function(message){installAuthenticatedSbFetch();if(currentTicket?.statut==='fermé'&&['admin','it_regional','it_hotel'].includes(currentUser?.role))await updateTicket(currentTicket.id,{statut:'nouveau'});const result=await previousComment(message);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousSwitch=window.switchView;window.switchView=function(view,element){touch();return previousSwitch(view,element);};
 
+  function hideMobileNavigationBeforeLogin(){
+    const signedIn=!!window.currentUser;
+    const candidates=[...document.querySelectorAll('nav,footer,[class*="bottom"],[class*="mobile"]')];
+    candidates.forEach(el=>{
+      const text=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      if(text.includes('dashboard')&&text.includes('tickets')&&text.includes('menu')){
+        el.style.display=signedIn?'':'none';
+        el.setAttribute('data-login-nav',signedIn?'visible':'hidden');
+      }
+    });
+  }
+
+  function hideInstallBannerIfInstalled(){
+    const installed=window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true||localStorage.getItem('onomo_pwa_installed')==='1';
+    if(!installed)return;
+    const candidates=[...document.querySelectorAll('body *')];
+    candidates.forEach(el=>{
+      if(el.children.length>8)return;
+      const text=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      if(text.includes('installer onomo desk')||text.includes('installer onomo support it')){
+        let target=el;
+        for(let i=0;i<4&&target.parentElement;i++){
+          const parent=target.parentElement;
+          const pos=getComputedStyle(parent).position;
+          if(pos==='fixed'||pos==='sticky'){target=parent;break;}
+          target=parent;
+        }
+        target.style.display='none';
+        target.setAttribute('data-pwa-install-banner','hidden');
+      }
+    });
+  }
+
+  function initMobileAndPwaUi(){
+    hideMobileNavigationBeforeLogin();
+    hideInstallBannerIfInstalled();
+    window.addEventListener('appinstalled',()=>{localStorage.setItem('onomo_pwa_installed','1');hideInstallBannerIfInstalled();});
+    const mq=window.matchMedia?.('(display-mode: standalone)');
+    mq?.addEventListener?.('change',hideInstallBannerIfInstalled);
+    const observer=new MutationObserver(()=>{hideMobileNavigationBeforeLogin();hideInstallBannerIfInstalled();});
+    observer.observe(document.body,{childList:true,subtree:true});
+    setTimeout(()=>{hideMobileNavigationBeforeLogin();hideInstallBannerIfInstalled();},500);
+    setTimeout(()=>{hideMobileNavigationBeforeLogin();hideInstallBannerIfInstalled();},1500);
+  }
+
   document.addEventListener('DOMContentLoaded',()=>{
     ['click','pointermove','keydown','input','submit','touchstart'].forEach(type=>document.addEventListener(type,touch,{passive:type==='pointermove'||type==='touchstart'}));
     try{channel=new BroadcastChannel('onomo-ticket-sync');channel.onmessage=event=>{if(event.data?.type==='tickets-updated')syncTickets();};}catch(_){}
+    initMobileAndPwaUi();
     restoreSession();
     setInterval(()=>{const last=Number(localStorage.getItem(ACTIVITY_KEY)||0);if(currentUser&&last&&Date.now()-last>=INACTIVITY){clearSession();showToast('Votre session a expiré pour cause d’inactivité.','err');doLogout();}},15000);
   });
-  window.OnomoRuntime={syncTickets,touch,refreshBadge,getAuthSession,installAuthenticatedSbFetch};
+  window.OnomoRuntime={syncTickets,touch,refreshBadge,getAuthSession,installAuthenticatedSbFetch,hideMobileNavigationBeforeLogin,hideInstallBannerIfInstalled};
 })();
