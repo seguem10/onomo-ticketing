@@ -167,6 +167,44 @@
   }
   window.OnomoAuth={createUser:createAuthUser,getClient:getAuthClient,getSession:getAuthSession,restore:restoreSession};
 
+  const previousSubmitUser=window.submitUser;
+  if(typeof previousSubmitUser==='function'){
+    window.submitUser=async function(){
+      const editId=document.getElementById('uEditId')?.value||'';
+      if(editId)return previousSubmitUser();
+      const prenom=document.getElementById('uPrenom')?.value.trim()||'';
+      const nom=document.getElementById('uNom')?.value.trim()||'';
+      const email=document.getElementById('uEmail')?.value.trim().toLowerCase()||'';
+      const password=document.getElementById('uPwd')?.value||'';
+      const role=document.getElementById('uRole')?.value||'it_hotel';
+      const hotel=role==='it_hotel'?(document.getElementById('uHotel')?.value||null):null;
+      const hotels=role==='it_regional'&&typeof getSelectedHotels==='function'?getSelectedHotels():[];
+      const roles=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
+      const finalRoles=roles.length?roles:[role];
+      if(!email){showToast("L'email est requis",'err');return;}
+      if(!password||password.length<8){showToast('Le mot de passe doit contenir au moins 8 caractères','err');return;}
+      if(role==='it_hotel'&&!hotel){showToast("Sélectionnez un hôtel pour l'IT Hôtel",'err');return;}
+      if(role==='it_regional'&&!hotels.length){showToast("Sélectionnez au moins un hôtel pour l'IT Régional",'err');return;}
+      if(DEMO_USERS.some(user=>user.email===email)){showToast('Email déjà utilisé','err');return;}
+      try{
+        const result=await createAuthUser({prenom,nom,email,password,role,roles:finalRoles,hotel,hotels});
+        installAuthenticatedSbFetch();
+        const rows=await sbLoadUsers();
+        if(Array.isArray(rows)){DEMO_USERS=rows.map(dbRowToUser);saveUsers(DEMO_USERS);}
+        populateSelects();closeModal('modalUser');
+        showToast(`Compte Supabase créé pour ${prenom} ${nom}`.trim(),'ok');
+        addNotif(`Nouveau compte : ${prenom} ${nom} (${ROLE_L[role]||role})`,'user-plus','var(--green)');
+        if(typeof showEmailNotification==='function')showEmailNotification(prenom,nom,email,role,password);
+        renderUsers();
+        return result;
+      }catch(error){
+        console.error('Création utilisateur Supabase:',error);
+        showToast(error.message||'Création du compte impossible','err');
+        return null;
+      }
+    };
+  }
+
   function hideMobileNavigationBeforeLogin(){
     try{
       const signedIn=!!window.currentUser;
