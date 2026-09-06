@@ -29,7 +29,7 @@
       const text=await response.text();return text?JSON.parse(text):[];
     };
   }
-  const writeSession=()=>{try{if(currentUser)localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,at:Date.now()}));}catch(_) {}};
+  const writeSession=()=>{try{if(currentUser)localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,user:currentUser,at:Date.now()}));}catch(_) {}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(ACTIVITY_KEY);}catch(_) {}};
   const touch=()=>{try{if(currentUser)localStorage.setItem(ACTIVITY_KEY,String(Date.now()));}catch(_) {}};
   function refreshBadge(){if(!currentUser)return;try{const all=visibleTickets();const badge=document.getElementById('sbOpen');if(badge)badge.textContent=all.length;}catch(_) {}}
@@ -63,16 +63,32 @@
   }
   function startSync(){installAuthenticatedSbFetch();if(syncTimer)clearInterval(syncTimer);syncTickets();startRealtime();syncTimer=setInterval(syncTickets,10000);}
   async function restoreSession(){
+    if(currentUser)return;
+    let saved=null;
+    try{saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(_){}
+    if(saved){
+      try{
+        let user=null;
+        if(saved.user&&saved.user.email===saved.email)user=saved.user;
+        if(!user&&Array.isArray(DEMO_USERS))user=DEMO_USERS.find(item=>item.id===saved.id&&item.email===saved.email)||null;
+        if(user){currentUser={...user};initSession();}
+      }catch(error){console.warn('Restauration locale de session impossible',error);}
+    }
     try{
-      installAuthenticatedSbFetch();const session=await getAuthSession();
+      installAuthenticatedSbFetch();
+      const session=await getAuthSession();
       if(session?.user){
-        const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${session.user.id}&limit=1`);
-        if(rows?.[0]){currentUser=dbRowToUser(rows[0]);initSession();return;}
-        console.warn('Session Supabase valide mais aucun utilisateur lié dans utilisateurs.auth_user_id');
+        try{
+          const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${session.user.id}&limit=1`);
+          if(rows?.[0]){currentUser=dbRowToUser(rows[0]);initSession();return;}
+          console.warn('Session Supabase valide mais aucun utilisateur lié dans utilisateurs.auth_user_id');
+        }catch(error){console.warn('Profil Supabase non disponible, session locale conservée',error);}
       }
-      const saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(!saved||currentUser)return;
-      const user=DEMO_USERS.find(item=>item.id===saved.id&&item.email===saved.email);if(user){currentUser=user;initSession();}
-    }catch(error){console.warn('Restauration de session impossible',error);}
+      if(currentUser)startSync();
+    }catch(error){
+      console.warn('Restauration Supabase impossible, session locale conservée',error);
+      if(currentUser)startSync();
+    }
   }
   const previousLogin=window.doLogin;
   if(typeof previousLogin==='function'){
