@@ -42,6 +42,40 @@
       const text=await response.text();return text?JSON.parse(text):[];
     };
   }
+
+  /* The application has legacy global CRUD functions. Replace their global
+     bindings as well as window properties so the legacy createTicket() uses
+     the authenticated JWT and therefore passes Supabase RLS. */
+  function installAuthenticatedTicketCrud(){
+    const s=cfg();
+    if(!s?.sbUrl||!s?.sbKey)return;
+    const authFetch=async(path,opts={})=>{
+      const session=await getAuthSession();
+      const headers={'Content-Type':'application/json','Prefer':opts.prefer||'return=representation','apikey':s.sbKey};
+      if(session?.access_token)headers.Authorization=`Bearer ${session.access_token}`;
+      else throw new Error('Session Supabase absente');
+      const response=await fetch(`${s.sbUrl}/rest/v1/${path}`,{...opts,headers});
+      const text=await response.text();
+      if(!response.ok)throw new Error(`Supabase ${response.status}: ${text.slice(0,500)}`);
+      return text?JSON.parse(text):[];
+    };
+    const load=async()=>authFetch('tickets?order=created_at.desc&limit=500');
+    const create=async(data)=>{
+      const session=await getAuthSession();
+      if(!session?.user)throw new Error('Session Supabase absente');
+      const payload={...data,created_by:session.user.id};
+      const rows=await authFetch('tickets',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
+      return Array.isArray(rows)?rows[0]:rows;
+    };
+    window.__onomoAuthenticatedSbLoadTickets=load;
+    window.__onomoAuthenticatedSbCreateTicket=create;
+    window.sbLoadTickets=load;
+    window.sbCreateTicket=create;
+    try{
+      window.eval('sbLoadTickets=window.__onomoAuthenticatedSbLoadTickets; sbCreateTicket=window.__onomoAuthenticatedSbCreateTicket;');
+    }catch(error){console.warn('Binding Supabase ticket CRUD non remplacé',error);}
+  }
+
   const writeSession=()=>{try{if(currentUser)localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,user:currentUser,at:Date.now()}));}catch(_) {}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(ACTIVITY_KEY);}catch(_) {}};
   const touch=()=>{try{if(currentUser)localStorage.setItem(ACTIVITY_KEY,String(Date.now()));}catch(_) {}};
@@ -50,7 +84,8 @@
   async function syncTickets(){
     if(loading||!currentUser||!sbOK())return;loading=true;
     try{
-      const records=await sbLoadTickets();
+      installAuthenticatedTicketCrud();
+      const records=await window.__onomoAuthenticatedSbLoadTickets();
       if(Array.isArray(records)){tickets=records;saveTickets(tickets);refreshView();}
     }catch(error){console.warn('Ticket sync unavailable',error);}finally{loading=false;}
   }
@@ -64,7 +99,7 @@
         .subscribe(status=>{if(status==='SUBSCRIBED')console.log('Supabase Realtime connecté');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Supabase Realtime indisponible, polling actif');});
     }catch(error){console.warn('Supabase Realtime indisponible',error);}
   }
-  function startSync(){installAuthenticatedSbFetch();if(syncTimer)clearInterval(syncTimer);syncTickets();startRealtime();syncTimer=setInterval(syncTickets,10000);}
+  function startSync(){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();if(syncTimer)clearInterval(syncTimer);syncTickets();startRealtime();syncTimer=setInterval(syncTickets,10000);}
 
   async function restoreSupabaseProfile(session){
     if(!session?.user||restoring)return false;
@@ -152,7 +187,7 @@
   const previousUpdate=window.updateTicket;
   if(typeof previousUpdate==='function')window.updateTicket=async function(id,updates){installAuthenticatedSbFetch();const result=await previousUpdate(id,updates);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousCreate=window.createTicket;
-  if(typeof previousCreate==='function')window.createTicket=async function(data){installAuthenticatedSbFetch();const session=await getAuthSession();const payload={...data};if(session?.user)payload.created_by=session.user.id;const result=await previousCreate(payload);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
+  if(typeof previousCreate==='function')window.createTicket=async function(data){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();const session=await getAuthSession();const payload={...data};if(session?.user)payload.created_by=session.user.id;const result=await previousCreate(payload);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousComment=window.addComment;
   if(typeof previousComment==='function')window.addComment=async function(message){installAuthenticatedSbFetch();const result=await previousComment(message);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousSwitch=window.switchView;
@@ -230,8 +265,9 @@
     try{['click','pointermove','keydown','input','submit','touchstart'].forEach(type=>document.addEventListener(type,touch,{passive:type==='pointermove'||type==='touchstart'}));}catch(_){}
     try{channel=new BroadcastChannel('onomo-ticket-sync');channel.onmessage=event=>{if(event.data?.type==='tickets-updated')syncTickets();};}catch(_){}
     try{initMobileAndPwaUi();}catch(error){console.warn('UI mobile/PWA init failed',error);}
+    try{installAuthenticatedTicketCrud();}catch(error){console.warn('Ticket CRUD init failed',error);}
     try{restoreSession();}catch(error){console.warn('Session restore failed',error);}
     setInterval(()=>{try{const last=Number(localStorage.getItem(ACTIVITY_KEY)||0);if(currentUser&&last&&Date.now()-last>=INACTIVITY){clearSession();showToast('Votre session a expiré pour cause d’inactivité.','err');doLogout();}}catch(_){}},15000);
   });
-  window.OnomoRuntime={syncTickets,touch,refreshBadge,getAuthSession,installAuthenticatedSbFetch,hideMobileNavigationBeforeLogin,hideInstallBannerIfInstalled,restoreSession};
+  window.OnomoRuntime={syncTickets,touch,refreshBadge,getAuthSession,installAuthenticatedSbFetch,installAuthenticatedTicketCrud,hideMobileNavigationBeforeLogin,hideInstallBannerIfInstalled,restoreSession};
 })();
