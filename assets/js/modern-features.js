@@ -1,4 +1,4 @@
-/* Onomo Support IT: role-based UI guard + voice recognition disabled. */
+/* Onomo Support IT: role guard, voice recognition disabled, ONOMO branding. */
 (function(){
   'use strict';
 
@@ -21,43 +21,49 @@
     }catch(_){}
   }
 
-  function textOf(el){return NORMALIZE(el?.textContent||el?.getAttribute?.('aria-label')||el?.title||'');}
-
-  function hideElement(el){
-    if(!el) return;
-    el.dataset.onomoRoleHidden='1';
-    el.setAttribute('aria-hidden','true');
-    el.style.display='none';
+  function applyBranding(){
+    const logo='assets/pwa/onomo-logo.svg';
+    document.title='Onomo Support IT — Service Desk';
+    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(el=>el.href=logo);
+    document.querySelectorAll('img').forEach(img=>{
+      const meta=NORMALIZE((img.alt||'')+' '+(img.title||'')+' '+(img.className||'')+' '+(img.id||'')+' '+(img.src||''));
+      if(/logo|brand|onomo-icon|icon-192/.test(meta)){
+        img.src=logo;
+        img.alt='ONOMO';
+        img.removeAttribute('srcset');
+      }
+    });
+    document.querySelectorAll('[data-logo],.logo,.brand-logo,.app-logo,#logo,#appLogo,#loginLogo').forEach(el=>{
+      if(el.tagName==='IMG') el.src=logo;
+      else if(!el.querySelector('img')){
+        const img=document.createElement('img');
+        img.src=logo; img.alt='ONOMO'; img.className='onomo-brand-logo';
+        img.style.maxWidth='180px'; img.style.maxHeight='64px'; img.style.objectFit='contain';
+        el.prepend(img);
+      }
+    });
   }
+
+  function textOf(el){return NORMALIZE(el?.textContent||el?.getAttribute?.('aria-label')||el?.title||'');}
+  function hideElement(el){if(!el)return;el.dataset.onomoRoleHidden='1';el.setAttribute('aria-hidden','true');el.style.display='none';}
 
   function applyRoleGuard(){
     removeVoice();
+    applyBranding();
     const user=window.currentUser;
     if(!user) return;
-
-    const full=isFullAccess(user);
-    const admin=isAdmin(user);
-
-    /* Administration/settings are Administrateur-only. */
+    const full=isFullAccess(user), admin=isAdmin(user);
     document.querySelectorAll('a,button,[role="button"],nav li,[data-view],[data-section]').forEach(el=>{
-      const t=textOf(el);
-      const id=NORMALIZE(el.id||el.dataset?.view||el.dataset?.section||'');
+      const t=textOf(el), id=NORMALIZE(el.id||el.dataset?.view||el.dataset?.section||'');
       const adminTarget=/\b(settings|parametres|administration|administrateur|gestion des utilisateurs|roles et permissions|users|utilisateurs)\b/.test(t+' '+id);
       const reportTarget=/\b(mon rapport|my report|my reports|mon reporting)\b/.test(t);
       if(reportTarget) hideElement(el);
       if(adminTarget && !admin) hideElement(el);
     });
-
-    /* Non-full-access users only need their own ticket area and ticket creation. */
-    if(!full){
-      document.querySelectorAll('a,button,[role="button"],nav li,[data-view],[data-section]').forEach(el=>{
-        const t=textOf(el), id=NORMALIZE(el.id||el.dataset?.view||el.dataset?.section||'');
-        const restricted=/\b(dashboard|tableau de bord|statistiques|statistics|rapports|reports|urgents|urgent|all tickets|tous les tickets|tickets de l'hotel|hotel tickets|utilisateurs|users|settings|parametres|administration)\b/.test(t+' '+id);
-        if(restricted) hideElement(el);
-      });
-    }
-
-    /* Only Administrateur may access Settings by direct view switching. */
+    if(!full) document.querySelectorAll('a,button,[role="button"],nav li,[data-view],[data-section]').forEach(el=>{
+      const t=textOf(el), id=NORMALIZE(el.id||el.dataset?.view||el.dataset?.section||'');
+      if(/\b(dashboard|tableau de bord|statistiques|statistics|rapports|reports|urgents|urgent|all tickets|tous les tickets|tickets de l'hotel|hotel tickets|utilisateurs|users|settings|parametres|administration)\b/.test(t+' '+id)) hideElement(el);
+    });
     if(!admin && typeof window.switchView==='function' && !window.__onomoRoleGuardWrapped){
       const original=window.switchView;
       window.switchView=function(view,element){
@@ -68,24 +74,15 @@
       };
       window.__onomoRoleGuardWrapped=true;
     }
-
     document.documentElement.dataset.onomoRole=roleNames(user).join(',');
     document.documentElement.dataset.onomoAdmin=admin?'1':'0';
   }
 
   function init(){
-    removeVoice();
-    applyRoleGuard();
-    const observer=new MutationObserver(()=>{
-      removeVoice();
-      if(window.currentUser) applyRoleGuard();
-    });
+    removeVoice(); applyBranding(); applyRoleGuard();
+    const observer=new MutationObserver(()=>{removeVoice();applyBranding();if(window.currentUser)applyRoleGuard();});
     observer.observe(document.documentElement,{childList:true,subtree:true});
-    setTimeout(applyRoleGuard,300);
-    setTimeout(applyRoleGuard,1000);
-    setTimeout(applyRoleGuard,2500);
+    setTimeout(applyRoleGuard,300);setTimeout(applyRoleGuard,1000);setTimeout(applyRoleGuard,2500);
   }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
-  else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
