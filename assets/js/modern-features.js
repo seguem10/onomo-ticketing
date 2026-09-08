@@ -1,155 +1,85 @@
-/* Onomo Support IT: role guard, voice recognition disabled, ONOMO branding, robust admin navigation. */
+/* ONOMO Support IT - UI fixes and role guard */
 (function(){
   'use strict';
-
-  const FULL_ACCESS = new Set(['admin','administrateur','it_regional','it_hotel','directeur','direction']);
-  const NORMALIZE = value => String(value || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const roleNames = user => {
-    const values=[];
-    if(user?.role) values.push(user.role);
-    if(Array.isArray(user?.roles)) values.push(...user.roles);
-    return values.map(NORMALIZE);
-  };
-  const isAdmin = user => roleNames(user).some(r=>r==='admin'||r==='administrateur');
-  const isFullAccess = user => roleNames(user).some(r=>FULL_ACCESS.has(r));
+  const N=v=>String(v||'').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const roles=u=>{const a=[];if(u?.role)a.push(u.role);if(Array.isArray(u?.roles))a.push(...u.roles);return a.map(N);};
+  const admin=u=>roles(u).some(r=>r==='admin'||r==='administrateur');
+  const full=u=>roles(u).some(r=>['admin','administrateur','it_regional','it_hotel','directeur','direction'].includes(r));
 
   function removeVoice(){
-    try{
-      document.getElementById('voiceDictationBtn')?.remove();
-      document.getElementById('voiceStatus')?.remove();
-      document.querySelectorAll('[data-voice], [data-action="voice"], [aria-label*="voice" i], [aria-label*="vocal" i]').forEach(el=>el.remove());
-    }catch(_){}
+    document.getElementById('voiceDictationBtn')?.remove();
+    document.getElementById('voiceStatus')?.remove();
+    document.querySelectorAll('[data-voice],[data-action="voice"],[aria-label*="voice" i],[aria-label*="vocal" i]').forEach(e=>e.remove());
   }
 
-  function applyBranding(){
-    const logo='assets/pwa/onomo-logo.svg';
+  function branding(){
     document.title='Onomo Support IT — Service Desk';
-    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(el=>el.href=logo);
-    document.querySelectorAll('img').forEach(img=>{
-      const meta=NORMALIZE((img.alt||'')+' '+(img.title||'')+' '+(img.className||'')+' '+(img.id||'')+' '+(img.src||''));
-      if(/logo|brand|onomo-icon|icon-192/.test(meta)){
-        if(img.getAttribute('src')!==logo) img.src=logo;
-        img.alt='ONOMO';
-        img.removeAttribute('srcset');
-      }
-    });
-    document.querySelectorAll('[data-logo],.logo,.brand-logo,.app-logo,#logo,#appLogo,#loginLogo').forEach(el=>{
-      if(el.tagName==='IMG'){
-        if(el.getAttribute('src')!==logo) el.src=logo;
-      }else if(!el.querySelector('img')){
-        const img=document.createElement('img');
-        img.src=logo; img.alt='ONOMO'; img.className='onomo-brand-logo';
-        img.style.maxWidth='180px'; img.style.maxHeight='64px'; img.style.objectFit='contain';
-        el.prepend(img);
-      }
-    });
+    const logo='assets/pwa/onomo-logo.svg';
+    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(e=>e.href=logo);
   }
 
-  function textOf(el){return NORMALIZE(el?.textContent||el?.getAttribute?.('aria-label')||el?.title||'');}
-  function hideElement(el){if(!el)return;el.dataset.onomoRoleHidden='1';el.setAttribute('aria-hidden','true');el.style.display='none';}
-  function showElement(el){if(!el)return;delete el.dataset.onomoRoleHidden;el.removeAttribute('aria-hidden');el.style.removeProperty('display');}
-
-  function openUsersDirect(item){
-    try{
-      const user=window.currentUser;
-      if(!isAdmin(user)) return false;
-      // Bypass the legacy role comparison in switchView().
-      if(typeof currentView !== 'undefined') currentView='users';
-      document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.classList.remove('active'));
-      if(item) item.classList.add('active');
-      const title=document.querySelector('.topbar-title');
-      if(title) title.textContent='Utilisateurs';
-      if(typeof renderUsers==='function'){
-        renderUsers();
-        return true;
-      }
-      if(typeof window.renderUsers==='function'){
-        window.renderUsers();
-        return true;
-      }
-      throw new Error('renderUsers() est introuvable');
-    }catch(error){
-      console.error('Onomo users navigation:',error);
+  /* Remplace la fonction de rendu utilisateurs par une version robuste.
+     L'ancienne version supposait que ROLE_STYLES.it existait et pouvait donc
+     planter si Supabase renvoyait "Administrateur" au lieu de "admin". */
+  function installUsersView(){
+    if(typeof window.renderUsers!=='function' || window.__onomoSafeUsersView)return;
+    const safeRenderUsers=function(){
       const mc=document.getElementById('mainContent');
-      if(mc) mc.innerHTML='<div class="alert alert-warn" style="margin:20px">Impossible d’afficher la gestion des utilisateurs.<br><small>'+String(error?.message||error)+'</small></div>';
-      return false;
-    }
+      if(!mc)return;
+      const users=Array.isArray(window.DEMO_USERS)?window.DEMO_USERS:[];
+      const me=window.currentUser;
+      const roleLabel=r=>({admin:'Admin',administrateur:'Administrateur',direction:'Direction',it_regional:'IT Régional',it_hotel:'IT Hôtel'}[N(r)]||String(r||'—'));
+      const roleStyle=r=>({
+        admin:{bg:'rgba(201,151,42,.12)',color:'#C9972A'},administrateur:{bg:'rgba(201,151,42,.12)',color:'#C9972A'},
+        direction:{bg:'rgba(5,150,105,.12)',color:'#059669'},it_regional:{bg:'rgba(124,58,237,.12)',color:'#7C3AED'},
+        it_hotel:{bg:'rgba(37,99,235,.12)',color:'#2563EB'}
+      }[N(r)]||{bg:'rgba(100,116,139,.12)',color:'#64748B'});
+      const desc=r=>({admin:'Accès total au système',administrateur:'Accès total au système',direction:'Consultation et rapports',it_regional:'Gestion de plusieurs hôtels',it_hotel:'Gestion de son hôtel'}[N(r)]||'');
+      const initialsSafe=s=>String(s||'?').split(' ').map(x=>x[0]||'').join('').slice(0,2).toUpperCase();
+      const escSafe=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      mc.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div><div style="font-size:15px;font-weight:700;color:var(--tx)">Gestion des comptes</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">${users.length} utilisateur(s)</div></div>
+          <button class="btn btn-gold" onclick="openModalUser()"><i class="ti ti-user-plus"></i>Ajouter un compte</button>
+        </div>
+        <div class="card"><div class="card-hdr"><div class="card-title"><i class="ti ti-users"></i>Comptes enregistrés</div></div>
+        ${users.length?users.map(u=>{
+          const name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email||'Utilisateur';
+          const rs=roleStyle(u.role); const isMe=me&&u.id===me.id;
+          const hotels=Array.isArray(u.hotels)?u.hotels:(typeof u.hotels==='string'?(()=>{try{return JSON.parse(u.hotels||'[]')}catch(_){return[]}})():[]);
+          return `<div class="user-row"><div class="user-av" style="background:${rs.bg};color:${rs.color}">${initialsSafe(name)}</div>
+            <div class="user-info" style="flex:1"><div class="user-name">${escSafe(name)}${isMe?'<span style="font-size:9px;background:var(--brand-l);color:var(--brand-text);padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:700">VOUS</span>':''}</div>
+            <div style="font-size:10px;color:var(--tx3);margin-top:2px">${escSafe(u.email)} · ${u.lastLogin?'Dernière connexion : '+escSafe(window.timeAgo?window.timeAgo(u.lastLogin):u.lastLogin):'Jamais connecté'}</div>
+            <div style="font-size:9px;color:var(--tx3);margin-top:2px;font-style:italic">${escSafe(desc(u.role))}</div></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="role-tag" style="background:${rs.bg};color:${rs.color}">${roleLabel(u.role)}</span>
+            ${N(u.role)==='it_hotel'&&u.hotel?`<span style="font-size:10px;color:var(--tx3);background:var(--surface2);padding:2px 8px;border-radius:10px;border:1px solid var(--border)">${escSafe(String(u.hotel).replace('Onomo ','R'))}</span>`:''}
+            ${N(u.role)==='it_regional'&&hotels.length?`<span style="font-size:10px;color:var(--purple-t);background:var(--purple-l);padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.2)">${hotels.length} hôtel(s)</span>`:''}
+            <button class="btn btn-outline btn-sm" onclick="openEditUser('${escSafe(u.id)}')"><i class="ti ti-edit"></i></button>
+            ${!isMe?`<button class="btn btn-danger btn-sm" onclick="askDeleteUser('${escSafe(u.id)}')"><i class="ti ti-trash"></i></button>`:''}
+            </div></div>`;
+        }).join(''):'<div class="empty-state"><i class="ti ti-users"></i><p>Aucun utilisateur</p></div>'}
+        </div>`;
+    };
+    window.renderUsers=safeRenderUsers;
+    window.__onomoSafeUsersView=true;
   }
 
-  function applyRoleGuard(){
-    removeVoice();
-    applyBranding();
-    const user=window.currentUser;
-    if(!user) return;
-    const full=isFullAccess(user), admin=isAdmin(user);
-
-    const adminSection=document.getElementById('sbAdminSec');
-    if(adminSection) admin ? showElement(adminSection) : hideElement(adminSection);
-
-    document.querySelectorAll('a,button,[role="button"],nav li,[data-view],[data-section]').forEach(el=>{
-      const t=textOf(el), id=NORMALIZE(el.id||el.dataset?.view||el.dataset?.section||'');
-      const adminTarget=/\b(settings|parametres|administration|administrateur|gestion des utilisateurs|roles et permissions|users|utilisateurs|hotels-admin)\b/.test(t+' '+id);
-      const reportTarget=/\b(mon rapport|my report|my reports|my reporting)\b/.test(t);
-      if(reportTarget) hideElement(el);
-      if(adminTarget && !admin) hideElement(el);
-      if(adminTarget && admin) showElement(el);
-    });
-
-    if(!full) document.querySelectorAll('a,button,[role="button"],nav li,[data-view],[data-section]').forEach(el=>{
-      const t=textOf(el), id=NORMALIZE(el.id||el.dataset?.view||el.dataset?.section||'');
-      if(/\b(dashboard|tableau de bord|statistiques|statistics|rapports|reports|urgents|urgent|all tickets|tous les tickets|tickets de l'hotel|hotel tickets)\b/.test(t+' '+id)) hideElement(el);
-    });
-
-    if(typeof window.switchView==='function' && !window.__onomoRoleGuardWrapped){
-      const original=window.switchView;
-      window.switchView=function(view,element){
-        const v=NORMALIZE(view);
-        if(isAdmin(window.currentUser) && v==='users') return openUsersDirect(element);
-        if(isAdmin(window.currentUser) && /settings|parametres|administration|hotels-admin/.test(v)) return original.apply(this,arguments);
-        if(!isAdmin(window.currentUser) && /settings|parametres|administration|users|utilisateurs|hotels-admin/.test(v)) return false;
-        if(!isFullAccess(window.currentUser) && /dashboard|urgents|reports|report|statistics|statistiques/.test(v)) return false;
-        return original.apply(this,arguments);
-      };
-      window.__onomoRoleGuardWrapped=true;
+  function guard(){
+    removeVoice();branding();
+    const u=window.currentUser;if(!u)return;
+    const a=admin(u);
+    const sec=document.getElementById('sbAdminSec');
+    if(sec)sec.style.display=a?'block':'none';
+    document.querySelectorAll('[data-view="users"],[data-view="hotels-admin"]').forEach(e=>{e.style.display=a?'flex':'none';});
+    if(!a){
+      document.querySelectorAll('[data-view="settings"]').forEach(e=>e.style.display='none');
     }
-
-    if(admin && !window.__onomoUsersNavReady){
-      document.querySelectorAll('[data-view="users"]').forEach(item=>{
-        item.style.display='flex';
-        item.onclick=function(e){e?.preventDefault?.();e?.stopPropagation?.();openUsersDirect(item);};
-      });
-      window.__onomoUsersNavReady=true;
-    }
-
-    document.documentElement.dataset.onomoRole=roleNames(user).join(',');
-    document.documentElement.dataset.onomoAdmin=admin?'1':'0';
-  }
-
-  function clearUnexpectedLoginOverlays(){
-    try{
-      if(window.currentUser) return;
-      document.querySelectorAll('#mfaLoginOverlay').forEach(el=>el.remove());
-      document.querySelectorAll('.overlay.open').forEach(el=>el.classList.remove('open'));
-      const login=document.getElementById('loginScreen');
-      if(login){login.style.pointerEvents='auto';login.style.zIndex='1';}
-      document.querySelectorAll('#loginEmail,#loginPwd,#loginBtn').forEach(el=>{
-        el.style.pointerEvents='auto';
-        el.removeAttribute('disabled');
-      });
-    }catch(_){}
+    installUsersView();
   }
 
   function init(){
-    removeVoice();
-    applyBranding();
-    applyRoleGuard();
-    clearUnexpectedLoginOverlays();
-    setTimeout(()=>{applyRoleGuard();clearUnexpectedLoginOverlays();},300);
-    setTimeout(()=>{applyRoleGuard();clearUnexpectedLoginOverlays();},1000);
-    setTimeout(()=>{applyRoleGuard();clearUnexpectedLoginOverlays();},2500);
-    setTimeout(()=>{applyRoleGuard();},5000);
+    removeVoice();branding();guard();
+    [300,1000,2500,5000].forEach(ms=>setTimeout(guard,ms));
   }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
-  else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
