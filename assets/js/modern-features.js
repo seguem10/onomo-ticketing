@@ -49,6 +49,33 @@
   function hideElement(el){if(!el)return;el.dataset.onomoRoleHidden='1';el.setAttribute('aria-hidden','true');el.style.display='none';}
   function showElement(el){if(!el)return;delete el.dataset.onomoRoleHidden;el.removeAttribute('aria-hidden');el.style.removeProperty('display');}
 
+  function openUsersDirect(item){
+    try{
+      const user=window.currentUser;
+      if(!isAdmin(user)) return false;
+      // Bypass the legacy role comparison in switchView().
+      if(typeof currentView !== 'undefined') currentView='users';
+      document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.classList.remove('active'));
+      if(item) item.classList.add('active');
+      const title=document.querySelector('.topbar-title');
+      if(title) title.textContent='Utilisateurs';
+      if(typeof renderUsers==='function'){
+        renderUsers();
+        return true;
+      }
+      if(typeof window.renderUsers==='function'){
+        window.renderUsers();
+        return true;
+      }
+      throw new Error('renderUsers() est introuvable');
+    }catch(error){
+      console.error('Onomo users navigation:',error);
+      const mc=document.getElementById('mainContent');
+      if(mc) mc.innerHTML='<div class="alert alert-warn" style="margin:20px">Impossible d’afficher la gestion des utilisateurs.<br><small>'+String(error?.message||error)+'</small></div>';
+      return false;
+    }
+  }
+
   function applyRoleGuard(){
     removeVoice();
     applyBranding();
@@ -73,32 +100,23 @@
       if(/\b(dashboard|tableau de bord|statistiques|statistics|rapports|reports|urgents|urgent|all tickets|tous les tickets|tickets de l'hotel|hotel tickets)\b/.test(t+' '+id)) hideElement(el);
     });
 
-    if(!admin && typeof window.switchView==='function' && !window.__onomoRoleGuardWrapped){
+    if(typeof window.switchView==='function' && !window.__onomoRoleGuardWrapped){
       const original=window.switchView;
       window.switchView=function(view,element){
         const v=NORMALIZE(view);
-        if(/settings|parametres|administration|users|utilisateurs|hotels-admin/.test(v)) return false;
+        if(isAdmin(window.currentUser) && v==='users') return openUsersDirect(element);
+        if(isAdmin(window.currentUser) && /settings|parametres|administration|hotels-admin/.test(v)) return original.apply(this,arguments);
+        if(!isAdmin(window.currentUser) && /settings|parametres|administration|users|utilisateurs|hotels-admin/.test(v)) return false;
         if(!isFullAccess(window.currentUser) && /dashboard|urgents|reports|report|statistics|statistiques/.test(v)) return false;
         return original.apply(this,arguments);
       };
       window.__onomoRoleGuardWrapped=true;
     }
 
-    if(admin && typeof window.renderUsers==='function' && !window.__onomoUsersNavReady){
-      const usersItems=document.querySelectorAll('[data-view="users"]');
-      usersItems.forEach(item=>{
+    if(admin && !window.__onomoUsersNavReady){
+      document.querySelectorAll('[data-view="users"]').forEach(item=>{
         item.style.display='flex';
-        item.onclick=function(e){
-          e?.preventDefault?.();
-          try{
-            if(typeof window.switchView==='function') window.switchView('users',item);
-            else window.renderUsers();
-          }catch(error){
-            const mc=document.getElementById('mainContent');
-            if(mc) mc.innerHTML='<div class="alert alert-warn" style="margin:20px">Impossible d\'afficher la gestion des utilisateurs. Rechargez la page. Détail: '+String(error?.message||error)+'</div>';
-            console.error('Onomo users navigation:',error);
-          }
-        };
+        item.onclick=function(e){e?.preventDefault?.();e?.stopPropagation?.();openUsersDirect(item);};
       });
       window.__onomoUsersNavReady=true;
     }
