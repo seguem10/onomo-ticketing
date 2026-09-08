@@ -28,14 +28,15 @@
     document.querySelectorAll('img').forEach(img=>{
       const meta=NORMALIZE((img.alt||'')+' '+(img.title||'')+' '+(img.className||'')+' '+(img.id||'')+' '+(img.src||''));
       if(/logo|brand|onomo-icon|icon-192/.test(meta)){
-        img.src=logo;
+        if(img.getAttribute('src')!==logo) img.src=logo;
         img.alt='ONOMO';
         img.removeAttribute('srcset');
       }
     });
     document.querySelectorAll('[data-logo],.logo,.brand-logo,.app-logo,#logo,#appLogo,#loginLogo').forEach(el=>{
-      if(el.tagName==='IMG') el.src=logo;
-      else if(!el.querySelector('img')){
+      if(el.tagName==='IMG'){
+        if(el.getAttribute('src')!==logo) el.src=logo;
+      }else if(!el.querySelector('img')){
         const img=document.createElement('img');
         img.src=logo; img.alt='ONOMO'; img.className='onomo-brand-logo';
         img.style.maxWidth='180px'; img.style.maxHeight='64px'; img.style.objectFit='contain';
@@ -78,11 +79,30 @@
     document.documentElement.dataset.onomoAdmin=admin?'1':'0';
   }
 
-  function init(){
-    removeVoice(); applyBranding(); applyRoleGuard();
-    const observer=new MutationObserver(()=>{removeVoice();applyBranding();if(window.currentUser)applyRoleGuard();});
-    observer.observe(document.documentElement,{childList:true,subtree:true});
-    setTimeout(applyRoleGuard,300);setTimeout(applyRoleGuard,1000);setTimeout(applyRoleGuard,2500);
+  function clearUnexpectedLoginOverlays(){
+    try{
+      if(window.currentUser) return;
+      document.querySelectorAll('#mfaLoginOverlay').forEach(el=>el.remove());
+      document.querySelectorAll('.overlay.open').forEach(el=>el.classList.remove('open'));
+      const login=document.getElementById('loginScreen');
+      if(login){login.style.pointerEvents='auto';login.style.zIndex='1';}
+      document.querySelectorAll('#loginEmail,#loginPwd,#loginBtn').forEach(el=>{
+        el.style.pointerEvents='auto';
+        el.removeAttribute('disabled');
+      });
+    }catch(_){}
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+
+  function init(){
+    removeVoice();
+    applyBranding();
+    applyRoleGuard();
+    clearUnexpectedLoginOverlays();
+    setTimeout(()=>{applyRoleGuard();clearUnexpectedLoginOverlays();},300);
+    setTimeout(()=>{applyRoleGuard();clearUnexpectedLoginOverlays();},1000);
+    setTimeout(()=>{applyRoleGuard();clearUnexpectedLoginOverlays();},2500);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
 })();
