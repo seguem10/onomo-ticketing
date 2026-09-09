@@ -29,7 +29,7 @@ drop policy if exists tickets_create on public.tickets;
 drop policy if exists tickets_update on public.tickets;
 drop policy if exists tickets_delete on public.tickets;
 create policy tickets_read on public.tickets for select to authenticated using ((select public.is_admin()) or ((select public.has_permission('ticket:read:all')) and (select public.user_has_hotel_scope(hotel))) or ((select public.has_permission('ticket:read:own')) and created_by=(select auth.uid())) or assigned_to=(select auth.uid()));
-create policy tickets_create on public.tickets for insert to authenticated with check ((select public.has_permission('ticket:create')) and created_by=(select auth.uid()) and (select public.user_has_hotel_scope(hotel)) and categorie in ('IT / Réseau','Chambres','Restauration','Guest relations','Sécurité','Autre'));
+create policy tickets_create on public.tickets for insert to authenticated with check ((select public.has_permission('ticket:create')) and created_by=(select auth.uid()) and (select public.user_has_hotel_scope(hotel)));
 create policy tickets_update on public.tickets for update to authenticated using ((select public.is_admin()) or ((select public.has_permission('ticket:update:all')) and (select public.user_has_hotel_scope(hotel))) or created_by=(select auth.uid()) or assigned_to=(select auth.uid())) with check ((select public.is_admin()) or ((select public.has_permission('ticket:update:all')) and (select public.user_has_hotel_scope(hotel))) or created_by=(select auth.uid()) or assigned_to=(select auth.uid()));
 create policy tickets_delete on public.tickets for delete to authenticated using ((select public.is_admin()));
 
