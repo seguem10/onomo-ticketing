@@ -62,21 +62,94 @@
   }
   window.__onomoDeleteUser=async function(id){const users=readUsers(),u=users.find(x=>String(x.id||x.auth_user_id)===String(id));if(!u)return;if(!confirm(`Supprimer l'utilisateur ${u.email||u.nom||''} ?`))return;try{if(typeof window.deleteUser==='function'&&window.deleteUser!==window.__onomoDeleteUser){await window.deleteUser(id);return;}alert('La suppression du compte Auth nécessite l’Edge Function d’administration. Aucun compte Auth n’est supprimé par le navigateur.');}catch(e){console.error(e);alert(e.message||'Suppression impossible.')}};
 
+  function ticketUsers(){
+    return readUsers().filter(u=>u&&u.email&&['it_regional','it_hotel','it regional','it hotel'].includes(N(u.role)));
+  }
+  function resolveTicketUser(value){
+    const s=N(value);if(!s)return null;
+    return ticketUsers().find(u=>{
+      const ids=[u.auth_user_id,u.id,u.email].filter(Boolean).map(String);
+      const name=(`${u.prenom||''} ${u.nom||''}`).trim();
+      return ids.some(x=>N(x)===s)||N(name)===s;
+    })||null;
+  }
+  function normalizeAssignment(updates){
+    const out={...(updates||{})};
+    const raw=out.assigned_to??out.assignee_id??out.assigne_a??'';
+    if(raw===''){out.assigned_to=null;out.assigne_a=null;delete out.assignee_id;return out;}
+    const u=resolveTicketUser(raw);
+    if(u){
+      const authId=u.auth_user_id||u.id||null;
+      const name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email;
+      out.assigned_to=authId;
+      out.assigne_a=u.email||name;
+    }else if(out.assigne_a){
+      out.assigne_a=String(out.assigne_a).trim();
+    }
+    delete out.assignee_id;
+    return out;
+  }
+  function rebuildAssignmentSelect(sel){
+    const users=ticketUsers();if(!users.length)return;
+    const current=resolveTicketUser(sel.value)||resolveTicketUser(sel.selectedOptions?.[0]?.textContent||'');
+    const previous=current||resolveTicketUser(sel.dataset.onomoSelected||'');
+    sel.innerHTML="<option value=''>— Non assigné —</option>";
+    users.forEach(u=>{
+      const id=String(u.auth_user_id||u.id||u.email);
+      const name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email;
+      const o=document.createElement('option');o.value=id;o.textContent=name;o.dataset.onomoUser='1';
+      if(previous && id===String(previous.auth_user_id||previous.id||previous.email))o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.dataset.onomoSelected=sel.value;
+  }
+  function installTicketAssignmentFix(){
+    if(window.__onomoAssignmentFixInstalled)return;
+    const oldPopulate=window.populateAgentSelect;
+    if(typeof oldPopulate==='function'&&!oldPopulate.__onomoWrapped){
+      const wrapped=function(id,selectedVal=''){
+        const result=oldPopulate.apply(this,arguments);
+        const el=document.getElementById(id);
+        if(el){
+          const u=resolveTicketUser(selectedVal);
+          if(u)el.dataset.onomoSelected=String(u.auth_user_id||u.id||u.email);
+          rebuildAssignmentSelect(el);
+        }
+        return result;
+      };
+      wrapped.__onomoWrapped=true;window.populateAgentSelect=wrapped;
+    }
+    const oldUpdate=window.updateTicket;
+    if(typeof oldUpdate==='function'&&!oldUpdate.__onomoAssignmentWrapped){
+      const wrapped=async function(id,updates){return oldUpdate.call(this,id,normalizeAssignment(updates));};
+      wrapped.__onomoAssignmentWrapped=true;window.updateTicket=wrapped;
+    }
+    const oldSb=window.sbUpdateTicket;
+    if(typeof oldSb==='function'&&!oldSb.__onomoAssignmentWrapped){
+      const wrapped=async function(id,updates){return oldSb.call(this,id,normalizeAssignment(updates));};
+      wrapped.__onomoAssignmentWrapped=true;window.sbUpdateTicket=wrapped;
+    }
+    window.__onomoAssignmentFixInstalled=true;
+    document.querySelectorAll('select').forEach(sel=>{
+      const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);
+      if(/(assign|assignee|assigned|responsable|technicien|agent|assigne)/.test(meta))rebuildAssignmentSelect(sel);
+    });
+  }
   function syncTicketAssignees(){
-    const users=readUsers().filter(u=>u&&u.email);if(!users.length)return;
+    const users=ticketUsers();if(!users.length)return;
     document.querySelectorAll('select').forEach(sel=>{
       const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);
       if(!/(assign|assignee|assigned|responsable|technicien|agent|assigne)/.test(meta))return;
       Array.from(sel.options).forEach(o=>{if(o.dataset.onomoUser==='1')o.remove();});
-      users.forEach(u=>{const id=String(u.auth_user_id||u.id||u.email);if(Array.from(sel.options).some(o=>String(o.value)===id||N(o.textContent).includes(N(u.email))))return;const o=document.createElement('option');o.value=id;o.textContent=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email;o.dataset.onomoUser='1';sel.appendChild(o);});
+      users.forEach(u=>{const id=String(u.auth_user_id||u.id||u.email);if(Array.from(sel.options).some(o=>String(o.value)===id))return;const o=document.createElement('option');o.value=id;o.textContent=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email;o.dataset.onomoUser='1';sel.appendChild(o);});
     });
   }
   function normalizeTicketData(data){
     const out={...(data||{})};
     const users=readUsers();
     let assigned=out.assigned_to||out.assignee_id||null;
-    if(!assigned&&out.assigne_a){const u=users.find(x=>String(x.auth_user_id||x.id)===String(out.assigne_a)||N(x.email)===N(out.assigne_a));if(u)assigned=u.auth_user_id||u.id;}
-    if(assigned){out.assigned_to=assigned;const u=users.find(x=>String(x.auth_user_id||x.id)===String(assigned));if(u)out.assigne_a=u.email||String(assigned);}
+    if(!assigned&&out.assigne_a){const u=users.find(x=>String(x.auth_user_id||x.id)===String(out.assigne_a)||N(x.email)===N(out.assigne_a)||N(`${x.prenom||''} ${x.nom||''}`)===N(out.assigne_a));if(u)assigned=u.auth_user_id||u.id;}
+    if(assigned){out.assigned_to=assigned;const u=users.find(x=>String(x.auth_user_id||x.id)===String(assigned));if(u)out.assigne_a=u.email||`${u.prenom||''} ${u.nom||''}`.trim();}
     const aliases={'maintenance':'Autre','it':'IT / Réseau','reseau':'IT / Réseau','réseau':'IT / Réseau','rooms':'Chambres','restaurant':'Restauration','guest relations':'Guest relations','security':'Sécurité','housekeeping':'Autre','other':'Autre'};
     const cat=String(out.categorie||out.category||'').trim();if(cat)out.categorie=CATS.includes(cat)?cat:(aliases[N(cat)]||'Autre');
     const p=N(out.priorite||out.priority||'');const pm={normal:'Normale',normale:'Normale',normalee:'Normale',urgente:'Urgente',urgent:'Urgente',uregentesse:'Urgente',bas:'Basse',basse:'Basse',haute:'Haute',critique:'Critique'};if(p)out.priorite=pm[p]||out.priorite;
@@ -131,7 +204,7 @@
   function injectMfaButton(){if(document.getElementById('onomoMfaBtn')||!currentUser)return;const host=document.querySelector('.sb-foot')||document.querySelector('.sidebar');if(!host)return;const b=document.createElement('button');b.id='onomoMfaBtn';b.className='logout-btn';b.innerHTML='<i class="ti ti-shield-lock"></i> Sécurité MFA';b.onclick=showMfaManager;host.appendChild(b);}
 
   function installLoginMfa(){if(window.__onomoMfaLoginWrapped||typeof window.doLogin!=='function')return;const original=window.doLogin;window.doLogin=async function(){const result=await original.apply(this,arguments);if(result===false)return result;try{const ok=await requireMfaAfterLogin();return ok?result:false}catch(e){console.error('[ONOMO] MFA check failed',e);return false;}};window.__onomoMfaLoginWrapped=true;}
-  function guard(){branding();removeVoice();fixLabels();normalizeCategoryOptions();normalizePriorityOptions();guardMenus();installUsersView();syncTicketAssignees();installDirectTicketCreate();installLoginMfa();injectMfaButton();}
-  function init(){guard();[300,1000,2500,5000].forEach(ms=>setTimeout(guard,ms));setInterval(()=>{normalizeCategoryOptions();normalizePriorityOptions();guardMenus();syncTicketAssignees();injectMfaButton();},2000);}
+  function guard(){branding();removeVoice();fixLabels();normalizeCategoryOptions();normalizePriorityOptions();guardMenus();installUsersView();installTicketAssignmentFix();syncTicketAssignees();installDirectTicketCreate();installLoginMfa();injectMfaButton();}
+  function init(){guard();[300,1000,2500,5000].forEach(ms=>setTimeout(guard,ms));setInterval(()=>{normalizeCategoryOptions();normalizePriorityOptions();guardMenus();installTicketAssignmentFix();syncTicketAssignees();injectMfaButton();},2000);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
