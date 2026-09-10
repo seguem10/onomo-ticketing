@@ -11,14 +11,48 @@
   const resolveTicketUser=value=>{const s=N(value);if(!s)return null;return ticketUsers().find(u=>[u.auth_user_id,u.id,u.email,`${u.prenom||''} ${u.nom||''}`].filter(Boolean).some(x=>N(x)===s))||null};
   const findTicket=id=>{try{return (Array.isArray(window.tickets)?window.tickets:[]).find(t=>String(t.id)===String(id))||null}catch(_){return null}};
   const defaultIT=hotel=>{const users=ticketUsers(),h=N(hotel);return users.find(u=>N(u.role)==='it hotel'&&N(u.hotel)===h)||users.find(u=>N(u.role)==='it regional')||users[0]||null};
+  const getSelectedAssignee=()=>{
+    const selects=[...document.querySelectorAll('select')].filter(sel=>{
+      const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);
+      return /(assign|assignee|assigned|responsable|technicien|agent|assigne)/.test(meta);
+    });
+    for(const sel of selects){
+      const value=sel.value||sel.dataset.onomoSelected||'';
+      const text=sel.selectedOptions?.[0]?.textContent||'';
+      const u=resolveTicketUser(value)||resolveTicketUser(text)||resolveTicketUser(sel.dataset.onomoSelected||'');
+      if(u)return u;
+    }
+    return null;
+  };
   const normalizeAssignment=(updates,id)=>{const out={...(updates||{})};let raw=out.assigned_to??out.assignee_id??out.assigne_a??'';if(!raw){const t=findTicket(id);raw=t?.assigned_to||t?.assigne_a||'';if(!raw&&N(out.statut)==='ferme'){const d=defaultIT(t?.hotel);raw=d?.auth_user_id||d?.id||d?.email||''}}const u=resolveTicketUser(raw);if(u){out.assigned_to=u.auth_user_id||u.id||null;out.assigne_a=u.email||(`${u.prenom||''} ${u.nom||''}`).trim()}else if(raw){out.assigne_a=String(raw).trim()}delete out.assignee_id;return out};
-  function assignmentSelect(sel){if(!sel)return;const users=ticketUsers();if(!users.length)return;const old=sel.value,text=sel.selectedOptions?.[0]?.textContent||'',previous=resolveTicketUser(old)||resolveTicketUser(text)||resolveTicketUser(sel.dataset.onomoSelected||'');sel.innerHTML="<option value=''>— Non assigné —</option>";users.forEach(u=>{const id=String(u.auth_user_id||u.id||u.email),name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email,o=document.createElement('option');o.value=id;o.textContent=name;o.dataset.onomoUser='1';if(previous&&id===String(previous.auth_user_id||previous.id||previous.email))o.selected=true;sel.appendChild(o)});sel.dataset.onomoSelected=sel.value}
+  function assignmentSelect(sel){
+    if(!sel)return;
+    const users=ticketUsers();if(!users.length)return;
+    const old=sel.value,text=sel.selectedOptions?.[0]?.textContent||'',previous=resolveTicketUser(old)||resolveTicketUser(text)||resolveTicketUser(sel.dataset.onomoSelected||'');
+    sel.innerHTML="<option value=''>— Non assigné —</option>";
+    users.forEach(u=>{const id=String(u.auth_user_id||u.id||u.email),name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email,o=document.createElement('option');o.value=id;o.textContent=name;o.dataset.onomoUser='1';if(previous&&id===String(previous.auth_user_id||previous.id||previous.email))o.selected=true;sel.appendChild(o)});
+    if(previous)sel.dataset.onomoSelected=String(previous.auth_user_id||previous.id||previous.email);else sel.dataset.onomoSelected=sel.value;
+    if(!sel.__onomoChangeBound){
+      sel.addEventListener('change',()=>{sel.dataset.onomoSelected=sel.value||'';const u=resolveTicketUser(sel.value)||resolveTicketUser(sel.selectedOptions?.[0]?.textContent||'');if(u)sel.dataset.onomoSelected=String(u.auth_user_id||u.id||u.email)});
+      sel.__onomoChangeBound=true;
+    }
+  }
   function assignmentSelects(){document.querySelectorAll('select').forEach(sel=>{const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);if(/(assign|assignee|assigned|responsable|technicien|agent|assigne)/.test(meta))assignmentSelect(sel)})}
   function installAssignment(){
     const p=window.populateAgentSelect;if(typeof p==='function'&&!p.__onomoCorrectionWrapped){const w=function(id,selectedVal=''){const r=p.apply(this,arguments),el=document.getElementById(id);if(el){const u=resolveTicketUser(selectedVal);if(u)el.dataset.onomoSelected=String(u.auth_user_id||u.id||u.email);assignmentSelect(el)}return r};w.__onomoCorrectionWrapped=true;window.populateAgentSelect=w}
     const u=window.updateTicket;if(typeof u==='function'&&!u.__onomoCorrectionWrapped){const w=async function(id,updates){return u.call(this,id,normalizeAssignment(updates,id))};w.__onomoCorrectionWrapped=true;window.updateTicket=w}
     const s=window.sbUpdateTicket;if(typeof s==='function'&&!s.__onomoCorrectionWrapped){const w=async function(id,updates){return s.call(this,id,normalizeAssignment(updates,id))};w.__onomoCorrectionWrapped=true;window.sbUpdateTicket=w}
-    const c=window.createTicket;if(typeof c==='function'&&!c.__onomoCorrectionWrapped){const w=async function(data){const p={...(data||{})};if(!p.assigned_to&&!p.assignee_id&&!p.assigne_a){const d=defaultIT(p.hotel);if(d){p.assigned_to=d.auth_user_id||d.id||d.email;p.assigne_a=d.email||(`${d.prenom||''} ${d.nom||''}`).trim()}}else Object.assign(p,normalizeAssignment(p));return c.call(this,p)};w.__onomoCorrectionWrapped=true;window.createTicket=w}
+    const c=window.createTicket;if(typeof c==='function'&&!c.__onomoCorrectionWrapped){const w=async function(data){
+      const p={...(data||{})};
+      const selected=getSelectedAssignee();
+      if(selected){
+        p.assigned_to=selected.auth_user_id||selected.id||selected.email||null;
+        p.assigne_a=selected.email||(`${selected.prenom||''} ${selected.nom||''}`).trim();
+      }else if(!p.assigned_to&&!p.assignee_id&&!p.assigne_a){
+        const d=defaultIT(p.hotel);if(d){p.assigned_to=d.auth_user_id||d.id||d.email;p.assigne_a=d.email||(`${d.prenom||''} ${d.nom||''}`).trim()}
+      }else Object.assign(p,normalizeAssignment(p));
+      return c.call(this,p);
+    };w.__onomoCorrectionWrapped=true;window.createTicket=w}
     assignmentSelects();return true;
   }
   function protectDetailView(){if(window.__onomoDetailViewGuard)return;const original=window.renderView;if(typeof original!=='function')return;let explicit=false;window.renderView=function(){try{const view=typeof currentView!=='undefined'?currentView:'',t=typeof currentTicket!=='undefined'?currentTicket:null;if(String(view)==='detail'&&t?.id&&!explicit){const fresh=findTicket(t.id);if(fresh)currentTicket={...t,...fresh};return}}catch(e){console.warn('[ONOMO] detail view guard:',e)}return original.apply(this,arguments)};const sw=window.switchView;if(typeof sw==='function')window.switchView=function(){explicit=true;try{return sw.apply(this,arguments)}finally{setTimeout(()=>{explicit=false},0)}};window.__onomoDetailViewGuard=true}
