@@ -43,9 +43,6 @@
     };
   }
 
-  /* The application has legacy global CRUD functions. Replace their global
-     bindings as well as window properties so the legacy createTicket() uses
-     the authenticated JWT and therefore passes Supabase RLS. */
   function installAuthenticatedTicketCrud(){
     const s=cfg();
     if(!s?.sbUrl||!s?.sbKey)return;
@@ -71,16 +68,32 @@
     window.__onomoAuthenticatedSbCreateTicket=create;
     window.sbLoadTickets=load;
     window.sbCreateTicket=create;
-    try{
-      window.eval('sbLoadTickets=window.__onomoAuthenticatedSbLoadTickets; sbCreateTicket=window.__onomoAuthenticatedSbCreateTicket;');
-    }catch(error){console.warn('Binding Supabase ticket CRUD non remplacé',error);}
+    try{window.eval('sbLoadTickets=window.__onomoAuthenticatedSbLoadTickets; sbCreateTicket=window.__onomoAuthenticatedSbCreateTicket;');}
+    catch(error){console.warn('Binding Supabase ticket CRUD non remplacé',error);}
   }
 
   const writeSession=()=>{try{if(currentUser)localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,user:currentUser,at:Date.now()}));}catch(_) {}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(ACTIVITY_KEY);}catch(_) {}};
   const touch=()=>{try{if(currentUser)localStorage.setItem(ACTIVITY_KEY,String(Date.now()));}catch(_) {}};
   function refreshBadge(){if(!currentUser)return;try{const all=visibleTickets();const badge=document.getElementById('sbOpen');if(badge)badge.textContent=all.length;}catch(_) {}}
-  function refreshView(){if(!currentUser)return;try{updateCounts();refreshBadge();if(['dashboard','tickets','urgents','my-tickets','detail'].includes(currentView))renderView();}catch(error){console.warn('Rafraîchissement vue impossible',error);}}
+
+  /* Background sync must never rebuild the ticket detail screen. */
+  function refreshView(){
+    if(!currentUser)return;
+    try{
+      updateCounts();
+      refreshBadge();
+      if(currentView==='detail'){
+        if(typeof currentTicket!=='undefined' && currentTicket?.id && Array.isArray(tickets)){
+          const fresh=tickets.find(t=>String(t.id)===String(currentTicket.id));
+          if(fresh)currentTicket={...currentTicket,...fresh};
+        }
+        return;
+      }
+      if(['dashboard','tickets','urgents','my-tickets'].includes(currentView))renderView();
+    }catch(error){console.warn('Rafraîchissement vue impossible',error);}
+  }
+
   async function syncTickets(){
     if(loading||!currentUser||!sbOK())return;loading=true;
     try{
@@ -118,10 +131,8 @@
       }
       console.warn('Session Auth valide mais aucun profil utilisateurs lié à auth_user_id');
       return false;
-    }catch(error){
-      console.warn('Profil Supabase non disponible',error);
-      return false;
-    }finally{restoring=false;}
+    }catch(error){console.warn('Profil Supabase non disponible',error);return false;}
+    finally{restoring=false;}
   }
 
   async function restoreSession(){
@@ -262,12 +273,8 @@
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
-    try{['click','pointermove','keydown','input','submit','touchstart'].forEach(type=>document.addEventListener(type,touch,{passive:type==='pointermove'||type==='touchstart'}));}catch(_){}
-    try{channel=new BroadcastChannel('onomo-ticket-sync');channel.onmessage=event=>{if(event.data?.type==='tickets-updated')syncTickets();};}catch(_){}
-    try{initMobileAndPwaUi();}catch(error){console.warn('UI mobile/PWA init failed',error);}
-    try{installAuthenticatedTicketCrud();}catch(error){console.warn('Ticket CRUD init failed',error);}
-    try{restoreSession();}catch(error){console.warn('Session restore failed',error);}
-    setInterval(()=>{try{const last=Number(localStorage.getItem(ACTIVITY_KEY)||0);if(currentUser&&last&&Date.now()-last>=INACTIVITY){clearSession();showToast('Votre session a expiré pour cause d’inactivité.','err');doLogout();}}catch(_){}},15000);
+    try{['touchstart','pointerdown','keydown','click'].forEach(evt=>document.addEventListener(evt,touch,{passive:true}));}catch(_){}
+    initMobileAndPwaUi();
+    restoreSession();
   });
-  window.OnomoRuntime={syncTickets,touch,refreshBadge,getAuthSession,installAuthenticatedSbFetch,installAuthenticatedTicketCrud,hideMobileNavigationBeforeLogin,hideInstallBannerIfInstalled,restoreSession};
 })();
