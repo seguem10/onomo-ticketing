@@ -40,6 +40,39 @@
     assignmentSelects();
     return typeof window.updateTicket==='function'&&typeof window.sbUpdateTicket==='function';
   }
+
+  /* Prevent background Supabase synchronization from rebuilding the ticket
+     detail page. Explicit navigation through switchView still renders. */
+  function protectDetailView(){
+    if(window.__onomoDetailViewGuard)return;
+    const originalRender=window.renderView;
+    if(typeof originalRender!=='function')return;
+    let explicitRender=false;
+    window.renderView=function(){
+      try{
+        const view=typeof currentView!=='undefined'?currentView:'';
+        const ticket=typeof currentTicket!=='undefined'?currentTicket:null;
+        if(String(view)==='detail'&&ticket?.id&&!explicitRender){
+          if(Array.isArray(window.tickets)){
+            const fresh=window.tickets.find(t=>String(t.id)===String(ticket.id));
+            if(fresh)currentTicket={...ticket,...fresh};
+          }
+          return;
+        }
+      }catch(e){console.warn('[ONOMO] detail view guard:',e);}
+      return originalRender.apply(this,arguments);
+    };
+    const originalSwitch=window.switchView;
+    if(typeof originalSwitch==='function'){
+      window.switchView=function(){
+        explicitRender=true;
+        try{return originalSwitch.apply(this,arguments)}
+        finally{setTimeout(()=>{explicitRender=false},0)}
+      };
+    }
+    window.__onomoDetailViewGuard=true;
+  }
+
   function disableVoice(){
     document.querySelectorAll('#voiceDictationBtn,[id*=voice],[class*=voice]').forEach(el=>el.remove());
     document.querySelectorAll('button').forEach(b=>{const t=(b.textContent||'').toLowerCase();if(t.includes('dicter automatiquement')||t.includes('dictée vocale'))b.remove();});
@@ -60,7 +93,7 @@
     document.querySelectorAll('[data-view="dashboard"],[data-view="urgents"]').forEach(el=>el.style.display=power?'':'none');
     if(!power)document.querySelectorAll('[data-view="report-global"],[data-view="report-hotel"],[data-view="report-agents"],[data-view="report-anomalies"],[data-view="report-my"],[data-view="users"],[data-view="hotels-admin"]').forEach(el=>el.style.display='none');
   }
-  function refresh(){disableVoice();fixLabels();hideAdminReport();protectNavigation();installAssignment();}
+  function refresh(){disableVoice();fixLabels();hideAdminReport();protectNavigation();installAssignment();protectDetailView();}
   document.addEventListener('DOMContentLoaded',()=>{
     refresh();
     new MutationObserver(refresh).observe(document.body,{subtree:true,childList:true});
