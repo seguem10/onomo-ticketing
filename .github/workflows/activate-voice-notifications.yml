@@ -1,0 +1,36 @@
+name: Activate voice and notifications
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Activate module
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/js/ticket-voice-notifications.js"></script>'
+          marker='<script src="assets/js/runtime-sync.js"></script>'
+          if tag not in s:
+              if marker not in s:
+                  raise SystemExit('runtime-sync.js marker not found')
+              s=s.replace(marker, marker+'\n'+tag, 1)
+              p.write_text(s, encoding='utf-8')
+          print('Voice/email module activated:', tag in s)
+      - name: Commit activation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "feat: activate voice ticket and email notifications"
+            git push
+          fi
