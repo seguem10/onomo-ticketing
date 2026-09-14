@@ -1,210 +1,41 @@
-/* ONOMO Support IT - production UI, authorization, ticket and MFA fixes */
+/* Extensions Onomo Support IT : rôles, accès restreint et dictée multilingue. */
 (function(){
-  'use strict';
-  const N=v=>String(v??'').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const adminRole=r=>['admin','administrateur'].includes(N(r));
-  const CATS=['IT / Réseau','Chambres','Restauration','Guest relations','Sécurité','Autre'];
-  const PRIORITIES=['Haute','Normale','Basse','Critique'];
-  const readUsers=()=>{try{const a=JSON.parse(localStorage.getItem('dh_users')||'[]');return Array.isArray(a)?a:[]}catch(_){return[]}};
-  const currentIsAdmin=()=>{try{if(typeof currentUser!=='undefined'&&currentUser)return adminRole(currentUser.role)||((currentUser.roles||[]).some(adminRole));}catch(_){}return false};
-  const currentAuthId=()=>{try{if(typeof currentUser!=='undefined'&&currentUser)return currentUser.auth_user_id||currentUser.id||null;}catch(_){}return null};
-
-  function branding(){document.title='Onomo Support IT — Service Desk';const logo='assets/pwa/onomo-logo.svg';document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(e=>e.href=logo);document.querySelectorAll('img').forEach(e=>{if(/logo|brand/i.test(e.alt||e.className||''))e.src=logo});}
-  function removeVoice(){document.getElementById('voiceDictationBtn')?.remove();document.getElementById('voiceStatus')?.remove();document.querySelectorAll('[data-voice],[data-action="voice"],[aria-label*="voice" i],[aria-label*="vocal" i]').forEach(e=>e.remove());}
-
-  function fixLabels(){
-    const textMap=[[/principatenece/gi,'Maintenance'],[/Normaleee/gi,'Normale'],[/uregentesse/gi,'Urgente'],[/\bUrgents\b/g,'Urgent'],[/\bSSS\b/g,'Urgent']];
-    document.querySelectorAll('*').forEach(el=>{el.childNodes.forEach(n=>{if(n.nodeType!==3)return;textMap.forEach(([re,to])=>{n.nodeValue=n.nodeValue.replace(re,to)});});});
-    document.querySelectorAll('option').forEach(o=>{textMap.forEach(([re,to])=>{o.textContent=o.textContent.replace(re,to)});});
+  const POWER=['Administrateur','IT Regional','IT Hotel','Directeur'];
+  const DEFAULT=[...POWER,'Demandeur'];
+  const roleStore='onomo_roles_v1';
+  const roles=()=>JSON.parse(localStorage.getItem(roleStore)||JSON.stringify(DEFAULT.map(name=>({name,permissions:POWER.includes(name)?['*']:['ticket:create','ticket:read:own','comment:read:own']}))));
+  const saveRoles=list=>localStorage.setItem(roleStore,JSON.stringify(list));
+  const userRoles=user=>{const aliases={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur'};const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
+  const isPower=user=>userRoles(user).some(role=>POWER.includes(role));
+  const permissions=user=>userRoles(user).flatMap(name=>roles().find(role=>role.name===name)?.permissions||[]);
+  const can=(user,permission)=>isPower(user)||permissions(user).includes('*')||permissions(user).includes(permission);
+  const owner=t=>t.created_by===currentUser?.id||t.created_by_email===currentUser?.email;
+  function applyAccess(){
+    const full=isPower(currentUser), admin=userRoles(currentUser).includes('Administrateur');
+    document.querySelectorAll('[data-view="dashboard"],[data-view="urgents"],#sbReportSec,#sbMySec').forEach(el=>el.style.display=full?'':'none');
+    document.querySelectorAll('#sbAdminSec').forEach(el=>el.style.display=admin?'':'none');
+    document.querySelectorAll('[data-view="settings"]').forEach(el=>el.style.display=admin?'':'none');
+    document.querySelectorAll('[data-view="tickets"]').forEach(el=>{const span=el.querySelector('span:not(.nav-badge)');if(span)span.textContent=full?'Tous les tickets':'Mes tickets';});
+    const newBtn=document.querySelector('.btn-gold[onclick="openNewTicket()"]'); if(newBtn)newBtn.style.display=(can(currentUser,'ticket:create')&&!(window.isReadOnly&&window.isReadOnly(currentUser)))?'':'none';
   }
-
-  function normalizeCategoryOptions(){
-    document.querySelectorAll('select').forEach(sel=>{
-      const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);
-      const looksCategory=/(categor|categorie|category|type)/.test(meta);
-      if(!looksCategory)return;
-      Array.from(sel.options).forEach(o=>{
-        const t=N(o.textContent),v=N(o.value);
-        const allowed=CATS.some(c=>N(c)===t||N(c)===v||N(c).replace(/\s*\/\s*/g,'/')===v);
-        if(!allowed && !/(select|choisir|choose|all|tous|toutes)/.test(t))o.remove();
-      });
-    });
-  }
-  function normalizePriorityOptions(){
-    document.querySelectorAll('select').forEach(sel=>{
-      const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);
-      if(!/(priorit|priority)/.test(meta))return;
-      Array.from(sel.options).forEach(o=>{
-        const t=N(o.textContent),v=N(o.value);
-        const canonical={haute:'Haute',urgent:'Urgente',normale:'Normale',normal:'Normale',basse:'Basse',bas:'Basse',critique:'Critique'}[t]||null;
-        if(canonical)o.textContent=canonical;
-        else if(v==='normal')o.textContent='Normale';
-      });
-    });
-  }
-
-  function guardMenus(){
-    const admin=currentIsAdmin();
-    document.querySelectorAll('[data-view="settings"],[data-view="users"],[data-view="hotels-admin"],[data-view="administration"],#sbAdminSec').forEach(el=>{el.style.setProperty('display',admin?'':'none','important');});
-    if(!admin)document.querySelectorAll('.nav-item').forEach(el=>{if(/administration|paramètres|settings|utilisateurs|roles et permissions|hôtels/i.test(el.textContent||''))el.style.setProperty('display','none','important');});
-  }
-
-  function installUsersView(){
-    if(window.__onomoSafeUsersView||typeof window.renderUsers!=='function')return;
-    window.renderUsers=function(){
-      const mc=document.getElementById('mainContent');if(!mc)return;const users=readUsers();
-      const roleLabel=r=>({admin:'Admin',administrateur:'Administrateur',direction:'Direction',directeur:'Directeur',it_regional:'IT Régional',it_hotel:'IT Hôtel',demandeur:'Demandeur'}[N(r)]||String(r||'—'));
-      const ini=s=>String(s||'?').split(' ').map(x=>x[0]||'').join('').slice(0,2).toUpperCase();
-      const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-      mc.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap"><div><div style="font-size:15px;font-weight:700">Gestion des comptes</div><div style="font-size:11px;color:var(--tx3)">${users.length} utilisateur(s)</div></div><button class="btn btn-gold" onclick="openModalUser()">Ajouter un compte</button></div><div class="card"><div class="card-hdr"><div class="card-title"><i class="ti ti-users"></i>Comptes enregistrés</div></div>${users.length?users.map(u=>{const name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email||'Utilisateur';const id=esc(u.id||u.auth_user_id||u.email);return `<div class="user-row"><div class="user-av">${ini(name)}</div><div class="user-info" style="flex:1"><div class="user-name">${esc(name)}</div><div style="font-size:10px;color:var(--tx3)">${esc(u.email)}</div></div><div style="display:flex;gap:8px;align-items:center"><span class="role-tag">${roleLabel(u.role)}</span><button class="btn btn-outline btn-sm" onclick="openEditUser('${id}')" title="Modifier"><i class="ti ti-edit"></i></button><button class="btn btn-outline btn-sm" onclick="window.__onomoDeleteUser('${id}')" title="Supprimer"><i class="ti ti-trash"></i></button></div></div>`}).join(''):'<div class="empty-state"><i class="ti ti-users"></i><p>Aucun utilisateur</p></div>'}</div>`;
-    };
-    window.__onomoSafeUsersView=true;
-  }
-  window.__onomoDeleteUser=async function(id){const users=readUsers(),u=users.find(x=>String(x.id||x.auth_user_id)===String(id));if(!u)return;if(!confirm(`Supprimer l'utilisateur ${u.email||u.nom||''} ?`))return;try{if(typeof window.deleteUser==='function'&&window.deleteUser!==window.__onomoDeleteUser){await window.deleteUser(id);return;}alert('La suppression du compte Auth nécessite l’Edge Function d’administration. Aucun compte Auth n’est supprimé par le navigateur.');}catch(e){console.error(e);alert(e.message||'Suppression impossible.')}};
-
-  function ticketUsers(){
-    return readUsers().filter(u=>u&&u.email&&['it_regional','it_hotel','it regional','it hotel'].includes(N(u.role)));
-  }
-  function resolveTicketUser(value){
-    const s=N(value);if(!s)return null;
-    return ticketUsers().find(u=>{
-      const ids=[u.auth_user_id,u.id,u.email].filter(Boolean).map(String);
-      const name=(`${u.prenom||''} ${u.nom||''}`).trim();
-      return ids.some(x=>N(x)===s)||N(name)===s;
-    })||null;
-  }
-  function normalizeAssignment(updates){
-    const out={...(updates||{})};
-    const raw=out.assigned_to??out.assignee_id??out.assigne_a??'';
-    if(raw===''){out.assigned_to=null;out.assigne_a=null;delete out.assignee_id;return out;}
-    const u=resolveTicketUser(raw);
-    if(u){
-      const authId=u.auth_user_id||u.id||null;
-      const name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email;
-      out.assigned_to=authId;
-      out.assigne_a=u.email||name;
-    }else if(out.assigne_a){
-      out.assigne_a=String(out.assigne_a).trim();
-    }
-    delete out.assignee_id;
-    return out;
-  }
-  function rebuildAssignmentSelect(sel){
-    const users=ticketUsers();if(!users.length)return;
-    const current=resolveTicketUser(sel.value)||resolveTicketUser(sel.selectedOptions?.[0]?.textContent||'');
-    const previous=current||resolveTicketUser(sel.dataset.onomoSelected||'');
-    sel.innerHTML="<option value=''>— Non assigné —</option>";
-    users.forEach(u=>{
-      const id=String(u.auth_user_id||u.id||u.email);
-      const name=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email;
-      const o=document.createElement('option');o.value=id;o.textContent=name;o.dataset.onomoUser='1';
-      if(previous && id===String(previous.auth_user_id||previous.id||previous.email))o.selected=true;
-      sel.appendChild(o);
-    });
-    sel.dataset.onomoSelected=sel.value;
-  }
-  function installTicketAssignmentFix(){
-    if(window.__onomoAssignmentFixInstalled)return;
-    const oldPopulate=window.populateAgentSelect;
-    if(typeof oldPopulate==='function'&&!oldPopulate.__onomoWrapped){
-      const wrapped=function(id,selectedVal=''){
-        const result=oldPopulate.apply(this,arguments);
-        const el=document.getElementById(id);
-        if(el){
-          const u=resolveTicketUser(selectedVal);
-          if(u)el.dataset.onomoSelected=String(u.auth_user_id||u.id||u.email);
-          rebuildAssignmentSelect(el);
-        }
-        return result;
-      };
-      wrapped.__onomoWrapped=true;window.populateAgentSelect=wrapped;
-    }
-    const oldUpdate=window.updateTicket;
-    if(typeof oldUpdate==='function'&&!oldUpdate.__onomoAssignmentWrapped){
-      const wrapped=async function(id,updates){return oldUpdate.call(this,id,normalizeAssignment(updates));};
-      wrapped.__onomoAssignmentWrapped=true;window.updateTicket=wrapped;
-    }
-    const oldSb=window.sbUpdateTicket;
-    if(typeof oldSb==='function'&&!oldSb.__onomoAssignmentWrapped){
-      const wrapped=async function(id,updates){return oldSb.call(this,id,normalizeAssignment(updates));};
-      wrapped.__onomoAssignmentWrapped=true;window.sbUpdateTicket=wrapped;
-    }
-    window.__onomoAssignmentFixInstalled=true;
-    document.querySelectorAll('select').forEach(sel=>{
-      const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);
-      if(/(assign|assignee|assigned|responsable|technicien|agent|assigne)/.test(meta))rebuildAssignmentSelect(sel);
-    });
-  }
-  function syncTicketAssignees(){
-    const users=ticketUsers();if(!users.length)return;
-    document.querySelectorAll('select').forEach(sel=>{
-      const meta=N(`${sel.id||''} ${sel.name||''} ${sel.getAttribute('aria-label')||''} ${sel.getAttribute('data-field')||''} ${sel.getAttribute('data-name')||''}`);
-      if(!/(assign|assignee|assigned|responsable|technicien|agent|assigne)/.test(meta))return;
-      Array.from(sel.options).forEach(o=>{if(o.dataset.onomoUser==='1')o.remove();});
-      users.forEach(u=>{const id=String(u.auth_user_id||u.id||u.email);if(Array.from(sel.options).some(o=>String(o.value)===id))return;const o=document.createElement('option');o.value=id;o.textContent=(`${u.prenom||''} ${u.nom||''}`).trim()||u.email;o.dataset.onomoUser='1';sel.appendChild(o);});
-    });
-  }
-  function normalizeTicketData(data){
-    const out={...(data||{})};
-    const users=readUsers();
-    let assigned=out.assigned_to||out.assignee_id||null;
-    if(!assigned&&out.assigne_a){const u=users.find(x=>String(x.auth_user_id||x.id)===String(out.assigne_a)||N(x.email)===N(out.assigne_a)||N(`${x.prenom||''} ${x.nom||''}`)===N(out.assigne_a));if(u)assigned=u.auth_user_id||u.id;}
-    if(assigned){out.assigned_to=assigned;const u=users.find(x=>String(x.auth_user_id||x.id)===String(assigned));if(u)out.assigne_a=u.email||`${u.prenom||''} ${u.nom||''}`.trim();}
-    const aliases={'maintenance':'Autre','it':'IT / Réseau','reseau':'IT / Réseau','réseau':'IT / Réseau','rooms':'Chambres','restaurant':'Restauration','guest relations':'Guest relations','security':'Sécurité','housekeeping':'Autre','other':'Autre'};
-    const cat=String(out.categorie||out.category||'').trim();if(cat)out.categorie=CATS.includes(cat)?cat:(aliases[N(cat)]||'Autre');
-    const p=N(out.priorite||out.priority||'');const pm={normal:'Normale',normale:'Normale',normalee:'Normale',urgente:'Urgente',urgent:'Urgente',uregentesse:'Urgente',bas:'Basse',basse:'Basse',haute:'Haute',critique:'Critique'};if(p)out.priorite=pm[p]||out.priorite;
-    return out;
-  }
-
-  function installDirectTicketCreate(){
-    if(window.__onomoDirectCreateInstalled)return;
-    const s=(()=>{try{return typeof settings!=='undefined'?settings:window.settings}catch(_){return window.settings}})();
-    if(!s?.sbUrl||!s?.sbKey||typeof window.fetch!=='function')return;
-    const original=window.createTicket;
-    if(typeof original!=='function')return;
-    window.createTicket=async function(data){
-      const client=window.supabase;
-      if(!client||typeof client.createClient!=='function'){return original(data);}
-      try{
-        const sb=typeof window.OnomoAuth?.getClient==='function'?window.OnomoAuth.getClient():client.createClient(s.sbUrl,s.sbKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'onomo-supabase-auth'}});
-        const {data:sessionData,error:sessionError}=await sb.auth.getSession();if(sessionError||!sessionData?.session?.user)throw new Error('Session Supabase absente. Reconnectez-vous.');
-        const payload=normalizeTicketData(data||{});payload.created_by=sessionData.session.user.id;
-        if(!payload.titre&&payload.title)payload.titre=payload.title;if(!payload.description)payload.description='';
-        const required=['titre','hotel','categorie','priorite'];const missing=required.filter(k=>!payload[k]);if(missing.length)throw new Error(`Champs ticket manquants: ${missing.join(', ')}`);
-        delete payload.assignee_id;delete payload.category;delete payload.priority;
-        const {data:rows,error}=await sb.from('tickets').insert(payload).select().single();
-        if(error)throw new Error(`Supabase ${error.code||''}: ${error.message}`);
-        try{if(Array.isArray(window.tickets)){window.tickets=[rows,...window.tickets];if(typeof saveTickets==='function')saveTickets(window.tickets);}}catch(_){}
-        try{if(typeof renderView==='function')renderView();if(typeof updateCounts==='function')updateCounts();}catch(_){}
-        console.info('[ONOMO] ticket created in Supabase',rows.id,rows.assigned_to||'unassigned');
-        return rows;
-      }catch(error){
-        console.error('[ONOMO] ticket creation failed, no local fallback',error);throw error;
-      }
-    };
-    window.__onomoDirectCreateInstalled=true;
-  }
-
-  let mfaOverlay=null,mfaFactorId=null,mfaChallengeId=null;
-  function ensureMfaOverlay(){if(mfaOverlay)return mfaOverlay;mfaOverlay=document.createElement('div');mfaOverlay.id='onomoMfaOverlay';mfaOverlay.style.cssText='position:fixed;inset:0;background:rgba(20,28,46,.96);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px';mfaOverlay.innerHTML=`<div style="width:min(420px,100%);background:#fff;border-radius:14px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.35)"><div style="font-size:20px;font-weight:700;margin-bottom:6px">Vérification MFA</div><div style="font-size:12px;color:#666;margin-bottom:18px">Saisissez le code à 6 chiffres de votre application Authenticator.</div><input id="onomoMfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:20px;text-align:center;letter-spacing:5px"/><div id="onomoMfaErr" style="display:none;color:#b42318;font-size:12px;margin-top:8px"></div><div style="display:flex;gap:8px;margin-top:16px"><button id="onomoMfaVerify" class="btn btn-gold" style="flex:1">Vérifier</button><button id="onomoMfaLogout" class="btn btn-outline">Déconnexion</button></div></div>`;document.body.appendChild(mfaOverlay);mfaOverlay.querySelector('#onomoMfaVerify').onclick=verifyMfaCode;mfaOverlay.querySelector('#onomoMfaLogout').onclick=()=>{try{window.OnomoAuth?.getClient()?.auth.signOut({scope:'local'})}catch(_){}location.reload()};return mfaOverlay;}
-  async function requireMfaAfterLogin(){
-    const client=window.OnomoAuth?.getClient?.();if(!client?.auth?.mfa)return true;
-    const {data,error}=await client.auth.mfa.getAuthenticatorAssuranceLevel();if(error)throw error;
-    if(data?.currentLevel==='aal1'&&data?.nextLevel==='aal2'){
-      const factors=await client.auth.mfa.listFactors();const factor=factors.data?.totp?.find(f=>f.status==='verified');if(!factor)return true;
-      mfaFactorId=factor.id;const ch=await client.auth.mfa.challenge({factorId:mfaFactorId});if(ch.error)throw ch.error;mfaChallengeId=ch.data.id;ensureMfaOverlay().style.display='flex';setTimeout(()=>document.getElementById('onomoMfaCode')?.focus(),50);return false;
-    }
-    return true;
-  }
-  async function verifyMfaCode(){const client=window.OnomoAuth?.getClient?.();const code=document.getElementById('onomoMfaCode')?.value.trim()||'';const err=document.getElementById('onomoMfaErr');if(!/^\d{6}$/.test(code)){err.textContent='Code MFA invalide.';err.style.display='block';return;}try{const r=await client.auth.mfa.verify({factorId:mfaFactorId,challengeId:mfaChallengeId,code});if(r.error)throw r.error;await client.auth.refreshSession();mfaOverlay.style.display='none';if(typeof window.startSync==='function')window.startSync();if(typeof window.renderView==='function')window.renderView();}catch(e){err.textContent=e.message||'Code MFA incorrect.';err.style.display='block';}}
-  function mfaApi(){return window.OnomoAuth?.getClient?.();}
-  async function showMfaManager(){const client=mfaApi();if(!client)return alert('Supabase Auth indisponible.');const factors=await client.auth.mfa.listFactors();if(factors.error)return alert(factors.error.message);const verified=(factors.data?.totp||[]).filter(f=>f.status==='verified');if(verified.length){if(confirm('MFA TOTP est actif. Voulez-vous le désactiver sur ce compte ?')){const r=await client.auth.mfa.unenroll({factorId:verified[0].id});if(r.error)return alert(r.error.message);await client.auth.refreshSession();try{await client.from('utilisateurs').update({mfa_enabled:false}).eq('auth_user_id',currentAuthId());}catch(_){}alert('MFA désactivé.');}return;}
-    const e=await client.auth.mfa.enroll({factorType:'totp',friendlyName:'Onomo Support IT'});if(e.error)return alert(e.error.message);const factor=e.data;const box=document.createElement('div');box.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(20,28,46,.96);display:flex;align-items:center;justify-content:center;padding:20px';box.innerHTML=`<div style="width:min(430px,100%);background:#fff;border-radius:14px;padding:24px;text-align:center"><h3>Activer la MFA</h3><p style="font-size:12px;color:#666">Scannez le QR code avec Google Authenticator, Microsoft Authenticator ou une autre application TOTP.</p><img style="width:220px;height:220px" src="data:image/svg+xml;utf8,${encodeURIComponent(factor.totp.qr_code)}"/><div style="font-size:11px;word-break:break-all;background:#f5f5f5;padding:8px;border-radius:6px">${factor.totp.secret}</div><input id="onomoEnrollCode" inputmode="numeric" maxlength="6" placeholder="Code à 6 chiffres" style="width:100%;margin-top:12px;padding:11px;text-align:center;font-size:18px"/><button id="onomoEnrollVerify" class="btn btn-gold" style="width:100%;margin-top:10px">Activer</button><button id="onomoEnrollCancel" class="btn btn-outline" style="width:100%;margin-top:8px">Annuler</button><div id="onomoEnrollErr" style="color:#b42318;font-size:12px;margin-top:8px"></div></div>`;document.body.appendChild(box);box.querySelector('#onomoEnrollCancel').onclick=async()=>{try{await client.auth.mfa.unenroll({factorId:factor.id})}catch(_){}box.remove()};box.querySelector('#onomoEnrollVerify').onclick=async()=>{const code=box.querySelector('#onomoEnrollCode').value.trim();const ch=await client.auth.mfa.challenge({factorId:factor.id});if(ch.error){box.querySelector('#onomoEnrollErr').textContent=ch.error.message;return;}const v=await client.auth.mfa.verify({factorId:factor.id,challengeId:ch.data.id,code});if(v.error){box.querySelector('#onomoEnrollErr').textContent=v.error.message;return;}await client.auth.refreshSession();try{await client.from('utilisateurs').update({mfa_enabled:true}).eq('auth_user_id',currentAuthId())}catch(_){}box.remove();alert('MFA activée. À la prochaine connexion, le code TOTP sera obligatoire.');};
-  }
-  function injectMfaButton(){if(document.getElementById('onomoMfaBtn')||!currentUser)return;const host=document.querySelector('.sb-foot')||document.querySelector('.sidebar');if(!host)return;const b=document.createElement('button');b.id='onomoMfaBtn';b.className='logout-btn';b.innerHTML='<i class="ti ti-shield-lock"></i> Sécurité MFA';b.onclick=showMfaManager;host.appendChild(b);}
-
-  function installLoginMfa(){if(window.__onomoMfaLoginWrapped||typeof window.doLogin!=='function')return;const original=window.doLogin;window.doLogin=async function(){const result=await original.apply(this,arguments);if(result===false)return result;try{const ok=await requireMfaAfterLogin();return ok?result:false}catch(e){console.error('[ONOMO] MFA check failed',e);return false;}};window.__onomoMfaLoginWrapped=true;}
-  function guard(){branding();removeVoice();fixLabels();normalizeCategoryOptions();normalizePriorityOptions();guardMenus();installUsersView();installTicketAssignmentFix();syncTicketAssignees();installDirectTicketCreate();installLoginMfa();injectMfaButton();}
-  function init(){guard();[300,1000,2500,5000].forEach(ms=>setTimeout(guard,ms));setInterval(()=>{normalizeCategoryOptions();normalizePriorityOptions();guardMenus();installTicketAssignmentFix();syncTicketAssignees();injectMfaButton();},2000);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+  const originalInit=window.initSession; window.initSession=function(){originalInit();applyAccess();if(!isPower(currentUser))switchView('tickets',document.querySelector('[data-view="tickets"]'));};
+  const loginGuard={key:'onomo_login_guard',maxAttempts:5,lockMinutes:15,read(){try{return JSON.parse(localStorage.getItem(this.key)||'{}')}catch(_){return{}}},write(value){localStorage.setItem(this.key,JSON.stringify(value))},locked(email){const entry=this.read()[email];return entry?.until&&Date.now()<entry.until},failure(email){const all=this.read(),entry=all[email]||{count:0};entry.count++;if(entry.count>=this.maxAttempts){entry.until=Date.now()+this.lockMinutes*60000;entry.count=0;}all[email]=entry;this.write(all);return entry.until},success(email){const all=this.read();delete all[email];this.write(all)}};
+  const originalLogin=window.doLogin;window.doLogin=async function(){const email=document.getElementById('loginEmail')?.value.trim().toLowerCase();if(loginGuard.locked(email)){const err=document.getElementById('loginErr');document.getElementById('loginErrMsg').textContent=window.OnomoI18n?.t('login_locked')||'Trop de tentatives. Réessayez dans quelques minutes.';err?.classList.add('show');return;}const before=document.getElementById('loginErrMsg')?.textContent;await originalLogin();const failed=document.getElementById('loginErr')?.classList.contains('show');if(failed)loginGuard.failure(email);else if(currentUser){loginGuard.success(email);sessionStorage.setItem('onomo_session_started',String(Date.now()));}};
+  const originalLogout=window.doLogout;window.doLogout=function(){sessionStorage.removeItem('onomo_session_started');return originalLogout();};
+  window.addEventListener('DOMContentLoaded',()=>{setInterval(()=>{const started=Number(sessionStorage.getItem('onomo_session_started')||0);if(currentUser&&started&&Date.now()-started>8*60*60*1000){showToast('Votre session a expiré.','err');doLogout();}},60000);});
+  const originalSwitch=window.switchView; window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['users','hotels-admin','settings'];if((!isPower(currentUser)&&restricted.includes(view))||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){showToast('Accès non autorisé.','err');return;}return originalSwitch(view,el);};
+  const originalSettings=window.renderSettings;window.renderSettings=function(){if(!userRoles(currentUser).includes('Administrateur')){showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');switchView('tickets',document.querySelector('[data-view="tickets"]'));return;}return originalSettings();};
+  window.visibleTickets=function(){return isPower(currentUser)?tickets:tickets.filter(owner);};
+  const originalCreate=window.createTicket; window.createTicket=async function(data){return originalCreate({...data,created_by:currentUser?.id||null,created_by_email:currentUser?.email||null});};
+  window.renderRoleManager=function(){if(!userRoles(currentUser).includes('Administrateur'))return;const list=roles();document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-hdr"><div class="card-title">Rôles et permissions</div><button class="btn btn-gold" onclick="addCustomRole()"><i class="ti ti-plus"></i>Nouveau rôle</button></div><div class="user-list">${list.map((role,index)=>`<div class="user-row"><div class="user-info"><div class="user-name">${esc(role.name)}</div><div class="user-email">${esc(role.permissions.join(', ')||'Aucune permission')}</div></div>${role.is_system?'<span class="role-tag">Système</span>':`<button class="btn btn-danger btn-sm" onclick="removeCustomRole(${index})"><i class="ti ti-trash"></i></button>`}</div>`).join('')}</div></div>`;};
+  window.addCustomRole=function(){const name=prompt('Nom du rôle :');if(!name)return;const permissionList=prompt('Permissions séparées par des virgules (ex. ticket:create,ticket:read:own) :','ticket:create,ticket:read:own,comment:read:own');if(permissionList===null)return;const list=roles();if(list.some(item=>item.name.toLowerCase()===name.trim().toLowerCase()))return showToast('Ce rôle existe déjà.','err');list.push({name:name.trim(),permissions:permissionList.split(',').map(item=>item.trim()).filter(Boolean)});saveRoles(list);renderRoleManager();};
+  window.removeCustomRole=function(index){const list=roles();if(POWER.includes(list[index]?.name)||list[index]?.name==='Demandeur')return showToast('Les rôles système ne peuvent pas être supprimés.','err');list.splice(index,1);saveRoles(list);renderRoleManager();};
+  function addRoleNav(){const admin=document.getElementById('sbAdminSec');if(!admin||document.querySelector('[data-view="roles"]'))return;admin.insertAdjacentHTML('beforeend','<div class="nav-item" data-view="roles" onclick="renderRoleManager();document.querySelectorAll(\'.nav-item\').forEach(i=>i.classList.remove(\'active\'));this.classList.add(\'active\')"><i class="ti ti-key"></i><span>Rôles et permissions</span></div>');}
+  function addUserRolePicker(){const select=document.getElementById('uRole');if(!select||document.getElementById('uRolesMulti'))return;select.closest('.form-g').insertAdjacentHTML('afterend',`<div class="form-g" id="uRolesMulti"><label class="field-lbl">Rôles additionnels</label><div id="uRoleChoices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:9px;border:1px solid var(--border);border-radius:var(--r)">${roles().map(role=>`<label style="font-size:11px"><input type="checkbox" value="${esc(role.name)}"> ${esc(role.name)}</label>`).join('')}</div></div>`);}
+  const originalOpenUser=window.openModalUser;window.openModalUser=function(){originalOpenUser();addUserRolePicker();document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=input.value===document.getElementById('uRole').value);};
+  const originalEditUser=window.openEditUser;window.openEditUser=function(id){originalEditUser(id);addUserRolePicker();const user=DEMO_USERS.find(item=>item.id===id);const assigned=userRoles(user);document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=assigned.includes(input.value));};
+  const originalSubmitUser=window.submitUser;window.submitUser=async function(){const assigned=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);await originalSubmitUser();const email=document.getElementById('uEmail')?.value.trim().toLowerCase();const user=DEMO_USERS.find(item=>item.email===email);if(user&&assigned.length){user.roles=assigned;user.role=assigned[0];saveUsers(DEMO_USERS);if(sbOK())await sbUpdateUser(user.id,{roles:assigned,role:user.role});}};
+  function addVoice(){const description=document.getElementById('ntDesc');if(!description||document.getElementById('voiceDictationBtn'))return;description.insertAdjacentHTML('afterend','<button type="button" class="btn btn-outline btn-sm" id="voiceDictationBtn" style="margin-top:8px"><i class="ti ti-microphone"></i>Dicter automatiquement</button><small id="voiceStatus" style="display:block;margin-top:5px;color:var(--tx3)"></small>');const button=document.getElementById('voiceDictationBtn'),status=document.getElementById('voiceStatus');const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Speech){button.disabled=true;status.textContent='La dictée vocale n’est pas disponible dans ce navigateur.';return;}let recognition,active=false,index=0;const languages=['fr-FR','en-US','ar-MA','es-ES'];function start(){recognition=new Speech();recognition.continuous=true;recognition.interimResults=true;recognition.lang=languages[index];recognition.onresult=event=>{let text='';for(let i=event.resultIndex;i<event.results.length;i++)text+=event.results[i][0].transcript;if(text)description.value=(description.value+' '+text).trim();};recognition.onerror=event=>{if(['no-speech','language-not-supported'].includes(event.error)&&active){index=(index+1)%languages.length;setTimeout(start,150);return;}status.textContent=`Dictée interrompue : ${event.error}`;active=false;button.innerHTML='<i class="ti ti-microphone"></i>Dicter automatiquement';};recognition.onend=()=>{if(active){index=(index+1)%languages.length;setTimeout(start,150);}};recognition.start();status.textContent='Écoute active — détection automatique en cours.';}button.addEventListener('click',()=>{active=!active;if(active){button.innerHTML='<i class="ti ti-player-stop"></i>Arrêter la dictée';start();}else{recognition?.stop();button.innerHTML='<i class="ti ti-microphone"></i>Dicter automatiquement';status.textContent='Dictée arrêtée.';}});}
+  function rebrand(root=document.body){root.querySelectorAll('*').forEach(element=>element.childNodes.forEach(node=>{if(node.nodeType===Node.TEXT_NODE)node.nodeValue=node.nodeValue.replace(/Support hôtelière|Support hôtelier|Support Hotelier/gi,'Support IT');}));}
+  document.addEventListener('DOMContentLoaded',()=>{addRoleNav();addUserRolePicker();addVoice();rebrand();new MutationObserver(()=>rebrand()).observe(document.body,{childList:true,subtree:true});const manifest=document.getElementById('pwa-manifest');if(manifest)manifest.href='assets/pwa/manifest.webmanifest';document.title='Onomo Support IT';document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent='Support IT');const installed=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone||localStorage.getItem('onomo_pwa_installed')==='1';if(installed){localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');}if('serviceWorker'in navigator)navigator.serviceWorker.register('onomo-sw.js').catch(()=>{});window.addEventListener('appinstalled',()=>{localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');});});
 })();
