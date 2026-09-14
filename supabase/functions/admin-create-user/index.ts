@@ -1,43 +1,144 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// supabase/functions/ai-ticket-analysis/index.ts
+//
+// Proxy sécurisé vers l'API Anthropic pour l'analyse IA des tickets.
+//
+// Pourquoi cette fonction existe :
+// L'appel direct à https://api.anthropic.com depuis le navigateur (ancien code
+// dans index.html) ne peut jamais fonctionner : il faudrait exposer une clé API
+// dans le JavaScript client, ce que l'API Anthropic bloque de toute façon (CORS).
+// Cette Edge Function reçoit la requête du navigateur, appelle l'API Anthropic
+// côté serveur avec la clé stockée en secret, et renvoie uniquement le résultat
+// structuré au client. La clé ANTHROPIC_API_KEY n'est jamais transmise au navigateur.
+//
+// Déploiement :
+//   supabase secrets set ANTHROPIC_API_KEY=sk-ant-xxxxx
+//   supabase functions deploy ai-ticket-analysis
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const DEFAULT_CATEGORIES = ["Maintenance", "IT / Réseau", "Chambres", "Restauration", "Guest relations", "Sécurité", "Ménage", "Autre"];
+const DEFAULT_PRIORITIES = ["Basse", "Normale", "Haute", "Urgente"];
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
 }
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-const roleMap: Record<string, string> = { admin:'Administrateur', administrateur:'Administrateur', direction:'Directeur', directeur:'Directeur', it_regional:'IT Regional', 'it regional':'IT Regional', it_hotel:'IT Hotel', 'it hotel':'IT Hotel', demandeur:'Demandeur', Administrateur:'Administrateur', Directeur:'Directeur', 'IT Regional':'IT Regional', 'IT Hotel':'IT Hotel', Demandeur:'Demandeur' }
-function getSecretKey(){ const direct=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'); if(direct)return direct; const single=Deno.env.get('SUPABASE_SECRET_KEY'); if(single&&!single.trim().startsWith('{'))return single; const many=Deno.env.get('SUPABASE_SECRET_KEYS'); if(many){try{const parsed=JSON.parse(many);const first=Object.values(parsed||{})[0];if(typeof first==='string'&&first)return first}catch(_){}} return null }
-const normalizeRole=(value:unknown)=>{const raw=String(value||'').trim();return roleMap[raw]||roleMap[raw.toLowerCase()]||raw}
-Deno.serve(async(req)=>{
-  if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders}); if(req.method!=='POST')return json({error:'Méthode non autorisée'},405)
-  try{
-    const supabaseUrl=Deno.env.get('SUPABASE_URL'); const publishableKey=Deno.env.get('SUPABASE_ANON_KEY')||Deno.env.get('SUPABASE_PUBLISHABLE_KEY'); const serviceRoleKey=getSecretKey()
-    if(!supabaseUrl||!publishableKey)return json({error:'Configuration Supabase publique manquante'},500); if(!serviceRoleKey)return json({error:'Clé serveur Supabase manquante'},500)
-    const token=(req.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim(); if(!token)return json({error:'Session Supabase requise'},401)
-    const callerClient=createClient(supabaseUrl,publishableKey,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:`Bearer ${token}`}}})
-    const {data:callerData,error:callerError}=await callerClient.auth.getUser(token); if(callerError||!callerData.user)return json({error:'Session Supabase invalide'},401)
-    const admin=createClient(supabaseUrl,serviceRoleKey,{auth:{persistSession:false,autoRefreshToken:false}})
-    const {data:callerRoles,error:rolesError}=await admin.from('app_user_roles').select('role_id, app_roles(name, permissions)').eq('user_id',callerData.user.id)
-    if(rolesError){console.error('admin-create-user role lookup failed',{userId:callerData.user.id,message:rolesError.message});return json({error:`Lecture des rôles impossible: ${rolesError.message}`},500)}
-    const isAdmin=(callerRoles||[]).some((row:any)=>row.app_roles?.name==='Administrateur'||row.app_roles?.permissions?.includes?.('*')); if(!isAdmin)return json({error:'Accès réservé aux administrateurs'},403)
-    let payload:any; try{payload=await req.json()}catch{return json({error:'JSON invalide'},400)}
-    const email=String(payload.email||'').trim().toLowerCase(),password=String(payload.password||''),prenom=String(payload.prenom||'').trim(),nom=String(payload.nom||'').trim(),roleInput=String(payload.role||'it_hotel').trim()
-    const requestedRoles=Array.isArray(payload.roles)&&payload.roles.length?payload.roles:[roleInput]; const roleNames=[...new Set(requestedRoles.map(normalizeRole).filter(Boolean))]
-    const hotel=payload.hotel?String(payload.hotel):null; const hotels=Array.isArray(payload.hotels)?payload.hotels.map((v:unknown)=>String(v)):[]
-    if(!email||!password)return json({error:'Email et mot de passe requis'},400); if(password.length<8)return json({error:'Le mot de passe doit contenir au moins 8 caractères'},400)
-    const allowedRoles=new Set(['Administrateur','IT Regional','IT Hotel','Directeur','Demandeur']); if(!roleNames.length||roleNames.some((r:string)=>!allowedRoles.has(r)))return json({error:`Rôle non autorisé: ${roleNames.join(', ')}`},400)
-    console.log('admin-create-user start',{caller:callerData.user.id,email,roles:roleNames,hotel,hotelsCount:hotels.length})
-    const {data:authData,error:authError}=await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{prenom,nom,role:roleNames[0],roles:roleNames,hotel,hotels}})
-    if(authError||!authData.user){console.error('admin-create-user auth.createUser failed',{email,message:authError?.message,status:authError?.status});return json({error:authError?.message||'Création Auth impossible'},400)}
-    const authUser=authData.user
-    const profile={id:authUser.id,auth_user_id:authUser.id,email,pwd:'',prenom,nom,role:roleNames[0],hotel,hotels,roles:roleNames,must_change_password:false,mfa_enabled:false,mfa_secret:null,created_at:new Date().toISOString()}
-    const {error:profileError}=await admin.from('utilisateurs').insert(profile)
-    if(profileError){console.error('admin-create-user profile insert failed',{authUserId:authUser.id,message:profileError.message,code:profileError.code,details:profileError.details});await admin.auth.admin.deleteUser(authUser.id);return json({error:`Profil utilisateurs impossible: ${profileError.message}`},400)}
-    for(const roleName of roleNames){
-      const {data:roleRow,error:roleError}=await admin.from('app_roles').select('id').eq('name',roleName).maybeSingle(); if(roleError||!roleRow){console.error('admin-create-user role not found',{roleName,message:roleError?.message});await admin.from('utilisateurs').delete().eq('auth_user_id',authUser.id);await admin.auth.admin.deleteUser(authUser.id);return json({error:`Rôle introuvable: ${roleName}`},400)}
-      const {error:linkError}=await admin.from('app_user_roles').insert({user_id:authUser.id,role_id:roleRow.id}); if(linkError){console.error('admin-create-user role link failed',{roleName,message:linkError.message,code:linkError.code,details:linkError.details});await admin.from('utilisateurs').delete().eq('auth_user_id',authUser.id);await admin.auth.admin.deleteUser(authUser.id);return json({error:`Association du rôle impossible: ${linkError.message}`},400)}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: CORS_HEADERS });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
+  if (!ANTHROPIC_API_KEY) {
+    return jsonResponse(
+      { error: "ANTHROPIC_API_KEY non configurée côté serveur. Voir supabase secrets set ANTHROPIC_API_KEY=..." },
+      500
+    );
+  }
+
+  // Vérifier que l'appelant présente au minimum la clé publique Supabase du projet.
+  // ⚠️ Limite connue : cette application n'utilise pas Supabase Auth (voir
+  // SUPABASE_AUTH_SETUP.md vs. le code réel de index.html — l'auth est gérée par
+  // l'app elle-même). Cette fonction ne peut donc pas vérifier qu'un utilisateur
+  // légitime de l'application appelle, seulement que l'appelant connaît la clé
+  // publique du projet Supabase (peu protecteur si cette clé est exposée, ce qui
+  // est le cas puisqu'elle est dans le HTML public). Pour une vraie protection,
+  // migrez vers Supabase Auth (voir SUPABASE_AUTH_SETUP.md) et vérifiez un JWT
+  // utilisateur ici avec supabase.auth.getUser(). En attendant, le principal
+  // risque est un usage abusif de votre quota Anthropic par un tiers qui aurait
+  // trouvé votre clé publique — surveillez votre consommation API.
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return jsonResponse({ error: "Authorization header requis" }, 401);
+  }
+
+  let payload: { titre?: string; description?: string; categories?: string[]; priorites?: string[] };
+  try {
+    payload = await req.json();
+  } catch (_e) {
+    return jsonResponse({ error: "Corps de requête JSON invalide" }, 400);
+  }
+
+  const titre = (payload.titre || "").slice(0, 500);
+  const description = (payload.description || "").slice(0, 2000);
+  const CATEGORIES = Array.isArray(payload.categories) && payload.categories.length > 0 ? payload.categories : DEFAULT_CATEGORIES;
+  const PRIORITIES = Array.isArray(payload.priorites) && payload.priorites.length > 0 ? payload.priorites : DEFAULT_PRIORITIES;
+
+  if (!titre.trim()) {
+    return jsonResponse({ error: "Le titre du ticket est requis" }, 400);
+  }
+
+  const systemPrompt = `Tu es un assistant qui analyse des tickets de support IT hôtelier.
+Réponds UNIQUEMENT avec un objet JSON valide, sans aucun texte avant ou après, avec exactement ces clés :
+{"priorite":"une valeur parmi ${JSON.stringify(PRIORITIES)}","categorie":"une valeur parmi ${JSON.stringify(CATEGORIES)}","resume":"résumé en une phrase (max 150 caractères)","action":"action recommandée en une phrase (max 150 caractères)"}
+Ne renvoie rien d'autre que ce JSON.`;
+
+  const userMessage = `Titre du ticket : ${titre}\nDescription : ${description || "(aucune description fournie)"}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-5",
+        max_tokens: 300,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userMessage }],
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Anthropic API error:", response.status, errText);
+      return jsonResponse(
+        { error: `Erreur API Anthropic (${response.status})`, priorite: "Normale", categorie: "Guest relations", resume: "Analyse IA indisponible.", action: "" },
+        502
+      );
     }
-    console.log('admin-create-user success',{authUserId:authUser.id,email,roles:roleNames}); return json({ok:true,user:{id:authUser.id,email,prenom,nom,role:roleNames[0],hotel,hotels,roles:roleNames}},201)
-  }catch(error){console.error('admin-create-user unhandled error',error instanceof Error?{message:error.message,stack:error.stack}:error);return json({error:error instanceof Error?error.message:'Erreur serveur lors de la création du compte'},500)}
-})
+
+    const data = await response.json();
+    const text: string = data?.content?.[0]?.text || "";
+
+    let parsed: Record<string, string>;
+    try {
+      const cleaned = text.replace(/```json|```/g, "").trim();
+      parsed = JSON.parse(cleaned);
+    } catch (_e) {
+      console.error("Failed to parse Claude response as JSON:", text);
+      return jsonResponse(
+        { error: "Réponse IA non structurée", priorite: "Normale", categorie: "Guest relations", resume: "Analyse IA indisponible (format inattendu).", action: "" },
+        502
+      );
+    }
+
+    // Validation stricte des valeurs renvoyées avant de les passer au client
+    const priorite = PRIORITIES.includes(parsed.priorite) ? parsed.priorite : "Normale";
+    const categorie = CATEGORIES.includes(parsed.categorie) ? parsed.categorie : "Guest relations";
+    const resume = String(parsed.resume || "").slice(0, 200);
+    const action = String(parsed.action || "").slice(0, 200);
+
+    return jsonResponse({ priorite, categorie, assigne: "", resume, action });
+  } catch (e) {
+    console.error("ai-ticket-analysis error:", e);
+    return jsonResponse(
+      { error: "Erreur réseau lors de l'appel à l'API Anthropic", priorite: "Normale", categorie: "Guest relations", resume: "Analyse IA indisponible.", action: "" },
+      502
+    );
+  }
+});
