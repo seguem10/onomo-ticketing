@@ -13,5 +13,6 @@
   window.OnomoI18n={t,setLanguage,get language(){return active},validate(){const keys=Object.keys(dictionary.fr);return ['en','ar'].flatMap(lang=>keys.filter(key=>!(key in dictionary[lang])).map(key=>`${lang}:${key}`));}};
   document.addEventListener('DOMContentLoaded',()=>{active=normalize(localStorage.getItem('onomo_language')||detect());selector();setLanguage(active,false);new MutationObserver(()=>translateLegacy()).observe(document.body,{childList:true,subtree:true});});
   function loadOnomoAutomation(){if(document.querySelector('script[data-onomo-automation]'))return;const s=document.createElement('script');s.src='assets/js/voice-email-admin.js';s.dataset.onomoAutomation='1';document.body.appendChild(s);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadOnomoAutomation,{once:true});else loadOnomoAutomation();
+  function loadOnomoUserRole(){if(document.querySelector('script[data-onomo-user-role]'))return;const s=document.createElement('script');s.src='assets/js/user-role-demandeur.js';s.dataset.onomoUserRole='1';document.body.appendChild(s);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{loadOnomoAutomation();loadOnomoUserRole()},{once:true});else{loadOnomoAutomation();loadOnomoUserRole();}
 })();
