@@ -21,7 +21,6 @@
       option.value='demandeur';
       option.textContent='Demandeur';
       select.appendChild(option);
-      select.dispatchEvent(new Event('change',{bubbles:true}));
     });
   }
 
@@ -46,7 +45,7 @@
   document.addEventListener('DOMContentLoaded',()=>{
     apply();
     new MutationObserver(apply).observe(document.body,{childList:true,subtree:true});
-  });
+  },{once:true});
 
   if(document.readyState!=='loading'){
     apply();
