@@ -701,7 +701,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
           <button class="vt-btn active" id="vtList" onclick="setViewMode('list')" title="Vue liste"><i class="ti ti-list"></i></button>
           <button class="vt-btn" id="vtKanban" onclick="setViewMode('kanban')" title="Vue Kanban"><i class="ti ti-layout-columns"></i></button>
         </div>
-        <button class="btn btn-gold" onclick="openNewTicket()"><i class="ti ti-plus"></i>Nouveau ticket</button>
+        <button class="btn btn-gold" id="btnNewTicket" onclick="openNewTicket()"><i class="ti ti-plus"></i>Nouveau ticket</button>
       </div>
       <div class="content" id="mainContent"></div>
     </div>
@@ -875,7 +875,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
 
 <!-- FAB mobile -->
-<button class="fab" onclick="openNewTicket()" title="Nouveau ticket" id="fabBtn"><i class="ti ti-plus"></i></button>
+<button class="fab" onclick="openNewTicket()" title="Nouveau ticket" id="fabBtn" data-requires-write="true"><i class="ti ti-plus"></i></button>
 
 <!-- Bottom nav mobile -->
 <div id="mobileBottomNav" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--dark);border-top:1px solid rgba(255,255,255,0.08);z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px)">
@@ -886,7 +886,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
     <div onclick="switchView('tickets',null);closeMobileMenu()" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:rgba(255,255,255,0.45);font-size:9px;transition:color .15s" class="mbnav-item" data-view="tickets">
       <i class="ti ti-ticket" style="font-size:20px"></i>Tickets
     </div>
-    <div onclick="openNewTicket()" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:var(--brand);font-size:9px">
+    <div onclick="openNewTicket()" id="mbNewTicketBtn" data-requires-write="true" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:var(--brand);font-size:9px">
       <i class="ti ti-plus-circle" style="font-size:20px"></i>Nouveau
     </div>
     <div onclick="toggleSidebar()" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:rgba(255,255,255,0.45);font-size:9px">
@@ -1038,7 +1038,7 @@ function loadSettings(){
       brandName: s.brandName||"ONOMO",
       brandColor: s.brandColor||"#C9972A",
       emailNotify: s.emailNotify!==undefined?s.emailNotify:true,
-      aiEnabled: s.aiEnabled!==undefined?s.aiEnabled:true,
+      aiEnabled: s.aiEnabled!==undefined?s.aiEnabled:false,
       autoAssign: s.autoAssign!==undefined?s.autoAssign:false,
       sbUrl: SUPABASE_URL || s.sbUrl || "",
       sbKey: SUPABASE_KEY || s.sbKey || "",
@@ -1048,7 +1048,7 @@ function loadSettings(){
       fontSize: s.fontSize || "13",
       sidebarColor: s.sidebarColor || "#141C2E",
     };
-  }catch(e){return{brandName:"ONOMO",brandColor:"#C9972A",emailNotify:true,aiEnabled:true,autoAssign:false,sbUrl:SUPABASE_URL||"",sbKey:SUPABASE_KEY||""};}
+  }catch(e){return{brandName:"ONOMO",brandColor:"#C9972A",emailNotify:true,aiEnabled:false,autoAssign:false,sbUrl:SUPABASE_URL||"",sbKey:SUPABASE_KEY||""};}
 }
 function saveSettings(){localStorage.setItem('dh_settings',JSON.stringify(settings));}
 
@@ -1407,7 +1407,8 @@ function initSession(){
   document.getElementById("sbReportSec").style.display=isDir?"block":"none";
   document.getElementById("sbMySec").style.display=isStaff?"block":"none";
   document.getElementById("sbAdminSec").style.display=currentUser.role==="admin"?"block":"none";
-  // Masquer le bouton Nouveau ticket pour la direction (lecture seule)
+  // Masquer tous les points d'entrée "Nouveau ticket" pour les comptes en lecture seule (direction)
+  document.querySelectorAll('[data-requires-write="true"]').forEach(el=>{el.style.display=isReadOnly()?"none":"";});
   const btnNew=document.getElementById("btnNewTicket");
   if(btnNew) btnNew.style.display=isReadOnly()?"none":"flex";
   populateSelects();
@@ -2462,7 +2463,7 @@ function renderSettings(){
       <!-- Fonctionnalités -->
       <div class="settings-section">
         <div class="settings-title"><i class="ti ti-toggle-right"></i>Fonctionnalités</div>
-        <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Analyse IA des tickets</div><div class="setting-desc">Utilise Claude (Anthropic) pour suggérer priorité, catégorie et actions</div></div><button class="toggle${settings.aiEnabled?" on":""}" id="tAI" onclick="toggleSetting('aiEnabled','tAI')"></button></div>
+        <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Analyse IA des tickets</div><div class="setting-desc">Utilise Claude (Anthropic) via une Edge Function Supabase pour suggérer priorité, catégorie et actions. <strong>Avant d'activer :</strong> déployez <code>supabase/functions/ai-ticket-analysis</code> et configurez le secret <code>ANTHROPIC_API_KEY</code> (voir le fichier de la fonction pour les instructions).</div></div><button class="toggle${settings.aiEnabled?" on":""}" id="tAI" onclick="toggleSetting('aiEnabled','tAI')"></button></div>
         <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Notifications email</div><div class="setting-desc">Envoyer un email à l'agent lors d'une assignation</div></div><button class="toggle${settings.emailNotify?" on":""}" id="tEmail" onclick="toggleSetting('emailNotify','tEmail')"></button></div>
         <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Auto-assignation</div><div class="setting-desc">Assigner automatiquement les tickets à l'agent disponible de l'hôtel</div></div><button class="toggle${settings.autoAssign?" on":""}" id="tAuto" onclick="toggleSetting('autoAssign','tAuto')"></button></div>
       </div>
@@ -2870,6 +2871,7 @@ function resetEverything(){
    NEW TICKET
 ══════════════════════════════════════════════ */
 function openNewTicket(){
+  if(isReadOnly()){showToast("Votre compte est en lecture seule — création de ticket non autorisée","err");return;}
   aiResult=null;
   document.getElementById("aiBox").style.display="none";
   document.getElementById("aiBtnWrap").style.display="none";
@@ -2908,23 +2910,23 @@ async function runAI(){
 }
 async function doAIAnalysis(titre,desc){
   try{
-    const agentList=DEMO_USERS.filter(u=>u.role==="it_regional"||u.role==="it_hotel").map(u=>`${u.prenom} ${u.nom}`).join(",");
-    const sys=`Tu es un système expert de gestion de tickets pour une chaîne hôtelière africaine (${settings.brandName}).
-Analyse le ticket et réponds UNIQUEMENT en JSON valide (sans markdown, sans backticks) :
-{"priorite":"Urgente|Haute|Normale|Basse","categorie":"Maintenance|IT / Réseau|Chambres|Restauration|Guest relations|Sécurité|Ménage|Autre","assigne":"choix parmi: ${agentList}","resume":"résumé clair en 1 phrase","action":"action immédiate concrète recommandée"}`;
-    const raw=await callClaude(sys,`Titre: ${titre}\nDescription: ${desc||"(vide)"}`);
-    return JSON.parse(raw.replace(/```[a-z]*/g,"").replace(/```/g,"").trim());
-  }catch(e){return{priorite:"Normale",categorie:"Guest relations",assigne:"",resume:"Analyse IA temporairement indisponible.",action:""};}
-}
-async function callClaude(sys,msg){
-  const r=await fetch("https://api.anthropic.com/v1/messages",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:sys,messages:[{role:"user",content:msg}]})
-  });
-  const d=await r.json();return d.content?.[0]?.text||"";
+    const headers={"Content-Type":"application/json","Authorization":`Bearer ${SUPABASE_KEY}`,"apikey":SUPABASE_KEY};
+    const r=await fetch(`${SUPABASE_URL}/functions/v1/ai-ticket-analysis`,{
+      method:"POST",headers,body:JSON.stringify({titre,description:desc||"",categories:CATS,priorites:PRIOS})
+    });
+    const result=await r.json();
+    if(!r.ok||result.error){console.warn("AI analysis error:",result.error);}
+    return{
+      priorite:result.priorite||"Normale",
+      categorie:result.categorie||"Guest relations",
+      assigne:"",
+      resume:result.resume||"Analyse IA indisponible.",
+      action:result.action||""
+    };
+  }catch(e){return{priorite:"Normale",categorie:"Guest relations",assigne:"",resume:"Analyse IA indisponible : impossible de joindre le service d'analyse.",action:""};}
 }
 async function submitNewTicket(){
+  if(isReadOnly()){showToast("Votre compte est en lecture seule — création de ticket non autorisée","err");closeModal("modalTicket");return;}
   const titre=document.getElementById("ntTitre").value.trim();
   if(!titre){showToast("Le sujet est requis","err");return;}
   const data={
