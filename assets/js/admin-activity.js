@@ -24,6 +24,7 @@
   function addNav(){
     if(!admin()||document.querySelector('[data-view="activity-log"]'))return;
     let sec=document.getElementById('sbAdminSec');
+    if(!sec)sec=document.querySelector('.sb-nav');
     if(!sec){
       const candidates=[...document.querySelectorAll('.nav-section,.sidebar-section,.nav-group,.nav-items')];
       sec=candidates.find(el=>/Utilisateurs|Hôtels|Paramètres|Rôles et permissions/i.test(el.textContent||''));
