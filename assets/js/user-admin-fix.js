@@ -1,17 +1,20 @@
 /* ONOMO Support IT - Correctif gestion des utilisateurs */
 (function(){
-  function getUser(){
-    if(window.currentUser)return window.currentUser;
-    try{const email=(document.getElementById('loginEmail')?.value||'').trim().toLowerCase();if(email&&Array.isArray(window.DEMO_USERS))return window.DEMO_USERS.find(u=>String(u.email||'').toLowerCase()===email)||null;}catch(_){ }
-    return null;
+  function candidates(){
+    const list=[];
+    try{if(window.currentUser)list.push(window.currentUser);}catch(_){ }
+    try{if(typeof currentUser!=='undefined'&&currentUser)list.push(currentUser);}catch(_){ }
+    try{const email=(document.getElementById('loginEmail')?.value||'').trim().toLowerCase();if(email&&Array.isArray(window.DEMO_USERS)){const u=window.DEMO_USERS.find(x=>String(x.email||'').toLowerCase()===email);if(u)list.push(u);}}catch(_){ }
+    try{if(Array.isArray(window.DEMO_USERS)){const u=window.DEMO_USERS.find(x=>x?.is_admin===true||x?.isAdmin===true);if(u)list.push(u);}}catch(_){ }
+    return list;
   }
   function roleValues(u){
     const raw=[u?.role,u?.role_name,u?.user_role].concat(Array.isArray(u?.roles)?u.roles:[]).filter(Boolean);
     return raw.flatMap(v=>v&&typeof v==='object'?[v.name,v.role,v.value].filter(Boolean):[v]).map(v=>String(v).toLowerCase().trim());
   }
-  function isAdmin(){const u=getUser()||{};return !!(u.is_admin===true||u.isAdmin===true||roleValues(u).some(v=>['admin','administrateur','administrator','admin système'].includes(v)));}
+  function isAdmin(){return candidates().some(u=>!!(u?.is_admin===true||u?.isAdmin===true||roleValues(u).some(v=>['admin','administrateur','administrator','admin système'].includes(v))));}
   function openUsers(el){
-    if(!isAdmin()){setTimeout(()=>{if(isAdmin())openUsers(el);else window.showToast?.('Accès non autorisé.','err');},250);return false;}
+    if(!isAdmin()){setTimeout(()=>{if(isAdmin())openUsers(el);else window.showToast?.('Accès non autorisé.','err');},400);return false;}
     window.currentView='users';window.filterStat='tous';window.searchQ='';
     const search=document.getElementById('searchInput');if(search)search.value='';
     document.querySelectorAll('.nav-item').forEach(item=>item.classList.remove('active'));
@@ -29,7 +32,8 @@
   }
   function wrapSwitch(){
     if(typeof window.switchView!=='function'||window.switchView.__usersFixWrapped)return;
-    const original=window.switchView;const wrapped=function(view,el){if(view==='users')return openUsers(el);return original.apply(this,arguments);};
+    const original=window.switchView;
+    const wrapped=function(view,el){if(view==='users')return openUsers(el);return original.apply(this,arguments);};
     wrapped.__usersFixWrapped=true;window.switchView=wrapped;
   }
   function init(){bind();wrapSwitch();setTimeout(()=>{bind();wrapSwitch();},100);setTimeout(()=>{bind();wrapSwitch();},500);setInterval(()=>{bind();wrapSwitch();},2000);}
