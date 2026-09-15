@@ -36,6 +36,13 @@
     }
     item.style.display=isAdmin()?'flex':'none';
   }
+  function loadUsersFix(){
+    if(document.querySelector('script[data-onomo-users-fix]'))return;
+    const s=document.createElement('script');
+    s.src='assets/js/user-admin-fix.js';
+    s.dataset.onomoUsersFix='1';
+    document.body.appendChild(s);
+  }
   async function render(){
     if(!isAdmin()){window.showToast?.('Accès non autorisé.','err');return;}
     const main=document.getElementById('mainContent');if(!main)return;
@@ -71,13 +78,13 @@
     window.sbFetch=wrapped;
   }
   function init(){
-    brand();addNav();wrapSbFetch();
-    setInterval(()=>{brand();addNav();wrapSbFetch();},1500);
+    brand();addNav();loadUsersFix();wrapSbFetch();
+    setInterval(()=>{brand();addNav();loadUsersFix();wrapSbFetch();},1500);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   const oldInit=window.initSession;
   if(oldInit&&!oldInit.__activityWrapped){
-    window.initSession=function(){const r=oldInit.apply(this,arguments);setTimeout(()=>{brand();addNav();},100);return r;};
+    window.initSession=function(){const r=oldInit.apply(this,arguments);setTimeout(()=>{brand();addNav();loadUsersFix();},100);return r;};
     window.initSession.__activityWrapped=true;
   }
   const oldSwitch=window.switchView;
