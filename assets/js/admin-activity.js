@@ -23,9 +23,22 @@
   }
   function addNav(){
     if(!admin()||document.querySelector('[data-view="activity-log"]'))return;
-    const sec=document.getElementById('sbAdminSec');
+    let sec=document.getElementById('sbAdminSec');
+    if(!sec){
+      const candidates=[...document.querySelectorAll('.nav-section,.sidebar-section,.nav-group,.nav-items')];
+      sec=candidates.find(el=>/Utilisateurs|Hôtels|Paramètres|Rôles et permissions/i.test(el.textContent||''));
+    }
+    if(!sec){
+      const anchor=document.querySelector('[data-view="users"],[data-view="hotels-admin"],[data-view="settings"],[data-view="roles"]');
+      sec=anchor?.parentElement;
+    }
     if(!sec)return;
-    sec.insertAdjacentHTML('beforeend','<div class="nav-item" data-view="activity-log" onclick="window.renderAdminActivity();document.querySelectorAll(\'.nav-item\').forEach(i=>i.classList.remove(\'active\'));this.classList.add(\'active\')"><i class="ti ti-history"></i><span>Journal d’activité</span></div>');
+    const item=document.createElement('div');
+    item.className='nav-item';
+    item.dataset.view='activity-log';
+    item.innerHTML='<i class="ti ti-history"></i><span>Journal d’activité</span>';
+    item.onclick=function(){window.renderAdminActivity();document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));item.classList.add('active');};
+    sec.appendChild(item);
   }
   async function render(){
     if(!admin()){window.showToast?.('Accès non autorisé.','err');return;}
