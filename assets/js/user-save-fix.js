@@ -39,25 +39,24 @@
     }else if(role==='it_regional'){
       hotels=selected;
     }
-    return {role,prenom,nom,email,hotel,hotels,password:(document.getElementById('uPwd')?.value||'')};
+    return {role,prenom,nom,email,hotel,hotels};
   }
 
   async function saveEdit(){
     const id=document.getElementById('uEditId')?.value||'';
-    if(!id) return null;
+    if(!id){window.showToast?.('Utilisateur introuvable.','err');return false;}
     const d=formData();
     if(!d.email){window.showToast?.("L'email est requis",'err');return false;}
     if(d.role==='it_hotel'&&!d.hotel){window.showToast?.("Sélectionnez un hôtel pour l'IT Hôtel",'err');return false;}
     if(d.role==='it_regional'&&!d.hotels.length){window.showToast?.("Sélectionnez au moins un hôtel pour l'IT Régional",'err');return false;}
     if(d.role==='demandeur'&&!d.hotel){window.showToast?.('Sélectionnez un hôtel pour le Demandeur','err');return false;}
-
-    if(typeof window.sbOK!=='function'||!window.sbOK()||typeof window.sbFetch!=='function'){
+    if(typeof window.sbFetch!=='function'){
       window.showToast?.('Supabase est indisponible. Modification non enregistrée.','err');
       return false;
     }
 
     try{
-      const payload={prenom:d.prenom,nom:d.nom,email:d.email,role:d.role,hotel:d.hotel,hotels:d.hotels};
+      const payload={prenom:d.prenom,nom:d.nom,email:d.email,role:d.role,hotel:d.hotel,hotels:d.hotels,roles:[d.role]};
       const rows=await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(id)}`,{
         method:'PATCH',
         body:JSON.stringify(payload),
@@ -72,7 +71,6 @@
         window.saveUsers?.(window.DEMO_USERS);
       }
       if(window.currentUser&&String(window.currentUser.id)===String(id))window.currentUser={...window.currentUser,...fresh};
-
       window.populateSelects?.();
       window.closeModal?.('modalUser');
       window.showToast?.('Compte mis à jour dans Supabase','ok');
@@ -83,6 +81,23 @@
       window.showToast?.(error?.message||'Modification non enregistrée dans Supabase','err');
       return false;
     }
+  }
+
+  function interceptSaveButton(){
+    if(document.documentElement.__onomoUserSaveClick)return;
+    document.documentElement.__onomoUserSaveClick=true;
+    document.addEventListener('click',event=>{
+      const modal=document.getElementById('modalUser');
+      if(!modal||!modal.contains(event.target))return;
+      const button=event.target.closest('button,input[type="button"],input[type="submit"]');
+      if(!button)return;
+      const label=String(button.textContent||button.value||'').toLowerCase().trim();
+      if(!/(enregistrer|sauvegarder|save|modifier)/.test(label))return;
+      if(!document.getElementById('uEditId')?.value)return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      saveEdit();
+    },true);
   }
 
   function wrap(){
@@ -100,7 +115,8 @@
   }
 
   function boot(){
-    if(wrap())return;
+    interceptSaveButton();
+    wrap();
     let n=0;
     const timer=setInterval(()=>{if(wrap()||++n>40)clearInterval(timer);},250);
   }
