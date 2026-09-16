@@ -15,5 +15,6 @@
   function loadOnomoAutomation(){if(document.querySelector('script[data-onomo-automation]'))return;const s=document.createElement('script');s.src='assets/js/voice-email-admin.js';s.dataset.onomoAutomation='1';document.body.appendChild(s);}
   function loadAdminActivity(){if(document.querySelector('script[data-onomo-activity]'))return;const s=document.createElement('script');s.src='assets/js/admin-activity.js';s.dataset.onomoActivity='1';document.body.appendChild(s);}
   function loadUserTicketFix(){if(document.querySelector('script[data-onomo-user-ticket-fix]'))return;const s=document.createElement('script');s.src='assets/js/user-ticket-fix.js';s.dataset.onomoUserTicketFix='1';document.body.appendChild(s);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{loadOnomoAutomation();loadAdminActivity();loadUserTicketFix();},{once:true});else{loadOnomoAutomation();loadAdminActivity();loadUserTicketFix();}
+  function loadUserSaveFix(){if(document.querySelector('script[data-onomo-user-save-fix]'))return;const s=document.createElement('script');s.src='assets/js/user-save-fix.js';s.dataset.onomoUserSaveFix='1';document.body.appendChild(s);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{loadOnomoAutomation();loadAdminActivity();loadUserTicketFix();loadUserSaveFix();},{once:true});else{loadOnomoAutomation();loadAdminActivity();loadUserTicketFix();loadUserSaveFix();}
 })();
