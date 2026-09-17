@@ -17,7 +17,10 @@
           clearSession();
           return;
         }
-        if(session?.user&&(event==='INITIAL_SESSION'||event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='USER_UPDATED')){
+        /* Do not rebuild the application view on token refresh or password update.
+           Supabase emits USER_UPDATED after changeUser/updateUser. Re-running
+           restoreSupabaseProfile() here sends the SPA back through initSession(). */
+        if(session?.user&&(event==='INITIAL_SESSION'||event==='SIGNED_IN')){
           setTimeout(()=>restoreSupabaseProfile(session),0);
         }
       });
