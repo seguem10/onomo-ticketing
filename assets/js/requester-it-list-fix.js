@@ -1,67 +1,43 @@
-/* ONOMO Support IT - liste des IT pour les Demandeurs */
+/* ONOMO Support IT - Demandeur: liste IT */
 (function(){
   'use strict';
-
-  const roleNorm=r=>({
-    admin:'admin', administrateur:'admin',
-    'it régional':'it_regional', it_regional:'it_regional',
-    'it hotel':'it_hotel', it_hotel:'it_hotel',
-    demandeur:'demandeur', requester:'demandeur'
-  }[String(r||'').toLowerCase().trim()]||String(r||'').toLowerCase().trim());
-
-  const hotelsOf=u=>{
-    if(Array.isArray(u?.hotels)) return u.hotels.filter(Boolean);
-    if(typeof u?.hotels==='string'){
-      try{const v=JSON.parse(u.hotels);return Array.isArray(v)?v.filter(Boolean):[];}catch(_){return u.hotels?[u.hotels]:[];}
-    }
-    return [];
-  };
-
-  async function loadUsers(){
-    if(typeof window.sbFetch!=='function') return [];
-    try{
-      const rows=await window.sbFetch('utilisateurs?order=prenom.asc,nom.asc&limit=500');
-      return Array.isArray(rows)?rows:[];
-    }catch(e){console.warn('ONOMO IT users load:',e);return [];}
-  }
-
+  const roleNorm=r=>({demandeur:'demandeur',requester:'demandeur'}[String(r||'').toLowerCase().trim()]||String(r||'').toLowerCase().trim());
   async function fillRequesterAgent(){
     const u=window.currentUser;
-    if(roleNorm(u?.role)!=='demandeur') return;
-    const hotel=String(u.hotel||'').trim();
+    if(roleNorm(u?.role)!=='demandeur')return;
     const select=document.getElementById('ntAgent');
-    if(!select) return;
-
-    const users=await loadUsers();
-    const its=users.filter(x=>{
-      const r=roleNorm(x.role);
-      if(r==='it_hotel') return String(x.hotel||'').trim()===hotel;
-      if(r==='it_regional') return hotelsOf(x).includes(hotel);
-      return false;
-    });
-
+    if(!select)return;
+    let its=[];
+    try{
+      if(typeof window.sbFetch==='function'){
+        const rows=await window.sbFetch('rpc/requester_it_users',{method:'POST',body:'{}',prefer:'return=representation'});
+        its=Array.isArray(rows)?rows:[];
+      }
+    }catch(e){console.warn('ONOMO liste IT:',e);}
     select.innerHTML='<option value="">— Sélectionner un IT —</option>';
     its.forEach(x=>{
       const name=`${x.prenom||''} ${x.nom||''}`.trim();
       if(!name)return;
-      const r=roleNorm(x.role);
-      const scope=r==='it_hotel'?x.hotel:hotelsOf(x).join(', ');
+      const scope=x.role==='it_hotel'?x.hotel:(Array.isArray(x.hotels)?x.hotels:[]).join(', ');
       const option=document.createElement('option');
       option.value=name;
       option.textContent=name+(scope?` (${scope})`:'');
       select.appendChild(option);
     });
-    if(its[0]){
-      const first=`${its[0].prenom||''} ${its[0].nom||''}`.trim();
-      select.value=first;
-    }
+    if(its[0])select.value=`${its[0].prenom||''} ${its[0].nom||''}`.trim();
   }
-
+  function loadProfileFix(){
+    if(document.querySelector('script[data-onomo-requester-profile-fix]'))return;
+    const s=document.createElement('script');
+    s.src='assets/js/requester-profile-fix.js?v=20260917b';
+    s.dataset.onomoRequesterProfileFix='1';
+    document.body.appendChild(s);
+  }
   function boot(){
-    setTimeout(fillRequesterAgent,300);
-    setTimeout(fillRequesterAgent,1200);
+    loadProfileFix();
+    setTimeout(fillRequesterAgent,500);
+    setTimeout(fillRequesterAgent,1500);
+    setTimeout(fillRequesterAgent,3000);
   }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
-  else boot();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
