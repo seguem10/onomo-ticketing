@@ -19,6 +19,8 @@
   }
 
   async function changePassword(){
+    /* The profile is a real SPA view. Keep it active while Supabase processes the password update. */
+    try{ currentView='profile'; }catch(_){ }
     const old=document.getElementById('pOld')?.value||'';
     const nw=document.getElementById('pNew')?.value||'';
     const confirm=document.getElementById('pConfirm')?.value||'';
