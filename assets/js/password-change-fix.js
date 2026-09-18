@@ -10,6 +10,14 @@
     try{if(typeof window.showToast==='function')window.showToast(message,type||'ok');}catch(_){}
   }
 
+  function getPasswordButton(){
+    return document.querySelector('#mainContent button[onclick*="changeMyPassword"]')
+      || Array.from(document.querySelectorAll('#mainContent button')).find(button=>{
+        const label=String(button.textContent||'').toLowerCase();
+        return label.includes('enregistrer')&&label.includes('mot de passe');
+      });
+  }
+
   async function changePassword(){
     const old=document.getElementById('pOld')?.value||'';
     const nw=document.getElementById('pNew')?.value||'';
@@ -36,19 +44,18 @@
       return;
     }
 
-    const button=document.querySelector('#mainContent button[onclick*="changeMyPassword"]');
-    if(button)button.disabled=true;
+    const button=getPasswordButton();
+    if(button){
+      button.disabled=true;
+      button.setAttribute('aria-busy','true');
+    }
 
     try{
-      /*
-       * Vérification de l'ancien mot de passe avec un client temporaire.
-       * Il ne partage pas la session principale.
-       */
       const verifier=window.supabase.createClient(s.sbUrl,s.sbKey,{
         auth:{
           persistSession:false,
           autoRefreshToken:false,
-          storageKey:'onomo-password-verifier'
+          storageKey:'onomo-password-verifier-'+Date.now()
         }
       });
 
@@ -57,18 +64,9 @@
 
       if(check.error)throw new Error('Mot de passe actuel incorrect');
 
-      /*
-       * Mise à jour avec le client Auth principal.
-       * Le runtime ignore volontairement USER_UPDATED, donc la SPA
-       * ne reconstruit pas la vue et ne revient pas au dashboard.
-       */
       const result=await client.auth.updateUser({password:nw});
       if(result.error)throw result.error;
 
-      /*
-       * Synchronisation du profil legacy utilisateurs.
-       * Cette partie ne touche pas à la session Auth.
-       */
       try{
         if(typeof window.sbFetch==='function'){
           const rows=await window.sbFetch(
@@ -97,24 +95,76 @@
         if(el)el.value='';
       });
 
-      /*
-       * Même si un ancien wrapper de navigation essaie de redessiner,
-       * on remet explicitement le profil après la mise à jour.
-       */
-      setTimeout(()=>{
-        try{
-          if(typeof window.renderMyProfile==='function')window.renderMyProfile();
-        }catch(_){}
-      },100);
-
       toast('Mot de passe mis à jour','ok');
     }catch(error){
       console.error('[ONOMO] changement mot de passe',error);
       toast(error?.message||'Impossible de modifier le mot de passe','err');
     }finally{
-      if(button)button.disabled=false;
+      if(button){
+        button.disabled=false;
+        button.removeAttribute('aria-busy');
+      }
     }
   }
 
-  window.changeMyPassword=changePassword;
+  function installFormProtection(){
+    if(document.documentElement.__onomoPasswordFormProtection)return;
+    document.documentElement.__onomoPasswordFormProtection=true;
+
+    document.addEventListener('click',event=>{
+      const button=event.target?.closest?.('#mainContent button');
+      if(!button)return;
+      const hasPasswordFields=
+        document.getElementById('pOld') &&
+        document.getElementById('pNew') &&
+        document.getElementById('pConfirm');
+      if(!hasPasswordFields)return;
+
+      const isPasswordButton=button===getPasswordButton()
+        || /enregistrer.*mot de passe|sauvegarder.*mot de passe|change.*password|save.*password/i.test(String(button.textContent||''));
+      if(!isPasswordButton)return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      changePassword();
+    },true);
+
+    document.addEventListener('submit',event=>{
+      const hasPasswordFields=
+        document.getElementById('pOld') &&
+        document.getElementById('pNew') &&
+        document.getElementById('pConfirm');
+      if(!hasPasswordFields)return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      changePassword();
+    },true);
+
+    document.addEventListener('keydown',event=>{
+      if(event.key!=='Enter')return;
+      const active=event.target;
+      if(!active?.closest?.('#mainContent'))return;
+      const hasPasswordFields=
+        document.getElementById('pOld') &&
+        document.getElementById('pNew') &&
+        document.getElementById('pConfirm');
+      if(!hasPasswordFields)return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      changePassword();
+    },true);
+  }
+
+  function boot(){
+    installFormProtection();
+    window.changeMyPassword=changePassword;
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
 })();
