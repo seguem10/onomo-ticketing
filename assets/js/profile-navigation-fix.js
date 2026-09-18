@@ -89,6 +89,10 @@
     if(!item)return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    /* Keep the application state on the profile view. The runtime sync runs every 10s and
+       uses currentView to decide which screen to redraw. Without this assignment it
+       still thinks we are on dashboard and sends the user back there. */
+    try{ currentView='profile'; }catch(_){ }
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
     item.classList.add('active');
     const title=document.getElementById('topbarTitle');
