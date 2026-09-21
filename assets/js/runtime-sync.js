@@ -3,6 +3,7 @@
   'use strict';
   const SESSION_KEY='onomo_active_session_v1', ACTIVITY_KEY='onomo_last_activity_v1', INACTIVITY=15*60*1000;
   let syncTimer=null, channel=null, realtimeChannel=null, realtimeClient=null, authClient=null, authSubscription=null, loading=false, syncQueued=false, syncQueuedTimer=null, restoring=false;
+  const t=(key,fallback)=>window.OnomoI18n?.t(key)||fallback;
   const cfg=()=>{try{return typeof settings!=='undefined'?settings:window.settings;}catch(_){return window.settings;}};
   const hasAuthConfiguration=()=>{const s=cfg();return Boolean(window.supabase&&s?.sbUrl&&s?.sbKey);};
 
@@ -302,9 +303,9 @@
   if(typeof previousSwitch==='function')window.switchView=function(view,element){touch();return previousSwitch(view,element);};
 
   const validPassword=password=>typeof password==='string'&&password.length>=12&&/[a-z]/.test(password)&&/[A-Z]/.test(password)&&/\d/.test(password)&&/[^A-Za-z0-9]/.test(password);
-  const passwordPolicyMessage='Utilisez au moins 12 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial.';
+  const passwordPolicyMessage=()=>t('password_policy','Utilisez au moins 12 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial.');
   async function updateSupabasePassword(password){
-    if(!validPassword(password))throw new Error(passwordPolicyMessage);
+    if(!validPassword(password))throw new Error(passwordPolicyMessage());
     const client=getAuthClient(),session=await getAuthSession();
     if(!client||!session?.user)throw new Error('Session Supabase absente.');
     const {error}=await client.auth.updateUser({password});
@@ -318,22 +319,22 @@
   }
   if(typeof window.changeMyPassword==='function')window.changeMyPassword=async function(){
     const old=document.getElementById('pOld')?.value||'',next=document.getElementById('pNew')?.value||'',confirm=document.getElementById('pConfirm')?.value||'';
-    if(next!==confirm){showToast('Les mots de passe ne correspondent pas','err');return false;}
-    if(!validPassword(next)){showToast(passwordPolicyMessage,'err');return false;}
+    if(next!==confirm){showToast(t('password_mismatch','Les mots de passe ne correspondent pas'),'err');return false;}
+    if(!validPassword(next)){showToast(passwordPolicyMessage(),'err');return false;}
     const client=getAuthClient(),session=await getAuthSession();
-    if(!client||!session?.user){showToast('Session Supabase absente','err');return false;}
+    if(!client||!session?.user){showToast(t('session_missing','Session Supabase absente'),'err');return false;}
     const verification=await client.auth.signInWithPassword({email:session.user.email,password:old});
-    if(verification.error){showToast('Mot de passe actuel incorrect','err');return false;}
-    try{await updateSupabasePassword(next);showToast('Mot de passe mis à jour','ok');['pOld','pNew','pConfirm'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});return true;}
-    catch(error){showToast(error.message||'Mise à jour du mot de passe impossible','err');return false;}
+    if(verification.error){showToast(t('current_password_incorrect','Mot de passe actuel incorrect'),'err');return false;}
+    try{await updateSupabasePassword(next);showToast(t('password_updated','Mot de passe mis à jour'),'ok');['pOld','pNew','pConfirm'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});return true;}
+    catch(error){showToast(error.message||t('password_update_failed','Mise à jour du mot de passe impossible'),'err');return false;}
   };
   if(typeof window.forceChangeDone==='function')window.forceChangeDone=async function(){
     const next=document.getElementById('fcNew')?.value||'',confirm=document.getElementById('fcConfirm')?.value||'',error=document.getElementById('fcErr'),message=document.getElementById('fcErrMsg');
     const fail=text=>{if(message)message.textContent=text;if(error)error.style.display='flex';};
-    if(next!==confirm){fail('Les mots de passe ne correspondent pas.');return false;}
-    if(!validPassword(next)){fail(passwordPolicyMessage);return false;}
-    try{await updateSupabasePassword(next);currentUser={...currentUser,mustChangePassword:false};showToast('Mot de passe défini avec succès','ok');initSession();return true;}
-    catch(problem){fail(problem.message||'Mise à jour du mot de passe impossible.');return false;}
+    if(next!==confirm){fail(t('password_mismatch','Les mots de passe ne correspondent pas'));return false;}
+    if(!validPassword(next)){fail(passwordPolicyMessage());return false;}
+    try{await updateSupabasePassword(next);currentUser={...currentUser,mustChangePassword:false};showToast(t('password_set','Mot de passe défini avec succès'),'ok');initSession();return true;}
+    catch(problem){fail(problem.message||t('password_update_failed','Mise à jour du mot de passe impossible'));return false;}
   };
 
   async function createAuthUser(payload){
@@ -375,11 +376,11 @@
       const hotels=role==='it_regional'&&typeof getSelectedHotels==='function'?getSelectedHotels():[];
       const roles=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
       const finalRoles=roles.length?roles:[role];
-      if(!email){showToast("L'email est requis",'err');return;}
-      if(!validPassword(password)){showToast(passwordPolicyMessage,'err');return;}
-      if(role==='it_hotel'&&!hotel){showToast("Sélectionnez un hôtel pour l'IT Hôtel",'err');return;}
-      if(role==='it_regional'&&!hotels.length){showToast("Sélectionnez au moins un hôtel pour l'IT Régional",'err');return;}
-      if(DEMO_USERS.some(user=>user.email===email)){showToast('Email déjà utilisé','err');return;}
+      if(!email){showToast(t('email_required',"L'email est requis"),'err');return;}
+      if(!validPassword(password)){showToast(passwordPolicyMessage(),'err');return;}
+      if(role==='it_hotel'&&!hotel){showToast(t('select_it_hotel',"Sélectionnez un hôtel pour l'IT Hôtel"),'err');return;}
+      if(role==='it_regional'&&!hotels.length){showToast(t('select_it_regional',"Sélectionnez au moins un hôtel pour l'IT Régional"),'err');return;}
+      if(DEMO_USERS.some(user=>user.email===email)){showToast(t('email_already_used','Email déjà utilisé'),'err');return;}
       try{
         const result=await createAuthUser({prenom,nom,email,password,role,roles:finalRoles,hotel,hotels});
         installAuthenticatedSbFetch();
@@ -393,7 +394,7 @@
         return result;
       }catch(error){
         console.error('Création utilisateur Supabase:',error);
-        showToast(error.message||'Création du compte impossible','err');
+        showToast(error.message||t('account_create_failed','Création du compte impossible'),'err');
         return null;
       }
     };
