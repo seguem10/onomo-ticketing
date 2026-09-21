@@ -1827,9 +1827,15 @@ function renderDetail(){
       </div>
     </div>`;
 }
-function submitComment(){
+let commentSubmissionPending=false;
+async function submitComment(){
+  if(commentSubmissionPending)return;
   const inp=document.getElementById("commentInput");
-  if(inp?.value.trim()){addComment(inp.value.trim());inp.value="";}
+  const message=inp?.value.trim();if(!message)return;
+  const button=inp?.parentElement?.querySelector("button");commentSubmissionPending=true;
+  if(button){button.disabled=true;button.setAttribute("aria-busy","true");}
+  try{await addComment(message);if(inp)inp.value="";}
+  finally{commentSubmissionPending=false;if(button){button.disabled=false;button.removeAttribute("aria-busy");}}
 }
 function openStatusModal(){
   if(!currentTicket)return;
@@ -1838,14 +1844,22 @@ function openStatusModal(){
   populatePrioSelect("editPrio",currentTicket.priorite);
   openModal("modalStatus");
 }
-function saveStatus(){
-  if(!currentTicket)return;
-  updateTicket(currentTicket.id,{
-    statut:document.getElementById("editStatut").value,
-    assigne_a:document.getElementById("editAgent").value,
-    priorite:document.getElementById("editPrio").value
-  });
-  closeModal("modalStatus");
+let statusSavePending=false;
+async function saveStatus(){
+  if(statusSavePending||!currentTicket)return;
+  const button=document.querySelector('#modalStatus .modal-foot .btn-gold');statusSavePending=true;
+  if(button){button.disabled=true;button.setAttribute("aria-busy","true");button.innerHTML='<i class="ti ti-loader-2 spin"></i>Enregistrement…';}
+  try{
+    await updateTicket(currentTicket.id,{
+      statut:document.getElementById("editStatut").value,
+      assigne_a:document.getElementById("editAgent").value,
+      priorite:document.getElementById("editPrio").value
+    });
+    closeModal("modalStatus");
+  }finally{
+    statusSavePending=false;
+    if(button){button.disabled=false;button.removeAttribute("aria-busy");button.innerHTML='<i class="ti ti-check"></i>Enregistrer';}
+  }
 }
 function reopenCurrentTicket(){
   if(!currentTicket||currentTicket.statut!=="fermé")return;
@@ -2964,7 +2978,9 @@ async function doAIAnalysis(titre,desc){
     };
   }catch(e){return{priorite:"Normale",categorie:"Guest relations",assigne:"",resume:"Analyse IA indisponible : impossible de joindre le service d'analyse.",action:""};}
 }
+let ticketSubmissionPending=false;
 async function submitNewTicket(){
+  if(ticketSubmissionPending)return;
   if(isReadOnly()){showToast("Votre compte est en lecture seule — création de ticket non autorisée","err");closeModal("modalTicket");return;}
   const titre=document.getElementById("ntTitre").value.trim();
   if(!titre){showToast("Le sujet est requis","err");return;}
@@ -2976,12 +2992,19 @@ async function submitNewTicket(){
     priorite:document.getElementById("ntPrio").value,
     assigne_a:document.getElementById("ntAgent").value
   };
-  closeModal("modalTicket"); // fermer AVANT l'async
-  document.getElementById("ntTitre").value="";
-  document.getElementById("ntDesc").value="";
-  showToast("Ticket créé avec succès","ok");
-  await createTicket(data);
-  renderView();
+  const button=document.querySelector('#modalTicket .modal-foot .btn-gold');ticketSubmissionPending=true;
+  if(button){button.disabled=true;button.setAttribute("aria-busy","true");button.innerHTML='<i class="ti ti-loader-2 spin"></i>Création…';}
+  try{
+    await createTicket(data);
+    closeModal("modalTicket");
+    document.getElementById("ntTitre").value="";
+    document.getElementById("ntDesc").value="";
+    showToast("Ticket créé avec succès","ok");
+    renderView();
+  }finally{
+    ticketSubmissionPending=false;
+    if(button){button.disabled=false;button.removeAttribute("aria-busy");button.innerHTML='<i class="ti ti-check"></i>Créer le ticket';}
+  }
 }
 
 
