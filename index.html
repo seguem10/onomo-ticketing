@@ -8,14 +8,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ONOMO Desk">
-<meta name="application-name" content="ONOMO Desk">
 <meta name="theme-color" content="#141C2E">
 <meta name="description" content="Onomo Support IT — système de ticketing et support informatique">
 <meta name="application-name" content="Onomo Support IT">
 <meta name="apple-mobile-web-app-title" content="Onomo Support IT">
 <meta name="theme-color" content="#155eef">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icons/icon-192.png">
+<link rel="icon" id="favicon" type="image/svg+xml" href="assets/pwa/onomo-icon.svg">
+<link rel="alternate icon" type="image/png" href="assets/pwa/icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="192x192" href="assets/pwa/icons/icon-192.png">
 <link rel="manifest" id="pwa-manifest">
 <link rel="apple-touch-icon" id="apple-touch-icon">
@@ -91,7 +90,7 @@ a{color:inherit;text-decoration:none}
 ═══════════════════════════════════════════ */
 .login-wrap{position:relative;z-index:1;width:100%;max-width:400px;padding:16px}
 .login-brand{text-align:center;margin-bottom:32px}
-.login-logo{font-size:26px;font-weight:700;color:var(--brand);letter-spacing:5px;display:flex;align-items:center;justify-content:center;gap:10px}
+.login-logo{font-size:26px;font-weight:700;color:var(--brand);letter-spacing:5px;display:flex;align-items:center;justify-content:center;gap:10px}.onomo-wordmark{display:block;width:auto;object-fit:contain;filter:invert(1)}.login-logo .onomo-wordmark{height:32px;max-width:180px}.sb-logo .onomo-wordmark{height:26px;max-width:150px}
 .login-logo i{font-size:22px}
 .login-tagline{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:3px;margin-top:6px;text-transform:uppercase}
 .login-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:var(--rl);padding:32px;backdrop-filter:blur(12px)}
@@ -624,7 +623,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 <div id="loginScreen" class="screen active">
   <div class="login-wrap">
     <div class="login-brand">
-      <div class="login-logo"><i class="ti ti-building-skyscraper"></i><span id="loginBrandName">ONOMO</span></div>
+      <div class="login-logo"><img class="onomo-wordmark" src="assets/pwa/onomo-logo.svg" alt="ONOMO"></div>
       <div class="login-tagline">Support Desk · Hôtellerie</div>
     </div>
     <div class="login-card">
@@ -645,7 +644,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
     <div class="sidebar" id="sidebar">
       <div class="sb-brand">
-        <div class="sb-logo"><i class="ti ti-building-skyscraper"></i><span id="sbBrandName">DESK</span></div>
+        <div class="sb-logo"><img class="onomo-wordmark" src="assets/pwa/onomo-logo.svg" alt="ONOMO"></div>
         <div class="sb-logo-sub">Support Hôtelier</div>
       </div>
       <div id="sbHotelChip" class="sb-hotel-chip" style="display:none"><i class="ti ti-building"></i><span id="sbHotelName"></span></div>
@@ -2742,7 +2741,7 @@ function applyLogoToUI(){
     if(logo){
       sbLogo.innerHTML=`<img src="${logo}" style="height:32px;max-width:140px;object-fit:contain;filter:brightness(1.1)">`;
     } else {
-      sbLogo.innerHTML=`<i class="ti ti-building-skyscraper"></i><span id="sbBrandName">${esc(settings.brandName||"ONOMO")}</span>`;
+      sbLogo.innerHTML=`<img class="onomo-wordmark" src="assets/pwa/onomo-logo.svg" alt="ONOMO">`;
     }
   }
   // Login logo
@@ -2751,7 +2750,7 @@ function applyLogoToUI(){
     if(logo){
       loginLogo.innerHTML=`<img src="${logo}" style="height:40px;max-width:160px;object-fit:contain">`;
     } else {
-      loginLogo.innerHTML=`<i class="ti ti-building-skyscraper"></i><span id="loginBrandName">${esc(settings.brandName||"ONOMO")}</span>`;
+      loginLogo.innerHTML=`<img class="onomo-wordmark" src="assets/pwa/onomo-logo.svg" alt="ONOMO">`;
     }
   }
   // Update PWA icon if loaded
