@@ -62,7 +62,29 @@
       if(uh && !uh.options.length) populateSelects();
     }
   }
-  const originalInit=window.initSession;window.initSession=function(){originalInit();applyAccess();if(!isPower(currentUser))switchView('tickets',document.querySelector('[data-view="tickets"]'));};
+  // PWA shortcuts and copied links use a hash route.  Resolve it only after
+  // authentication is restored so the normal navigation guard also protects
+  // direct links such as #settings.
+  function applyHashRoute(){
+    if(!currentUser)return;
+    const hash=decodeURIComponent(location.hash.replace(/^#/,'')).trim().toLowerCase();
+    if(!hash)return;
+    const routes={'all-tickets':'tickets','my-tickets':'my-tickets',dashboard:'dashboard',urgents:'urgents',settings:'settings',profile:'profile',users:'users',hotels:'hotels-admin'};
+    if(hash==='new-ticket'){
+      if(can(currentUser,'ticket:create')&&!(window.isReadOnly&&window.isReadOnly(currentUser)))window.openNewTicket?.();
+      else window.showToast?.(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');
+      return;
+    }
+    if(hash==='roles'){
+      if(userRoles(currentUser).includes('Administrateur'))window.renderRoleManager?.();
+      else window.showToast?.(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');
+      return;
+    }
+    const view=routes[hash];
+    if(view)window.switchView?.(view,document.querySelector(`[data-view="${view}"]`));
+  }
+  window.addEventListener('hashchange',applyHashRoute);
+  const originalInit=window.initSession;window.initSession=function(){originalInit();applyAccess();if(!isPower(currentUser))switchView('tickets',document.querySelector('[data-view="tickets"]'));setTimeout(applyHashRoute,0);};
   const loginGuard={key:'onomo_login_guard',maxAttempts:5,lockMinutes:15,read(){try{return JSON.parse(localStorage.getItem(this.key)||'{}')}catch(_){return{}}},write(value){localStorage.setItem(this.key,JSON.stringify(value))},locked(email){const entry=this.read()[email];return entry?.until&&Date.now()<entry.until},failure(email){const all=this.read(),entry=all[email]||{count:0};entry.count++;if(entry.count>=this.maxAttempts){entry.until=Date.now()+this.lockMinutes*60000;entry.count=0;}all[email]=entry;this.write(all);return entry.until},success(email){const all=this.read();delete all[email];this.write(all)}};
   const originalLogin=window.doLogin;window.doLogin=async function(){const email=document.getElementById('loginEmail')?.value.trim().toLowerCase();if(loginGuard.locked(email)){const err=document.getElementById('loginErr');document.getElementById('loginErrMsg').textContent=window.OnomoI18n?.t('login_locked')||'Trop de tentatives. Réessayez dans quelques minutes.';err?.classList.add('show');return;}await originalLogin();const failed=document.getElementById('loginErr')?.classList.contains('show');if(failed)loginGuard.failure(email);else if(currentUser){loginGuard.success(email);sessionStorage.setItem('onomo_session_started',String(Date.now()));}};
   const originalLogout=window.doLogout;window.doLogout=function(){sessionStorage.removeItem('onomo_session_started');return originalLogout();};
