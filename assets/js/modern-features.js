@@ -54,6 +54,24 @@
   window.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();});
   const originalSwitch=window.switchView;window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['users','hotels-admin','settings'];if((!isPower(currentUser)&&restricted.includes(view))||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){showToast('Accès non autorisé.','err');return;}return originalSwitch(view,el);};
   const originalSettings=window.renderSettings;window.renderSettings=function(){if(!userRoles(currentUser).includes('Administrateur')){showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');switchView('tickets',document.querySelector('[data-view="tickets"]'));return;}return originalSettings();};
+  // Hiding the menu is not sufficient: a non-administrator can call global
+  // handlers from DevTools. Guard every system-settings mutator as well.
+  function guardSettingsMutators(){
+    ['selectColor','selectSidebarColor','previewFont','applyTypography','addCat','removeCat','saveCats','resetCats','setTheme','uploadLogo','removeLogo','applySettings','toggleSetting','saveSbConfig'].forEach(name=>{
+      const original=window[name];
+      if(typeof original!=='function'||original.__onomoAdminGuard)return;
+      const guarded=function(...args){
+        if(!userRoles(currentUser).includes('Administrateur')){
+          showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');
+          return false;
+        }
+        return original.apply(this,args);
+      };
+      guarded.__onomoAdminGuard=true;
+      window[name]=guarded;
+    });
+  }
+  guardSettingsMutators();
   window.visibleTickets=function(){return isPower(currentUser)?tickets:tickets.filter(owner);};
   const originalCreate=window.createTicket;window.createTicket=async function(data){return originalCreate({...data,created_by:currentUser?.id||null,created_by_email:currentUser?.email||null});};
   const originalUserHotels=window.userHotels;window.userHotels=function(u){u=u||currentUser;if(u?.role==='demandeur'||u?.role==='requester')return u.hotel?[u.hotel]:[];return originalUserHotels?originalUserHotels(u):[];};
