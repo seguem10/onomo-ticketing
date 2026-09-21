@@ -23,6 +23,10 @@ create or replace function public.is_admin() returns boolean language sql stable
 
 drop policy if exists allow_all on public.utilisateurs;
 drop policy if exists allow_all on public.commentaires;
+-- A legacy policy named `all` granted every authenticated user full access to
+-- every comment.  It must be removed as well: PostgreSQL combines policies
+-- with OR, so leaving it in place bypasses the restrictive policies below.
+drop policy if exists "all" on public.commentaires;
 drop policy if exists allow_all on public.audit_logs;
 drop policy if exists tickets_read on public.tickets;
 drop policy if exists tickets_create on public.tickets;
