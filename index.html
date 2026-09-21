@@ -1892,11 +1892,34 @@ function ticketEventLabel(event){
   const labels={created:"Ticket créé",updated:"Ticket mis à jour",reassigned:"Ticket réassigné",closed:"Ticket fermé",reopened:"Ticket rouvert",commented:"Commentaire ajouté"};
   return labels[event.action]||"Mise à jour du ticket";
 }
+function ticketEventActor(event){
+  const users=Array.isArray(DEMO_USERS)?DEMO_USERS:[];
+  const actor=users.find(user=>String(user.auth_user_id||user.id||"")===String(event.actor_id||""));
+  if(!actor)return event.actor_id?"Utilisateur":"";
+  return `${actor.prenom||""} ${actor.nom||""}`.trim()||actor.email||"Utilisateur";
+}
+function ticketEventValue(field,value){
+  if(field==="statut"){
+    const keys={nouveau:"new",en_cours:"in_progress",en_attente:"pending",résolu:"resolved",fermé:"closed"};
+    return window.OnomoI18n?.t(keys[value])||STAT_L[value]||value||"—";
+  }
+  return value||"—";
+}
+function ticketEventDetail(event){
+  const oldValues=event.old_values&&typeof event.old_values==="object"?event.old_values:{};
+  const newValues=event.new_values&&typeof event.new_values==="object"?event.new_values:{};
+  if(event.action==="commented")return newValues.message?`« ${newValues.message} »`:"";
+  const changes=[];
+  if(oldValues.statut!==undefined&&oldValues.statut!==newValues.statut)changes.push(`Statut : ${ticketEventValue("statut",oldValues.statut)} → ${ticketEventValue("statut",newValues.statut)}`);
+  if(oldValues.priorite!==undefined&&oldValues.priorite!==newValues.priorite)changes.push(`Priorité : ${oldValues.priorite||"—"} → ${newValues.priorite||"—"}`);
+  if(oldValues.assigne_a!==undefined&&oldValues.assigne_a!==newValues.assigne_a)changes.push(`Assigné : ${oldValues.assigne_a||"Non assigné"} → ${newValues.assigne_a||"Non assigné"}`);
+  return changes.join(" · ");
+}
 function renderTicketEvents(message){
   const target=document.getElementById("ticketHistoryList");if(!target)return;
   if(message){target.textContent=message;return;}
   if(!ticketEvents.length){target.textContent="Aucun événement enregistré pour le moment.";return;}
-  target.innerHTML=ticketEvents.map(event=>`<div style="display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)"><i class="ti ti-clock" style="color:var(--tx3);margin-top:2px"></i><div><strong style="color:var(--tx)">${esc(ticketEventLabel(event))}</strong><div style="font-size:11px;color:var(--tx3);margin-top:2px">${esc(timeAgo(event.created_at))}</div></div></div>`).join("");
+  target.innerHTML=ticketEvents.map(event=>{const actor=ticketEventActor(event),detail=ticketEventDetail(event);return`<div style="display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)"><i class="ti ti-clock" style="color:var(--tx3);margin-top:2px"></i><div><strong style="color:var(--tx)">${actor?`${esc(actor)} — `:""}${esc(ticketEventLabel(event))}</strong>${detail?`<div style="font-size:11px;color:var(--tx2);margin-top:2px">${esc(detail)}</div>`:""}<div style="font-size:11px;color:var(--tx3);margin-top:2px">${esc(timeAgo(event.created_at))}</div></div></div>`;}).join("");
 }
 async function analyzeDetail(){
   if(!currentTicket)return;

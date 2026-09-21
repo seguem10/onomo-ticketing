@@ -146,7 +146,10 @@
       // preserving cached comments for every other ticket.
       commentaires=[...commentaires.filter(comment=>String(comment.ticket_id)!==String(ticketId)),...rows];
       saveCommentaires(commentaires);
-      if(currentView==='detail'&&String(currentTicket?.id)===String(ticketId))renderDetail();
+      if(currentView==='detail'&&String(currentTicket?.id)===String(ticketId)){
+        renderDetail();
+        window.loadTicketEvents?.(ticketId);
+      }
     }catch(error){console.warn('Synchronisation commentaires indisponible',error);}
   }
   async function syncNotifications(){
@@ -170,7 +173,11 @@
     try{
       const s=cfg();realtimeClient=getAuthClient()||window.supabase.createClient(s.sbUrl,s.sbKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'onomo-supabase-auth'}});
       realtimeChannel=realtimeClient.channel('onomo-ticket-events')
-        .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},()=>syncTickets())
+        .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},payload=>{
+          syncTickets();
+          const ticketId=payload.new?.id||payload.old?.id;
+          if(currentView==='detail'&&String(currentTicket?.id)===String(ticketId))window.loadTicketEvents?.(ticketId);
+        })
         .on('postgres_changes',{event:'*',schema:'public',table:'commentaires'},payload=>{
           const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;
           syncComments(ticketId);
