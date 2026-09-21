@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   const SESSION_KEY='onomo_active_session_v1', ACTIVITY_KEY='onomo_last_activity_v1', INACTIVITY=15*60*1000;
-  let syncTimer=null, channel=null, realtimeChannel=null, realtimeClient=null, authClient=null, authSubscription=null, loading=false, restoring=false;
+  let syncTimer=null, channel=null, realtimeChannel=null, realtimeClient=null, authClient=null, authSubscription=null, loading=false, syncQueued=false, syncQueuedTimer=null, restoring=false;
   const cfg=()=>{try{return typeof settings!=='undefined'?settings:window.settings;}catch(_){return window.settings;}};
   const hasAuthConfiguration=()=>{const s=cfg();return Boolean(window.supabase&&s?.sbUrl&&s?.sbKey);};
 
@@ -129,13 +129,24 @@
     }catch(error){console.warn('Rafraîchissement vue impossible',error);}
   }
 
+  function queueTicketSync(delay=100){
+    if(syncQueuedTimer)return;
+    syncQueuedTimer=setTimeout(()=>{syncQueuedTimer=null;syncTickets();},delay);
+  }
   async function syncTickets(){
-    if(loading||!currentUser||!sbOK())return;loading=true;
+    if(!currentUser||!sbOK())return;
+    // Realtime may deliver several events while a fetch is running. Do not drop
+    // the later event: one targeted reload is queued after the active request.
+    if(loading){syncQueued=true;return;}
+    loading=true;
     try{
       installAuthenticatedTicketCrud();
       const records=await window.__onomoAuthenticatedSbLoadTickets();
       if(Array.isArray(records)){tickets=records;saveTickets(tickets);refreshView();}
-    }catch(error){console.warn('Ticket sync unavailable',error);}finally{loading=false;}
+    }catch(error){console.warn('Ticket sync unavailable',error);}finally{
+      loading=false;
+      if(syncQueued){syncQueued=false;queueTicketSync(0);}
+    }
   }
   async function syncComments(ticketId){
     if(!currentUser||!sbOK()||!ticketId)return;
@@ -174,14 +185,14 @@
       const s=cfg();realtimeClient=getAuthClient()||window.supabase.createClient(s.sbUrl,s.sbKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'onomo-supabase-auth'}});
       realtimeChannel=realtimeClient.channel('onomo-ticket-events')
         .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},payload=>{
-          syncTickets();
+          queueTicketSync();
           const ticketId=payload.new?.id||payload.old?.id;
           if(currentView==='detail'&&String(currentTicket?.id)===String(ticketId))window.loadTicketEvents?.(ticketId);
         })
         .on('postgres_changes',{event:'*',schema:'public',table:'commentaires'},payload=>{
           const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;
           syncComments(ticketId);
-          syncTickets();
+          queueTicketSync();
         })
         .on('postgres_changes',{event:'*',schema:'public',table:'notifications'},()=>syncNotifications())
         .subscribe(status=>{if(status==='SUBSCRIBED')console.log('Supabase Realtime connecté');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Supabase Realtime indisponible, polling actif');});
