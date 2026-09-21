@@ -198,6 +198,7 @@
       if(rows?.[0]){
         currentUser=dbRowToUser(rows[0]);
         currentUser.auth_user_id=session.user.id;
+        if(currentUser.language)window.OnomoI18n?.setLanguage(currentUser.language,false);
         initSession();
         writeSession();
         touch();
@@ -252,6 +253,7 @@
             if(rows?.[0]){
               currentUser=dbRowToUser(rows[0]);
               currentUser.auth_user_id=data.session.user.id;
+              if(currentUser.language)window.OnomoI18n?.setLanguage(currentUser.language,false);
               initSession();
               writeSession();
               touch();
