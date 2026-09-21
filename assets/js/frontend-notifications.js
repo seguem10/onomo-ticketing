@@ -30,7 +30,7 @@
         ticket_categorie:ticket.categorie || '',
         ticket_statut:(typeof STAT_L!=='undefined' && STAT_L[ticket.statut]) || ticket.statut || '',
         app_url:(typeof APP_URL!=='undefined' && APP_URL) || window.location.href,
-        name:(typeof settings!=='undefined' && settings.brandName) || 'ONOMO Desk',
+        name:(typeof settings!=='undefined' && settings.brandName ? `${settings.brandName} Support IT` : 'ONOMO Support IT'),
         event:event
       };
       const res=await window.emailjs.send(c.serviceId,c.templateId,params);
