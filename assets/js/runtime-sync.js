@@ -79,6 +79,37 @@
   const writeSession=()=>{try{if(currentUser)localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,user:currentUser,at:Date.now()}));}catch(_) {}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(ACTIVITY_KEY);}catch(_) {}};
   const touch=()=>{try{if(currentUser)localStorage.setItem(ACTIVITY_KEY,String(Date.now()));}catch(_) {}};
+  let inactivityTimer=null, idleLogoutInProgress=false, lastPointerTouch=0;
+  const sessionExpiredMessage=()=>window.OnomoI18n?.t('session_expired')||'Votre session a expiré pour cause d’inactivité.';
+  async function expireInactiveSession(){
+    if(idleLogoutInProgress||!currentUser)return;
+    idleLogoutInProgress=true;
+    try{
+      await window.doLogout?.();
+      const error=document.getElementById('loginErr'),message=document.getElementById('loginErrMsg');
+      if(message)message.textContent=sessionExpiredMessage();
+      error?.classList.add('show');
+    }catch(error){console.warn('Déconnexion pour inactivité impossible',error);}
+    finally{idleLogoutInProgress=false;}
+  }
+  function checkInactivity(){
+    if(!currentUser||idleLogoutInProgress)return;
+    const last=Number(localStorage.getItem(ACTIVITY_KEY)||0);
+    if(!last){touch();return;}
+    if(Date.now()-last>=INACTIVITY)expireInactiveSession();
+  }
+  function startInactivityWatcher(){
+    if(inactivityTimer)return;
+    inactivityTimer=setInterval(checkInactivity,15000);
+    checkInactivity();
+  }
+  function recordUserActivity(event){
+    if(!currentUser)return;
+    if(event?.type==='pointermove'){
+      const now=Date.now();if(now-lastPointerTouch<1000)return;lastPointerTouch=now;
+    }
+    touch();
+  }
   function refreshBadge(){if(!currentUser)return;try{const all=visibleTickets();const badge=document.getElementById('sbOpen');if(badge)badge.textContent=all.length;}catch(_) {}}
 
   /* Background sync must never rebuild the ticket detail screen. */
@@ -301,7 +332,8 @@
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
-    try{['touchstart','pointerdown','keydown','click'].forEach(evt=>document.addEventListener(evt,touch,{passive:true}));}catch(_){}
+    try{['touchstart','pointerdown','pointermove','keydown','click','input','change'].forEach(evt=>document.addEventListener(evt,recordUserActivity,{passive:true}));}catch(_){}
+    startInactivityWatcher();
     initMobileAndPwaUi();
     restoreSession();
   });
