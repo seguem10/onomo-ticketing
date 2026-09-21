@@ -4,6 +4,7 @@
   const SESSION_KEY='onomo_active_session_v1', ACTIVITY_KEY='onomo_last_activity_v1', INACTIVITY=15*60*1000;
   let syncTimer=null, channel=null, realtimeChannel=null, realtimeClient=null, authClient=null, authSubscription=null, loading=false, restoring=false;
   const cfg=()=>{try{return typeof settings!=='undefined'?settings:window.settings;}catch(_){return window.settings;}};
+  const hasAuthConfiguration=()=>{const s=cfg();return Boolean(window.supabase&&s?.sbUrl&&s?.sbKey);};
 
   function getAuthClient(){
     if(authClient)return authClient;
@@ -38,8 +39,8 @@
       const s=cfg();if(!s?.sbUrl||!s?.sbKey)throw new Error('Supabase non configuré');
       const session=await getAuthSession();
       const headers={'Content-Type':'application/json','Prefer':opts.prefer||'return=representation','apikey':s.sbKey};
-      if(session?.access_token)headers.Authorization=`Bearer ${session.access_token}`;
-      else headers.Authorization=`Bearer ${s.sbKey}`;
+      if(!session?.access_token)throw new Error('Session Supabase absente');
+      headers.Authorization=`Bearer ${session.access_token}`;
       const response=await fetch(`${s.sbUrl}/rest/v1/${path}`,{...opts,headers});
       if(!response.ok){const text=await response.text();throw new Error(`Supabase ${response.status}: ${text.slice(0,300)}`);}
       const text=await response.text();return text?JSON.parse(text):[];
@@ -144,6 +145,13 @@
     if(session?.user){
       const restored=await restoreSupabaseProfile(session);
       if(restored)return;
+    }
+    /* In production, a browser cache must never become an alternate
+       authentication authority. Local restoration remains available only for
+       an explicit offline/demo configuration without Supabase Auth. */
+    if(hasAuthConfiguration()){
+      clearSession();
+      return;
     }
     let saved=null;
     try{saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(_){}
