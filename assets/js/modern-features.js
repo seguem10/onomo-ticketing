@@ -151,6 +151,42 @@
   };
   const originalRoleChange=window.onRoleChange;window.onRoleChange=function(v){if(originalRoleChange)originalRoleChange(v);if(v==='demandeur'||v==='requester'){const wrap=document.getElementById('uHotelWrap');const single=document.getElementById('uHotelSingle');const multi=document.getElementById('uHotelMulti');if(wrap)wrap.style.display='block';if(single)single.style.display='block';if(multi)multi.style.display='none';const label=single?.querySelector('.field-lbl');if(label)label.innerHTML='Hôtel assigné <span style="color:var(--tx3);font-weight:400">(Demandeur)</span>';const uh=document.getElementById('uHotel');if(uh&&!uh.options.length){const hotels=HOTELS||[];uh.innerHTML="<option value=''>— Sélectionner un hôtel —</option>";hotels.forEach(h=>{const o=document.createElement('option');o.value=h.nom;o.textContent=h.nom;uh.appendChild(o);});}}};
   function addVoice(){const description=document.getElementById('ntDesc');if(!description||document.getElementById('voiceDictationBtn'))return;description.insertAdjacentHTML('afterend','<button type="button" class="btn btn-outline btn-sm" id="voiceDictationBtn" style="margin-top:8px"><i class="ti ti-microphone"></i>Dicter automatiquement</button><small id="voiceStatus" style="display:block;margin-top:5px;color:var(--tx3)"></small>');const button=document.getElementById('voiceDictationBtn'),status=document.getElementById('voiceStatus');const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Speech){button.disabled=true;status.textContent='La dictée vocale n’est pas disponible dans ce navigateur.';return;}let recognition,active=false,index=0;const languages=['fr-FR','en-US','ar-MA','es-ES'];function start(){recognition=new Speech();recognition.continuous=true;recognition.interimResults=true;recognition.lang=languages[index];recognition.onresult=event=>{let text='';for(let i=event.resultIndex;i<event.results.length;i++)text+=event.results[i][0].transcript;if(text)description.value=(description.value+' '+text).trim();};recognition.onerror=event=>{if(['no-speech','language-not-supported'].includes(event.error)&&active){index=(index+1)%languages.length;setTimeout(start,150);return;}status.textContent=`Dictée interrompue : ${event.error}`;active=false;button.innerHTML='<i class="ti ti-microphone"></i>Dicter automatiquement';};recognition.onend=()=>{if(active){index=(index+1)%languages.length;setTimeout(start,150);}};recognition.start();status.textContent='Écoute active — détection automatique en cours.';}button.addEventListener('click',()=>{active=!active;if(active){button.innerHTML='<i class="ti ti-player-stop"></i>Arrêter la dictée';start();}else{recognition?.stop();button.innerHTML='<i class="ti ti-microphone"></i>Dicter automatiquement';status.textContent='Dictée arrêtée.';}});}
+  // Browser SpeechRecognition accepts one recognition language at a time. This
+  // implementation starts from the browser/application preference, detects
+  // clear French/English/Arabic results for the following segment, and never
+  // rotates languages after every utterance (which previously corrupted text).
+  function addVoice(){
+    const description=document.getElementById('ntDesc');if(!description||document.getElementById('voiceDictationBtn'))return;
+    description.insertAdjacentHTML('afterend','<button type="button" class="btn btn-outline btn-sm" id="voiceDictationBtn" style="margin-top:8px"><i class="ti ti-microphone"></i>Dicter automatiquement</button><small id="voiceStatus" style="display:block;margin-top:5px;color:var(--tx3)"></small>');
+    const button=document.getElementById('voiceDictationBtn'),status=document.getElementById('voiceStatus'),Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!Speech){button.disabled=true;status.textContent='La dictée vocale n’est pas disponible dans ce navigateur.';return;}
+    const available=['fr-FR','en-US','ar-MA'];
+    const preferred=()=>{const candidates=[...(navigator.languages||[]),navigator.language,window.OnomoI18n?.language].filter(Boolean).map(String);return candidates.some(value=>value.startsWith('ar'))?'ar-MA':candidates.some(value=>value.startsWith('en'))?'en-US':'fr-FR';};
+    const detectedLanguage=text=>/[؀-ۿ]/.test(text)?'ar-MA':/\b(le|la|les|de|des|est|pas|avec|pour|bonjour)\b/i.test(text)?'fr-FR':/\b(the|and|is|with|for|hello|please)\b/i.test(text)?'en-US':null;
+    let recognition=null,active=false,language=preferred(),restartTimer=null;
+    const restart=()=>{if(active){clearTimeout(restartTimer);restartTimer=setTimeout(start,250);}};
+    function start(){
+      recognition=new Speech();recognition.continuous=true;recognition.interimResults=true;recognition.lang=language;
+      recognition.onresult=event=>{
+        let finalText='',interimText='';
+        for(let i=event.resultIndex;i<event.results.length;i++){const value=event.results[i][0].transcript;if(event.results[i].isFinal)finalText+=value;else interimText+=value;}
+        if(finalText.trim()){
+          description.value=(description.value+' '+finalText.trim()).trim();
+          const next=detectedLanguage(finalText);if(next&&next!==language)language=next;
+          status.textContent='Dictée active.';
+        }else if(interimText.trim())status.textContent='Écoute en cours…';
+      };
+      recognition.onerror=event=>{
+        if(!active)return;
+        if(event.error==='language-not-supported'){language=available[(available.indexOf(language)+1)%available.length];restart();return;}
+        if(event.error==='no-speech'){restart();return;}
+        status.textContent=`Dictée interrompue : ${event.error}`;active=false;button.innerHTML='<i class="ti ti-microphone"></i>Dicter automatiquement';
+      };
+      recognition.onend=restart;
+      try{recognition.start();status.textContent='Écoute active — langue détectée automatiquement.';}catch(error){status.textContent='Impossible de démarrer la dictée.';active=false;}
+    }
+    button.addEventListener('click',()=>{active=!active;if(active){button.innerHTML='<i class="ti ti-player-stop"></i>Arrêter la dictée';language=preferred();start();}else{clearTimeout(restartTimer);recognition?.stop();button.innerHTML='<i class="ti ti-microphone"></i>Dicter automatiquement';status.textContent='Dictée arrêtée.';}});
+  }
   function rebrand(root=document.body){root.querySelectorAll('*').forEach(element=>element.childNodes.forEach(node=>{if(node.nodeType===Node.TEXT_NODE)node.nodeValue=node.nodeValue.replace(/Support hôtelière|Support hôtelier|Support Hotelier|Support Desk · Hôtellerie/gi,'Support IT');}));}
   document.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();addRoleNav();addUserRolePicker();addVoice();rebrand();new MutationObserver(()=>rebrand()).observe(document.body,{childList:true,subtree:true});const manifest=document.getElementById('pwa-manifest');if(manifest)manifest.href='assets/pwa/manifest.webmanifest';document.title='Onomo Support IT';document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent='Support IT');const installed=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone||localStorage.getItem('onomo_pwa_installed')==='1';if(installed){localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');}if('serviceWorker'in navigator)navigator.serviceWorker.register('onomo-sw.js').catch(()=>{});window.addEventListener('appinstalled',()=>{localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');});});
 })();
