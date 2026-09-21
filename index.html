@@ -1006,6 +1006,7 @@ function DEMO_TICKETS_DATA(){return[];} // Système vide par défaut
 let currentUser    = null;
 let tickets        = [];
 let commentaires   = [];
+let ticketEvents   = [];
 let activity       = [];
 let currentTicket  = null;
 let searchQ        = "";
@@ -1570,8 +1571,11 @@ async function createTicket(data){
 }
 
 async function updateTicket(id,updates){
-  tickets=tickets.map(t=>t.id===id?{...t,...updates}:t);
-  if(currentTicket?.id===id)currentTicket={...currentTicket,...updates};
+  // The database workflow closes a resolved ticket. Mirror that deterministic
+  // transition locally so the agent never sees a stale "Résolu" state.
+  const finalUpdates=updates?.statut==="résolu"?{...updates,statut:"fermé"}:updates;
+  tickets=tickets.map(t=>t.id===id?{...t,...finalUpdates}:t);
+  if(currentTicket?.id===id)currentTicket={...currentTicket,...finalUpdates};
   saveTickets(tickets);
   updateCounts();
   showToast("Ticket mis à jour","ok");
@@ -1579,7 +1583,7 @@ async function updateTicket(id,updates){
   // Write to Supabase
   if(sbOK()){
     try{
-      await sbUpdateTicket(id, updates);
+      await sbUpdateTicket(id, finalUpdates);
     }catch(e){
       console.error('Supabase updateTicket failed:',e);
     }
@@ -1751,16 +1755,20 @@ function openDetail(id){
   document.getElementById("topbarTitle").textContent="Détail ticket";
   document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
   renderDetail();
+  loadTicketEvents(id);
 }
 function renderDetail(){
   if(!currentTicket)return;
   const t=currentTicket;
   const si=STATUTS.indexOf(t.statut);
   const canEdit=canManageTickets(currentUser);
+  const identity=[currentUser?.auth_user_id,currentUser?.id,currentUser?.email].filter(Boolean).map(v=>String(v).toLowerCase());
+  const canComment=canEdit||identity.includes(String(t.created_by||"").toLowerCase())||identity.includes(String(t.created_by_email||"").toLowerCase());
   const tcoms=commentaires.filter(c=>c.ticket_id===t.id);
   const controls=canEdit?`
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
       <button class="btn btn-outline btn-sm" onclick="openStatusModal()"><i class="ti ti-edit"></i>Modifier statut / assignation</button>
+      ${t.statut==="fermé"?`<button class="btn btn-outline btn-sm" onclick="reopenCurrentTicket()"><i class="ti ti-refresh"></i>Rouvrir le ticket</button>`:""}
       ${settings.aiEnabled?`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple-t);border:1px solid rgba(124,58,237,.2)" onclick="analyzeDetail()"><i class="ti ti-sparkles"></i>Analyse IA</button>`:""}
     </div>
     <div id="detailAIBox" style="margin-top:12px"></div>`:""
@@ -1790,7 +1798,11 @@ function renderDetail(){
         <div class="card" style="padding:20px">
           <div class="comment-title"><i class="ti ti-messages"></i>Commentaires (${tcoms.length})</div>
           <div id="commentList">${comHTML}</div>
-          ${canEdit?`<div class="c-input-wrap"><input id="commentInput" class="c-input" placeholder="Ajouter un commentaire…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){submitComment();event.preventDefault();}"><button class="btn btn-gold btn-sm" onclick="submitComment()"><i class="ti ti-send"></i></button></div>`:""}
+          ${canComment?`<div class="c-input-wrap"><input id="commentInput" class="c-input" placeholder="Ajouter un commentaire…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){submitComment();event.preventDefault();}"><button class="btn btn-gold btn-sm" onclick="submitComment()"><i class="ti ti-send"></i></button></div>`:""}
+        </div>
+        <div class="card" style="padding:20px;margin-top:14px">
+          <div class="comment-title"><i class="ti ti-history"></i>Historique</div>
+          <div id="ticketHistoryList" style="font-size:12px;color:var(--tx2)">Chargement de l’historique…</div>
         </div>
       </div>
       <div class="detail-sidebar">
@@ -1834,6 +1846,32 @@ function saveStatus(){
     priorite:document.getElementById("editPrio").value
   });
   closeModal("modalStatus");
+}
+function reopenCurrentTicket(){
+  if(!currentTicket||currentTicket.statut!=="fermé")return;
+  updateTicket(currentTicket.id,{statut:"nouveau"});
+}
+async function loadTicketEvents(ticketId){
+  ticketEvents=[];
+  renderTicketEvents();
+  if(!sbOK()||!ticketId)return;
+  try{
+    const rows=await sbFetch(`ticket_events?ticket_id=eq.${encodeURIComponent(ticketId)}&order=created_at.desc`);
+    if(currentTicket?.id===ticketId){ticketEvents=Array.isArray(rows)?rows:[];renderTicketEvents();}
+  }catch(error){
+    console.warn("Historique ticket indisponible",error);
+    if(currentTicket?.id===ticketId){ticketEvents=[];renderTicketEvents("Historique indisponible.");}
+  }
+}
+function ticketEventLabel(event){
+  const labels={created:"Ticket créé",updated:"Ticket mis à jour",reassigned:"Ticket réassigné",closed:"Ticket fermé",reopened:"Ticket rouvert",commented:"Commentaire ajouté"};
+  return labels[event.action]||"Mise à jour du ticket";
+}
+function renderTicketEvents(message){
+  const target=document.getElementById("ticketHistoryList");if(!target)return;
+  if(message){target.textContent=message;return;}
+  if(!ticketEvents.length){target.textContent="Aucun événement enregistré pour le moment.";return;}
+  target.innerHTML=ticketEvents.map(event=>`<div style="display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)"><i class="ti ti-clock" style="color:var(--tx3);margin-top:2px"></i><div><strong style="color:var(--tx)">${esc(ticketEventLabel(event))}</strong><div style="font-size:11px;color:var(--tx3);margin-top:2px">${esc(timeAgo(event.created_at))}</div></div></div>`).join("");
 }
 async function analyzeDetail(){
   if(!currentTicket)return;
