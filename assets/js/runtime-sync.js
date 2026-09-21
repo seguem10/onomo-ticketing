@@ -137,6 +137,18 @@
       if(Array.isArray(records)){tickets=records;saveTickets(tickets);refreshView();}
     }catch(error){console.warn('Ticket sync unavailable',error);}finally{loading=false;}
   }
+  async function syncComments(ticketId){
+    if(!currentUser||!sbOK()||!ticketId)return;
+    try{
+      const rows=await window.sbFetch(`commentaires?ticket_id=eq.${encodeURIComponent(ticketId)}&order=created_at.asc`);
+      if(!Array.isArray(rows))return;
+      // Replace only this ticket's slice: this prevents duplicates while
+      // preserving cached comments for every other ticket.
+      commentaires=[...commentaires.filter(comment=>String(comment.ticket_id)!==String(ticketId)),...rows];
+      saveCommentaires(commentaires);
+      if(currentView==='detail'&&String(currentTicket?.id)===String(ticketId))renderDetail();
+    }catch(error){console.warn('Synchronisation commentaires indisponible',error);}
+  }
   async function syncNotifications(){
     if(!currentUser||!sbOK()||typeof notifications==='undefined')return;
     try{
@@ -159,7 +171,11 @@
       const s=cfg();realtimeClient=getAuthClient()||window.supabase.createClient(s.sbUrl,s.sbKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'onomo-supabase-auth'}});
       realtimeChannel=realtimeClient.channel('onomo-ticket-events')
         .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},()=>syncTickets())
-        .on('postgres_changes',{event:'*',schema:'public',table:'commentaires'},()=>syncTickets())
+        .on('postgres_changes',{event:'*',schema:'public',table:'commentaires'},payload=>{
+          const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;
+          syncComments(ticketId);
+          syncTickets();
+        })
         .on('postgres_changes',{event:'*',schema:'public',table:'notifications'},()=>syncNotifications())
         .subscribe(status=>{if(status==='SUBSCRIBED')console.log('Supabase Realtime connecté');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Supabase Realtime indisponible, polling actif');});
     }catch(error){console.warn('Supabase Realtime indisponible',error);}

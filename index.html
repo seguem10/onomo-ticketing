@@ -1747,15 +1747,26 @@ function renderTicketList(list,title){
 /* ══════════════════════════════════════════════
    DETAIL
 ══════════════════════════════════════════════ */
-function openDetail(id){
+async function openDetail(id){
   currentTicket=tickets.find(t=>t.id===id);
   if(!currentTicket)return;
-  commentaires=commentaires.filter(c=>c.ticket_id===id);
   currentView="detail";
   document.getElementById("topbarTitle").textContent="Détail ticket";
   document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
   renderDetail();
   loadTicketEvents(id);
+  // Keep the cache for every ticket. The previous filter discarded comments
+  // for all other tickets whenever a detail view was opened.
+  if(sbOK()){
+    try{
+      const rows=await sbLoadComments(id);
+      if(Array.isArray(rows)){
+        commentaires=[...commentaires.filter(c=>String(c.ticket_id)!==String(id)),...rows];
+        saveCommentaires(commentaires);
+        if(currentView==="detail"&&String(currentTicket?.id)===String(id))renderDetail();
+      }
+    }catch(error){console.warn('Chargement des commentaires impossible',error);}
+  }
 }
 function renderDetail(){
   if(!currentTicket)return;
