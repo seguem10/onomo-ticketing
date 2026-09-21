@@ -106,6 +106,22 @@
       if(Array.isArray(records)){tickets=records;saveTickets(tickets);refreshView();}
     }catch(error){console.warn('Ticket sync unavailable',error);}finally{loading=false;}
   }
+  async function syncNotifications(){
+    if(!currentUser||!sbOK()||typeof notifications==='undefined')return;
+    try{
+      const rows=await window.sbFetch('notifications?order=created_at.desc&limit=50');
+      if(!Array.isArray(rows))return;
+      notifications=rows.map(row=>{
+        const body=row.body&&typeof row.body==='object'?row.body:{};
+        const type=String(row.type||'info');
+        const icon=type==='assignment'?'user-check':type==='comment'?'message':type==='closed'?'circle-check':type==='urgent'?'alert-triangle':'ticket';
+        const color=type==='urgent'?'var(--red)':type==='closed'?'var(--green)':'var(--brand)';
+        return {id:row.id,text:String(body.message||body.title||'Mise à jour de ticket'),icon,color,read:Boolean(row.read_at),time:row.created_at};
+      });
+      if(typeof renderNotifDot==='function')renderNotifDot();
+      if(typeof renderNotifList==='function')renderNotifList();
+    }catch(error){console.warn('Synchronisation notifications indisponible',error);}
+  }
   function startRealtime(){
     if(realtimeChannel||!window.supabase||!sbOK())return;
     try{
@@ -113,10 +129,11 @@
       realtimeChannel=realtimeClient.channel('onomo-ticket-events')
         .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},()=>syncTickets())
         .on('postgres_changes',{event:'*',schema:'public',table:'commentaires'},()=>syncTickets())
+        .on('postgres_changes',{event:'*',schema:'public',table:'notifications'},()=>syncNotifications())
         .subscribe(status=>{if(status==='SUBSCRIBED')console.log('Supabase Realtime connecté');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Supabase Realtime indisponible, polling actif');});
     }catch(error){console.warn('Supabase Realtime indisponible',error);}
   }
-  function startSync(){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();if(syncTimer)clearInterval(syncTimer);syncTickets();startRealtime();syncTimer=setInterval(syncTickets,10000);}
+  function startSync(){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();if(syncTimer)clearInterval(syncTimer);syncTickets();syncNotifications();startRealtime();syncTimer=setInterval(syncTickets,10000);}
 
   async function restoreSupabaseProfile(session){
     if(!session?.user||restoring)return false;

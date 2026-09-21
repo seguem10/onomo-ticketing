@@ -4063,6 +4063,15 @@ function renderNotifDot(){
   const dot = document.getElementById('notifDot');
   if(dot) dot.style.display = unread > 0 ? 'block' : 'none';
 }
+async function markAllNotifsRead(){
+  const unreadIds=notifications.filter(n=>!n.read&&/^\d+$/.test(String(n.id))).map(n=>n.id);
+  notifications.forEach(n=>n.read=true);
+  renderNotifDot();renderNotifList();
+  if(unreadIds.length&&sbOK()){
+    try{await sbFetch(`notifications?id=in.(${unreadIds.join(",")})`,{method:"PATCH",body:JSON.stringify({read_at:new Date().toISOString()})});}
+    catch(error){console.warn("Lecture des notifications non synchronisée",error);}
+  }
+}
 function toggleNotif(){
   notifOpen = !notifOpen;
   const panel = document.getElementById('notifPanel');
@@ -4070,8 +4079,7 @@ function toggleNotif(){
     panel.classList.toggle('open', notifOpen);
     renderNotifList();
     if(notifOpen) {
-      notifications.forEach(n => n.read = true);
-      renderNotifDot();
+      markAllNotifsRead();
     }
   }
 }
@@ -4086,9 +4094,7 @@ function renderNotifList(){
     </div>`).join('');
 }
 function clearNotifs(){
-  notifications = [];
-  renderNotifList();
-  renderNotifDot();
+  markAllNotifsRead();
   const panel = document.getElementById('notifPanel');
   if(panel) panel.classList.remove('open');
   notifOpen = false;
