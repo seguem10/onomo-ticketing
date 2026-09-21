@@ -79,11 +79,30 @@ Depuis le dossier du projet :
 supabase functions deploy admin-create-user
 ```
 
-La fonction utilise automatiquement les variables Supabase disponibles dans l'environnement hébergé.
+La fonction nécessite le secret serveur `SUPABASE_SERVICE_ROLE_KEY`. Il ne doit
+jamais être ajouté aux variables Vercel ni au code navigateur :
 
-Si votre projet utilise encore la variable historique `SUPABASE_SERVICE_ROLE_KEY`, elle est également acceptée par le code.
+```bash
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=votre_cle_service_role
+supabase functions deploy admin-create-user
+```
 
-## 4. Création depuis l'application
+## 4. Déployer l'analyse IA (optionnelle)
+
+L'analyse des tickets et la création d'utilisateurs sont deux fonctions Edge
+distinctes. Déployez la première uniquement si vous activez l'option IA :
+
+```bash
+supabase secrets set ANTHROPIC_API_KEY=votre_cle_anthropic
+supabase functions deploy ai-ticket-analysis
+```
+
+L'analyse attend actuellement du JSON (titre et description). La dictée vocale
+requiert en plus un fournisseur de transcription dédié : l'application affiche
+une erreur explicite tant que celui-ci n'est pas configuré, au lieu de simuler
+une transcription ou d'envoyer l'audio à Anthropic.
+
+## 5. Création depuis l'application
 
 Une fois la fonction déployée :
 
@@ -97,7 +116,7 @@ Le compte est alors créé directement dans Supabase Auth.
 
 Il est aussi créé automatiquement dans `utilisateurs` et dans `app_user_roles`.
 
-## 5. Session après actualisation
+## 6. Session après actualisation
 
 Le navigateur utilise maintenant une session Supabase persistante avec :
 
@@ -109,7 +128,7 @@ Le navigateur utilise maintenant une session Supabase persistante avec :
 
 Une actualisation de la page ne doit donc plus déconnecter l'utilisateur tant que sa session Supabase est valide.
 
-## 6. Vérification
+## 7. Vérification
 
 Après déploiement Vercel :
 

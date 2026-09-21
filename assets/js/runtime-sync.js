@@ -347,7 +347,7 @@
       const roles=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
       const finalRoles=roles.length?roles:[role];
       if(!email){showToast("L'email est requis",'err');return;}
-      if(!password||password.length<8){showToast('Le mot de passe doit contenir au moins 8 caractères','err');return;}
+      if(!validPassword(password)){showToast(passwordPolicyMessage,'err');return;}
       if(role==='it_hotel'&&!hotel){showToast("Sélectionnez un hôtel pour l'IT Hôtel",'err');return;}
       if(role==='it_regional'&&!hotels.length){showToast("Sélectionnez au moins un hôtel pour l'IT Régional",'err');return;}
       if(DEMO_USERS.some(user=>user.email===email)){showToast('Email déjà utilisé','err');return;}

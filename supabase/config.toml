@@ -1,4 +1,7 @@
 [functions.ai-ticket-analysis]
 enabled = true
 verify_jwt = true
-entrypoint = "./functions/admin-create-user/index.ts"
+
+[functions.admin-create-user]
+enabled = true
+verify_jwt = true
