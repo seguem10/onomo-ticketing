@@ -5,6 +5,11 @@ const URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const roleNames: Record<string, string> = { admin: "Administrateur", it_regional: "IT Regional", it_hotel: "IT Hotel", direction: "Directeur", demandeur: "Demandeur" };
+const databaseRoleName = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const name = value.trim().slice(0, 120);
+  return roleNames[name] ?? (name || null);
+};
 
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
@@ -31,7 +36,7 @@ Deno.serve(async (req) => {
   const nom = typeof body.nom === "string" ? body.nom.trim().slice(0, 100) : "";
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const requested = Array.isArray(body.roles) ? body.roles : [body.role];
-  const roles = [...new Set(requested.filter((role): role is string => typeof role === "string" && role in roleNames))];
+  const roles = [...new Set(requested.map(databaseRoleName).filter((role): role is string => Boolean(role)))];
   const role = typeof body.role === "string" && body.role in roleNames ? body.role : roles[0];
   const hotel = typeof body.hotel === "string" && body.hotel.trim() ? body.hotel.trim().slice(0, 160) : null;
   const hotels = Array.isArray(body.hotels) ? [...new Set(body.hotels.filter((v): v is string => typeof v === "string" && v.trim()).map(v => v.trim().slice(0, 160)))].slice(0, 100) : [];
@@ -51,7 +56,7 @@ Deno.serve(async (req) => {
     const profile = { id: userId, auth_user_id: userId, prenom, nom, email, pwd: "", role, roles, hotel, hotels, must_change_password: true };
     const { error: profileError } = await admin.from("utilisateurs").upsert(profile, { onConflict: "auth_user_id" });
     if (profileError) throw profileError;
-    const { data: dbRoles, error: roleError } = await admin.from("app_roles").select("id,name").in("name", roles.map(value => roleNames[value]));
+    const { data: dbRoles, error: roleError } = await admin.from("app_roles").select("id,name").in("name", roles);
     if (roleError || !dbRoles || dbRoles.length !== roles.length) throw roleError ?? new Error("Rôle introuvable dans app_roles.");
     const { error: linkError } = await admin.from("app_user_roles").upsert(dbRoles.map(dbRole => ({ user_id: userId, role_id: dbRole.id })), { onConflict: "user_id,role_id" });
     if (linkError) throw linkError;

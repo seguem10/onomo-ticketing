@@ -341,13 +341,29 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
+  const roleDatabaseName=value=>({admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',demandeur:'Demandeur',requester:'Demandeur'}[value]||value);
+  async function replaceUserRoles(profileId, roleValues){
+    if(!profileId||!Array.isArray(roleValues)||!roleValues.length||!window.sbFetch)return;
+    const profiles=await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(profileId)}&select=auth_user_id&limit=1`);
+    const targetUserId=profiles?.[0]?.auth_user_id;
+    if(!targetUserId)throw new Error('Compte Auth Supabase introuvable pour cet utilisateur.');
+    const roles=[...new Set(roleValues.map(roleDatabaseName).filter(Boolean))];
+    await window.sbFetch('rpc/replace_user_roles',{method:'POST',body:JSON.stringify({target_user_id:targetUserId,role_names:roles}),prefer:'return=minimal'});
+  }
   window.OnomoAuth={createUser:createAuthUser,getClient:getAuthClient,getSession:getAuthSession,restore:restoreSession};
 
   const previousSubmitUser=window.submitUser;
   if(typeof previousSubmitUser==='function'){
     window.submitUser=async function(){
       const editId=document.getElementById('uEditId')?.value||'';
-      if(editId)return previousSubmitUser();
+      if(editId){
+        const primaryRole=document.getElementById('uRole')?.value||'demandeur';
+        const selected=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
+        const result=await previousSubmitUser();
+        try{await replaceUserRoles(editId,[primaryRole,...selected]);}
+        catch(error){console.error('Synchronisation des rôles Supabase',error);showToast(error.message||'Rôles enregistrés localement, synchronisation Supabase impossible.','err');}
+        return result;
+      }
       const prenom=document.getElementById('uPrenom')?.value.trim()||'';
       const nom=document.getElementById('uNom')?.value.trim()||'';
       const email=document.getElementById('uEmail')?.value.trim().toLowerCase()||'';

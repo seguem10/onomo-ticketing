@@ -1166,7 +1166,10 @@ function dbRowToUser(row){
   return {
     id: row.id, email: row.email, pwd: row.pwd,
     prenom: row.prenom||'', nom: row.nom||'',
-    role: row.role, hotel: row.hotel||null,
+    role: row.role,
+    roles: typeof row.roles === 'string' ? JSON.parse(row.roles||'[]') : (row.roles||[]),
+    auth_user_id: row.auth_user_id||null,
+    hotel: row.hotel||null,
     hotels: typeof row.hotels === 'string' ? JSON.parse(row.hotels||'[]') : (row.hotels||[]),
     mustChangePassword: row.must_change_password,
     mfaEnabled: row.mfa_enabled,
