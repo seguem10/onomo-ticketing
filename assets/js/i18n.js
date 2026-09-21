@@ -38,6 +38,7 @@
   // in this central mapping so they rerender correctly after a language switch.
   Object.assign(phrases,{
     'Gestion des comptes':'account_management','Account management':'account_management','إدارة الحسابات':'account_management',
+    'Utilisateurs':'users','Users':'users','المستخدمون':'users',
     'Comptes enregistrés':'registered_accounts','Registered accounts':'registered_accounts','الحسابات المسجلة':'registered_accounts',
     'Ajouter un compte':'add_account','Add account':'add_account','إضافة حساب':'add_account',
     'Nouvel utilisateur':'new_user','New user':'new_user','مستخدم جديد':'new_user',
