@@ -51,6 +51,9 @@ do $$ begin alter publication supabase_realtime add table public.commentaires; e
 
 alter table public.ticket_events enable row level security;
 alter table public.notifications enable row level security;
+drop policy if exists ticket_events_read on public.ticket_events;
+drop policy if exists notifications_own on public.notifications;
+drop policy if exists notifications_read_own on public.notifications;
 create policy ticket_events_read on public.ticket_events for select using(public.has_permission('*') or exists(select 1 from public.tickets t where t.id=ticket_events.ticket_id and t.created_by=auth.uid()));
 create policy notifications_own on public.notifications for select using(recipient_id=auth.uid());
 create policy notifications_read_own on public.notifications for update using(recipient_id=auth.uid()) with check(recipient_id=auth.uid());
@@ -58,4 +61,5 @@ create policy notifications_read_own on public.notifications for update using(re
 -- Application settings: only global administrators can read/write them.
 create table if not exists public.app_settings (key text primary key, value jsonb not null, updated_at timestamptz not null default now(), updated_by uuid references auth.users(id));
 alter table public.app_settings enable row level security;
+drop policy if exists settings_admin_only on public.app_settings;
 create policy settings_admin_only on public.app_settings for all using(public.has_permission('*')) with check(public.has_permission('*'));
