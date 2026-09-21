@@ -2909,7 +2909,9 @@ async function runAI(){
 }
 async function doAIAnalysis(titre,desc){
   try{
-    const headers={"Content-Type":"application/json","Authorization":`Bearer ${SUPABASE_KEY}`,"apikey":SUPABASE_KEY};
+    const session=await window.OnomoAuth?.getSession?.();
+    if(!session?.access_token)throw new Error("Session Supabase absente");
+    const headers={"Content-Type":"application/json","Authorization":`Bearer ${session.access_token}`,"apikey":SUPABASE_KEY};
     const r=await fetch(`${SUPABASE_URL}/functions/v1/ai-ticket-analysis`,{
       method:"POST",headers,body:JSON.stringify({titre,description:desc||"",categories:CATS,priorites:PRIOS})
     });

@@ -14,7 +14,11 @@
 //   supabase secrets set ANTHROPIC_API_KEY=sk-ant-xxxxx
 //   supabase functions deploy ai-ticket-analysis
 
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_PUBLISHABLE_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -48,20 +52,20 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Vérifier que l'appelant présente au minimum la clé publique Supabase du projet.
-  // ⚠️ Limite connue : cette application n'utilise pas Supabase Auth (voir
-  // SUPABASE_AUTH_SETUP.md vs. le code réel de index.html — l'auth est gérée par
-  // l'app elle-même). Cette fonction ne peut donc pas vérifier qu'un utilisateur
-  // légitime de l'application appelle, seulement que l'appelant connaît la clé
-  // publique du projet Supabase (peu protecteur si cette clé est exposée, ce qui
-  // est le cas puisqu'elle est dans le HTML public). Pour une vraie protection,
-  // migrez vers Supabase Auth (voir SUPABASE_AUTH_SETUP.md) et vérifiez un JWT
-  // utilisateur ici avec supabase.auth.getUser(). En attendant, le principal
-  // risque est un usage abusif de votre quota Anthropic par un tiers qui aurait
-  // trouvé votre clé publique — surveillez votre consommation API.
+  // A publishable key identifies the project, not the caller. Verify the user
+  // token server-side before an expensive third-party request can be made.
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return jsonResponse({ error: "Authorization header requis" }, 401);
+  const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
+  if (!token || !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    return jsonResponse({ error: "Session utilisateur requise" }, 401);
+  }
+  const auth = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: { user }, error: authError } = await auth.auth.getUser(token);
+  if (authError || !user) {
+    return jsonResponse({ error: "Session utilisateur invalide ou expirée" }, 401);
   }
 
   let payload: { titre?: string; description?: string; categories?: string[]; priorites?: string[] };

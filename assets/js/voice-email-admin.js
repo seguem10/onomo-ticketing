@@ -51,7 +51,7 @@
     const hotel=document.getElementById('ntHotel')?.value||'';const u=current();const allowedHotels=Array.isArray(u?.hotels)?u.hotels:(hotel?[hotel]:[]);
     form.append('hotel',hotel);form.append('hotels',JSON.stringify(allowedHotels));form.append('categories',JSON.stringify(['IT / Réseau','Chambres','Restauration','Guest relations','Sécurité','Autre']));
     const {data:{session}}=await client.auth.getSession();if(!session?.access_token)throw new Error('Session Supabase absente.');
-    const s=settingsOf(),res=await fetch(`${s.sbUrl}/functions/v1/ai-ticket-analysis`,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`},body:form});
+    const s=settingsOf(),res=await fetch(`${s.sbUrl}/functions/v1/ai-ticket-analysis`,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,apikey:s.sbKey},body:form});
     const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(_){data={error:text}}if(!res.ok)throw new Error(data.error||`Analyse vocale impossible (${res.status})`);return data;
   }
   let recorder=null,chunks=[],recording=false;
