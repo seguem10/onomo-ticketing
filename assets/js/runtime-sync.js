@@ -173,7 +173,9 @@
         const type=String(row.type||'info');
         const icon=type==='assignment'?'user-check':type==='comment'?'message':type==='closed'?'circle-check':type==='urgent'?'alert-triangle':'ticket';
         const color=type==='urgent'?'var(--red)':type==='closed'?'var(--green)':'var(--brand)';
-        return {id:row.id,text:String(body.message||body.title||'Mise à jour de ticket'),icon,color,read:Boolean(row.read_at),time:row.created_at};
+        const template=body.key&&window.OnomoI18n?.t(body.key);
+        const text=template&&template!==body.key?template.replace(/\{(ticket|status)\}/g,(_m,key)=>String(body[key]||'')):String(body.message||body.title||'Mise à jour de ticket');
+        return {id:row.id,text,icon,color,read:Boolean(row.read_at),time:row.created_at};
       });
       if(typeof renderNotifDot==='function')renderNotifDot();
       if(typeof renderNotifList==='function')renderNotifList();
