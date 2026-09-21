@@ -16,7 +16,7 @@
 <link rel="icon" id="favicon" type="image/svg+xml" href="assets/pwa/onomo-icon.svg">
 <link rel="alternate icon" type="image/png" href="assets/pwa/icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="192x192" href="assets/pwa/icons/icon-192.png">
-<link rel="manifest" id="pwa-manifest">
+<link rel="manifest" id="pwa-manifest" href="assets/pwa/manifest.webmanifest">
 <link rel="apple-touch-icon" id="apple-touch-icon">
 <style>
   /* PWA splash / install banner */
@@ -929,9 +929,9 @@ const ROLE_STYLES={
    DEMO DATA
 ══════════════════════════════════════════════ */
 // ══ USERS — persistés dans localStorage ══
-const DEFAULT_USERS = [
-  {id:"u1",email:"admin@hotel.com", pwd:hashPwd("admin123"), prenom:"Admin", nom:"Système", role:"admin", hotel:null, hotels:[], createdAt:new Date().toISOString(), mustChangePassword:false, mfaEnabled:false, mfaSecret:null},
-];
+/* No browser-resident accounts. Accounts and passwords are managed only by
+   Supabase Auth; this array is merely a transient cache of authorized profiles. */
+const DEFAULT_USERS = [];
 
 // Simple hash — pas du vrai crypto mais masque les mots de passe en clair dans localStorage
 function hashPwd(pwd){
@@ -1323,53 +1323,15 @@ function togglePwd(id,btn){
 // fillDemo removed — no demo accounts shown on login page
 
 async function doLogin(){
-  const email=document.getElementById("loginEmail").value.trim().toLowerCase();
-  const pwd=document.getElementById("loginPwd").value;
+  /* Supabase Auth is the only production authentication authority. The legacy
+     localStorage account list is retained temporarily for data migration only
+     and must never grant a browser session. runtime-sync.js replaces this
+     function with the authenticated Supabase login flow. */
   const errEl=document.getElementById("loginErr");
-  const btn=document.getElementById("loginBtn");
-  errEl.classList.remove("show");
-  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spin"></i>Connexion…';}
-
-  // 1. Si Supabase connecté → charger les utilisateurs depuis Supabase d'abord
-  if(sbOK()){
-    try{
-      const rows = await sbFetch(`utilisateurs?email=eq.${encodeURIComponent(email)}&limit=1`);
-      if(rows && rows.length > 0){
-        const sbUser = dbRowToUser(rows[0]);
-        // Mettre à jour DEMO_USERS en mémoire
-        const idx = DEMO_USERS.findIndex(u=>u.email===email);
-        if(idx>=0) DEMO_USERS[idx]=sbUser;
-        else DEMO_USERS.push(sbUser);
-        saveUsers(DEMO_USERS);
-      }
-    }catch(e){
-      console.warn("Supabase user fetch failed, using local cache:", e);
-    }
-  }
-
-  // 2. Chercher dans DEMO_USERS (maintenant synchronisé)
-  const u=DEMO_USERS.find(u=>u.email===email);
-  if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-login"></i>Se connecter';}
-
-  if(u && checkPwd(pwd,u.pwd)){
-    const loginTs=new Date().toISOString();
-    DEMO_USERS=DEMO_USERS.map(x=>x.id===u.id?{...x,lastLogin:loginTs}:x);
-    saveUsers(DEMO_USERS);
-    if(sbOK()) sbUpdateUser(u.id,{last_login:loginTs});
-    const freshUser=DEMO_USERS.find(x=>x.id===u.id);
-    if(freshUser.mfaEnabled&&freshUser.mfaSecret){
-      showMFALogin(freshUser);
-    } else if(freshUser.mustChangePassword){
-      currentUser={...freshUser};
-      showForceChangePassword();
-    } else {
-      currentUser={...freshUser};
-      initSession();
-    }
-  } else {
-    document.getElementById("loginErrMsg").textContent="Email ou mot de passe incorrect.";
-    errEl.classList.add("show");
-  }
+  const message=document.getElementById("loginErrMsg");
+  if(message)message.textContent="Authentification Supabase indisponible. Vérifiez votre connexion puis réessayez.";
+  errEl?.classList.add("show");
+  return false;
 }
 
 function doLogout(){
@@ -1619,7 +1581,8 @@ async function addComment(msg){
 ══════════════════════════════════════════════ */
 function visibleTickets(){
   const myHotels=userHotels(currentUser);
-  if(currentUser.role==="admin"||currentUser.role==="direction")return tickets; // tous
+  if(currentUser.role==="admin")return tickets;
+  if(currentUser.role==="direction")return myHotels.length>0?tickets.filter(t=>myHotels.includes(t.hotel)):[];
   if(myHotels.length>0)return tickets.filter(t=>myHotels.includes(t.hotel));
   return [];
 }
@@ -3776,74 +3739,12 @@ function generateIcon(size){
 }
 
 function initPWA(){
-  // Hide install banner if already installed
-  if(localStorage.getItem('pwa_installed') || window.matchMedia('(display-mode: standalone)').matches){
-    const bar = document.getElementById('pwaInstallBar');
-    if(bar) bar.classList.remove('show');
-  }
-  const appName = (settings && settings.brandName) ? settings.brandName + ' Support IT' : 'ONOMO Support IT';
-  const icon192 = generateIcon(192);
-  const icon512 = generateIcon(512);
-
-  // Set apple touch icon
-  const appleIcon = document.getElementById('apple-touch-icon');
-  if(appleIcon){ appleIcon.href = icon192; }
-
-  // Generate and inject manifest
-  const manifest = {
-    name: appName,
-    short_name: appName,
-    description: 'Système de ticketing IT — ONOMO Support IT',
-    start_url: './',
-    display: 'standalone',
-    orientation: 'portrait-primary',
-    background_color: '#141C2E',
-    theme_color: '#141C2E',
-    lang: 'fr',
-    icons: [
-      { src: icon192, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-      { src: icon512, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-    ],
-    categories: ['business', 'productivity'],
-    shortcuts: [
-      { name: 'Nouveau ticket', url: './', icons: [{ src: icon192, sizes: '192x192' }] },
-      { name: 'Tableau de bord', url: './', icons: [{ src: icon192, sizes: '192x192' }] }
-    ]
-  };
-
-  const manifestStr = JSON.stringify(manifest);
-  const manifestBlob = new Blob([manifestStr], {type: 'application/json'});
-  const manifestUrl = URL.createObjectURL(manifestBlob);
-  const manifestLink = document.getElementById('pwa-manifest');
-  if(manifestLink) manifestLink.href = manifestUrl;
-
-  // Register Service Worker for offline support
-  if('serviceWorker' in navigator){
-    const swCode = `
-const CACHE = 'onomo-desk-v1';
-const ASSETS = ['./', './index.html'];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-  ));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  if(e.request.url.includes('supabase') || e.request.url.includes('fonts') || e.request.url.includes('cdn')) return;
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
-  );
-});`;
-    const swBlob = new Blob([swCode], {type: 'application/javascript'});
-    const swUrl = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl).then(() => {
-      console.log('ONOMO Support IT SW registered');
-    }).catch(e => console.warn('SW registration failed:', e));
-  }
+  const installed=localStorage.getItem('pwa_installed')||window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(installed)document.getElementById('pwaInstallBar')?.classList.remove('show');
+  const manifestLink=document.getElementById('pwa-manifest');
+  if(manifestLink)manifestLink.href='assets/pwa/manifest.webmanifest';
+  const appleIcon=document.getElementById('apple-touch-icon');
+  if(appleIcon)appleIcon.href='assets/pwa/icons/icon-192.png';
 }
 
 // Install prompt (Android Chrome)

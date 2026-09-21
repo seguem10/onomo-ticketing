@@ -286,6 +286,41 @@
   const previousSwitch=window.switchView;
   if(typeof previousSwitch==='function')window.switchView=function(view,element){touch();return previousSwitch(view,element);};
 
+  const validPassword=password=>typeof password==='string'&&password.length>=12&&/[a-z]/.test(password)&&/[A-Z]/.test(password)&&/\d/.test(password)&&/[^A-Za-z0-9]/.test(password);
+  const passwordPolicyMessage='Utilisez au moins 12 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial.';
+  async function updateSupabasePassword(password){
+    if(!validPassword(password))throw new Error(passwordPolicyMessage);
+    const client=getAuthClient(),session=await getAuthSession();
+    if(!client||!session?.user)throw new Error('Session Supabase absente.');
+    const {error}=await client.auth.updateUser({password});
+    if(error)throw error;
+    /* Password hashes belong only to Supabase Auth: never persist a browser
+       hash or a password-derived value into public.utilisateurs. */
+    try{
+      const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
+      if(rows?.[0])await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(rows[0].id)}`,{method:'PATCH',body:JSON.stringify({must_change_password:false}),prefer:'return=minimal'});
+    }catch(error){console.warn('Profil mis à jour sans modifier le mot de passe local',error);}
+  }
+  if(typeof window.changeMyPassword==='function')window.changeMyPassword=async function(){
+    const old=document.getElementById('pOld')?.value||'',next=document.getElementById('pNew')?.value||'',confirm=document.getElementById('pConfirm')?.value||'';
+    if(next!==confirm){showToast('Les mots de passe ne correspondent pas','err');return false;}
+    if(!validPassword(next)){showToast(passwordPolicyMessage,'err');return false;}
+    const client=getAuthClient(),session=await getAuthSession();
+    if(!client||!session?.user){showToast('Session Supabase absente','err');return false;}
+    const verification=await client.auth.signInWithPassword({email:session.user.email,password:old});
+    if(verification.error){showToast('Mot de passe actuel incorrect','err');return false;}
+    try{await updateSupabasePassword(next);showToast('Mot de passe mis à jour','ok');['pOld','pNew','pConfirm'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});return true;}
+    catch(error){showToast(error.message||'Mise à jour du mot de passe impossible','err');return false;}
+  };
+  if(typeof window.forceChangeDone==='function')window.forceChangeDone=async function(){
+    const next=document.getElementById('fcNew')?.value||'',confirm=document.getElementById('fcConfirm')?.value||'',error=document.getElementById('fcErr'),message=document.getElementById('fcErrMsg');
+    const fail=text=>{if(message)message.textContent=text;if(error)error.style.display='flex';};
+    if(next!==confirm){fail('Les mots de passe ne correspondent pas.');return false;}
+    if(!validPassword(next)){fail(passwordPolicyMessage);return false;}
+    try{await updateSupabasePassword(next);currentUser={...currentUser,mustChangePassword:false};showToast('Mot de passe défini avec succès','ok');initSession();return true;}
+    catch(problem){fail(problem.message||'Mise à jour du mot de passe impossible.');return false;}
+  };
+
   async function createAuthUser(payload){
     const client=getAuthClient();if(!client)throw new Error('Supabase Auth indisponible');
     const {data,error}=await client.functions.invoke('admin-create-user',{body:payload});
