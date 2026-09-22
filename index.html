@@ -1522,14 +1522,18 @@ async function createTicket(data){
     try{
       const {id:localIdIgnored, ...sbData} = t; // Supabase génère son propre UUID
       const created = await sbCreateTicket(sbData);
-      if(created){
-        // Replace local id with real Supabase id
-        tickets = tickets.map(x=>x.id===localId?{...x,id:created.id}:x);
-        saveTickets(tickets);
-      }
+      if(!created)throw new Error('Création du ticket refusée par Supabase');
+      // Replace local id with real Supabase id
+      tickets = tickets.map(x=>x.id===localId?{...x,id:created.id}:x);
+      saveTickets(tickets);
     }catch(e){
       console.error('Supabase createTicket failed:',e);
-      showToast("Ticket sauvegardé localement (Supabase indisponible)","err");
+      // Never leave a connected UI showing a ticket rejected by the database.
+      tickets=tickets.filter(x=>x.id!==localId);
+      saveTickets(tickets);updateCounts();
+      if(currentView==="dashboard"||currentView==="tickets")renderView();
+      showToast(window.OnomoI18n?.t('ticket_create_failed')||"Impossible de créer le ticket. Veuillez réessayer.","err");
+      return null;
     }
   }
   return t;
@@ -1539,20 +1543,30 @@ async function updateTicket(id,updates){
   // The database workflow closes a resolved ticket. Mirror that deterministic
   // transition locally so the agent never sees a stale "Résolu" state.
   const finalUpdates=updates?.statut==="résolu"?{...updates,statut:"fermé"}:updates;
-  tickets=tickets.map(t=>t.id===id?{...t,...finalUpdates}:t);
+  const previous=tickets.find(t=>String(t.id)===String(id));
+  if(!previous)return false;
+  tickets=tickets.map(t=>String(t.id)===String(id)?{...t,...finalUpdates}:t);
   if(currentTicket?.id===id)currentTicket={...currentTicket,...finalUpdates};
   saveTickets(tickets);
   updateCounts();
-  showToast("Ticket mis à jour","ok");
   if(currentView==="detail")renderDetail();
   // Write to Supabase
   if(sbOK()){
     try{
-      await sbUpdateTicket(id, finalUpdates);
+      const saved=await sbUpdateTicket(id, finalUpdates);
+      if(!saved)throw new Error('Modification du ticket refusée par Supabase');
     }catch(e){
       console.error('Supabase updateTicket failed:',e);
+      tickets=tickets.map(t=>String(t.id)===String(id)?previous:t);
+      if(currentTicket?.id===id)currentTicket={...previous};
+      saveTickets(tickets);updateCounts();
+      if(currentView==="detail")renderDetail();else if(["dashboard","tickets","urgents","my-tickets"].includes(currentView))renderView();
+      showToast(window.OnomoI18n?.t('ticket_update_failed')||"Impossible de modifier le ticket. Veuillez réessayer.","err");
+      return false;
     }
   }
+  showToast("Ticket mis à jour","ok");
+  return true;
 }
 
 async function addComment(msg){
@@ -1572,11 +1586,17 @@ async function addComment(msg){
   if(sbOK()){
     try{
       const {id:localId,...sbData}=co;
-      await sbCreateComment(sbData);
+      const created=await sbCreateComment(sbData);
+      if(!created)throw new Error('Création du commentaire refusée par Supabase');
     }catch(e){
       console.error('Supabase addComment failed:',e);
+      commentaires=commentaires.filter(comment=>comment.id!==co.id);
+      saveCommentaires(commentaires);renderDetail();
+      showToast(window.OnomoI18n?.t('comment_create_failed')||"Impossible d’ajouter le commentaire. Veuillez réessayer.","err");
+      return false;
     }
   }
+  return true;
 }
 
 /* ══════════════════════════════════════════════
@@ -1811,7 +1831,7 @@ async function submitComment(){
   const message=inp?.value.trim();if(!message)return;
   const button=inp?.parentElement?.querySelector("button");commentSubmissionPending=true;
   if(button){button.disabled=true;button.setAttribute("aria-busy","true");}
-  try{await addComment(message);if(inp)inp.value="";}
+  try{const added=await addComment(message);if(added&&inp)inp.value="";}
   finally{commentSubmissionPending=false;if(button){button.disabled=false;button.removeAttribute("aria-busy");}}
 }
 function openStatusModal(){
@@ -1827,12 +1847,12 @@ async function saveStatus(){
   const button=document.querySelector('#modalStatus .modal-foot .btn-gold');statusSavePending=true;
   if(button){button.disabled=true;button.setAttribute("aria-busy","true");button.innerHTML='<i class="ti ti-loader-2 spin"></i>Enregistrement…';}
   try{
-    await updateTicket(currentTicket.id,{
+    const saved=await updateTicket(currentTicket.id,{
       statut:document.getElementById("editStatut").value,
       assigne_a:document.getElementById("editAgent").value,
       priorite:document.getElementById("editPrio").value
     });
-    closeModal("modalStatus");
+    if(saved)closeModal("modalStatus");
   }finally{
     statusSavePending=false;
     if(button){button.disabled=false;button.removeAttribute("aria-busy");button.innerHTML='<i class="ti ti-check"></i>Enregistrer';}
@@ -2995,7 +3015,8 @@ async function submitNewTicket(){
   const button=document.querySelector('#modalTicket .modal-foot .btn-gold');ticketSubmissionPending=true;
   if(button){button.disabled=true;button.setAttribute("aria-busy","true");button.innerHTML='<i class="ti ti-loader-2 spin"></i>Création…';}
   try{
-    await createTicket(data);
+    const created=await createTicket(data);
+    if(!created)return;
     closeModal("modalTicket");
     document.getElementById("ntTitre").value="";
     document.getElementById("ntDesc").value="";
@@ -4127,6 +4148,7 @@ renderDashboard = function(){
 const _origCreateTicket = createTicket;
 createTicket = async function(data){
   const t = await _origCreateTicket(data);
+  if(!t)return null;
   addNotif(`Nouveau ticket ${t.numero} — ${t.titre.slice(0,40)}`, 'ticket', 'var(--brand)');
   if(t.priorite === 'Urgente'){
     addNotif(`⚠ Ticket URGENT : ${t.numero}`, 'alert-triangle', 'var(--red)');
@@ -4142,7 +4164,8 @@ createTicket = async function(data){
 const _origUpdateTicket = updateTicket;
 updateTicket = async function(id, updates){
   const prev = tickets.find(t => t.id === id);
-  await _origUpdateTicket(id, updates);
+  const updated=await _origUpdateTicket(id, updates);
+  if(!updated)return false;
   const t = tickets.find(t => t.id === id);
   if(updates.statut && prev && updates.statut !== prev.statut){
     addNotif(`${t?.numero||id} → ${STAT_L[updates.statut]||updates.statut}`, 'circle-check', 'var(--green)');
@@ -4151,6 +4174,7 @@ updateTicket = async function(id, updates){
   if(updates.assigne_a && updates.assigne_a !== prev?.assigne_a && updates.assigne_a){
     notifyAgent(updates.assigne_a, t||prev, 'assignation');
   }
+  return true;
 };
 
 /* ══════════════════════════════════════════════
