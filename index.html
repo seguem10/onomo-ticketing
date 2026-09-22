@@ -4025,12 +4025,20 @@ function renderNotifDot(){
   if(dot) dot.style.display = unread > 0 ? 'block' : 'none';
 }
 async function markAllNotifsRead(){
-  const unreadIds=notifications.filter(n=>!n.read&&/^\d+$/.test(String(n.id))).map(n=>n.id);
+  // Supabase notification IDs are UUIDs, not numeric IDs. Persist just the
+  // records that originated from Supabase, never client-only toast messages.
+  const unreadIds=notifications.filter(n=>!n.read&&n.persisted===true).map(n=>n.id);
+  const unreadIdSet=new Set(unreadIds);
   notifications.forEach(n=>n.read=true);
   renderNotifDot();renderNotifList();
   if(unreadIds.length&&sbOK()){
     try{await sbFetch(`notifications?id=in.(${unreadIds.join(",")})`,{method:"PATCH",body:JSON.stringify({read_at:new Date().toISOString()})});}
-    catch(error){console.warn("Lecture des notifications non synchronisée",error);}
+    catch(error){
+      // Keep the UI truthful if the database write did not complete.
+      notifications.forEach(n=>{if(unreadIdSet.has(n.id))n.read=false;});
+      renderNotifDot();renderNotifList();
+      console.warn("Lecture des notifications non synchronisée",error);
+    }
   }
 }
 function toggleNotif(){
