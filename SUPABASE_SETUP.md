@@ -11,7 +11,7 @@ L’application historique utilisait une table `utilisateurs` avec des mots de p
 
 ## Durcissement P0 des accès
 
-Après les migrations précédentes, exécutez aussi `supabase/p0_rls_hardening.sql` dans le SQL Editor Supabase.
+Après les migrations précédentes, exécutez aussi `supabase/p0_rls_hardening.sql`, puis `supabase/p3_settings_security_reconciliation.sql`, dans le SQL Editor Supabase.
 
 Cette migration crée la table de périmètres hôtel manquante, rétablit la compatibilité
 avec les rôles historiques utilisant la permission `*`, protège le journal des tickets
@@ -23,3 +23,7 @@ Avant de l'exécuter en production, exportez une sauvegarde et lancez ensuite
 UUID de comptes de test à jour.
 
 La clé publishable Supabase peut être fournie au navigateur. Ne placez jamais une clé `service_role` dans ce fichier HTML, dans JavaScript ou dans le navigateur.
+
+La réconciliation P3 réserve strictement `app_settings` au rôle Administrateur,
+accorde à ce rôle les droits SQL nécessaires pour enregistrer les paramètres et
+journalise chaque modification dans `audit_logs` sans recopier de valeur sensible.

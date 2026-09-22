@@ -8,6 +8,8 @@ Dans Supabase → SQL Editor, exécuter dans cet ordre :
 
 1. `supabase/secure_roles_migration.sql`
 2. `supabase/ticketing_production_migration.sql`
+3. `supabase/p0_rls_hardening.sql`
+4. `supabase/p3_settings_security_reconciliation.sql`
 
 La table `utilisateurs` doit contenir `auth_user_id`.
 
