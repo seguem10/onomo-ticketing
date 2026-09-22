@@ -11,7 +11,7 @@ L’application historique utilisait une table `utilisateurs` avec des mots de p
 
 ## Durcissement P0 des accès
 
-Après les migrations précédentes, exécutez aussi `supabase/p0_rls_hardening.sql`, puis `supabase/p3_settings_security_reconciliation.sql`, `supabase/p4_profile_privilege_guard.sql` et `supabase/p5_notification_trigger_reconciliation.sql`, dans le SQL Editor Supabase.
+Après les migrations précédentes, exécutez aussi `supabase/p0_rls_hardening.sql`, puis `supabase/p3_settings_security_reconciliation.sql`, `supabase/p4_profile_privilege_guard.sql`, `supabase/p5_notification_trigger_reconciliation.sql` et `supabase/p6_ticket_creation_history_fix.sql`, dans le SQL Editor Supabase.
 
 Cette migration crée la table de périmètres hôtel manquante, rétablit la compatibilité
 avec les rôles historiques utilisant la permission `*`, protège le journal des tickets
@@ -36,3 +36,7 @@ Supabase Auth.
 La migration P5 conserve une seule chaîne de notifications : elle désactive les
 anciens triggers qui produisaient des doublons et garde les notifications à clés
 de traduction utilisées par l’interface FR / EN / AR.
+
+La migration P6 sépare la préparation du ticket (avant insertion) et l’écriture
+de son événement d’historique (après insertion). Elle corrige l’échec de création
+causé par la clé étrangère de `ticket_events`.
