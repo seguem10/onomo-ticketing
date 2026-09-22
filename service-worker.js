@@ -1,4 +1,4 @@
-const CACHE_NAME='onomo-shell-v6';
+const CACHE_NAME='onomo-shell-v7';
 const SHELL=['./','./index.html','./assets/css/app.css','./assets/css/responsive.css','./assets/css/interactions.css','./assets/js/ui.js','./assets/js/app.js','./assets/js/runtime-sync.js','./assets/js/i18n.js','./assets/js/locales-data.js','./assets/js/modern-features.js','./assets/js/corrections.js','./assets/pwa/onomo-logo.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
