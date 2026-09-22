@@ -1,6 +1,7 @@
 /* ONOMO Support IT - synchronisation utilisateurs + ticket Demandeur */
 (function(){
   'use strict';
+  const t=(key,fallback)=>{const value=window.OnomoI18n?.t(key);return value&&value!==key?value:fallback;};
   const normRole=r=>({admin:'admin',administrateur:'admin','administrateur système':'admin',it_regional:'it_regional','it régional':'it_regional','it hotel':'it_hotel',it_hotel:'it_hotel',demandeur:'demandeur',requester:'demandeur'}[String(r||'').toLowerCase().trim()]||String(r||'').toLowerCase().trim());
   function normHotels(v){if(Array.isArray(v))return v.filter(Boolean);if(typeof v==='string'){try{const p=JSON.parse(v);return Array.isArray(p)?p.filter(Boolean):[];}catch(_){return v?[v]:[];}}return []}
   function norm(u){if(!u)return u;return {...u,role:normRole(u.role),hotels:normHotels(u.hotels)}}
@@ -22,10 +23,10 @@
     const u=norm(window.currentUser);if(!u||u.role!=='demandeur')return;
     const hotel=u.hotel||'';
     const hs=document.getElementById('ntHotel');
-    if(hs){hs.innerHTML='';const o=document.createElement('option');o.value=hotel;o.textContent=hotel||'— Aucun hôtel assigné —';o.disabled=!hotel;hs.appendChild(o);hs.value=hotel}
+    if(hs){hs.innerHTML='';const o=document.createElement('option');o.value=hotel;o.textContent=hotel||t('no_hotel_option','— Aucun hôtel assigné —');o.disabled=!hotel;hs.appendChild(o);hs.value=hotel}
     const a=document.getElementById('ntAgent');
     if(a){
-      a.innerHTML="<option value=''>— Sélectionner un IT —</option>";
+      a.innerHTML="<option value=''>"+t('select_it_option','— Sélectionner un IT —')+"</option>";
       const us=allUsers();
       const matching=us.filter(x=>(x.role==='it_hotel'&&x.hotel===hotel)||(x.role==='it_regional'&&normHotels(x.hotels).includes(hotel)));
       const pool=matching.length?matching:us.filter(x=>x.role==='it_hotel'||x.role==='it_regional');
@@ -39,7 +40,7 @@
   const oldPopulate=window.populateSelects;
   if(typeof oldPopulate==='function')window.populateSelects=function(){const r=oldPopulate.apply(this,arguments);if(norm(window.currentUser)?.role==='demandeur')fillRequesterTicket();return r};
   const oldSubmitTicket=window.submitNewTicket;
-  if(typeof oldSubmitTicket==='function')window.submitNewTicket=async function(){if(norm(window.currentUser)?.role==='demandeur'){await prepareRequester();if(!document.getElementById('ntHotel')?.value){window.showToast?.('Votre compte Demandeur n’a aucun hôtel assigné.','err');return}if(!document.getElementById('ntAgent')?.value){window.showToast?.('Aucun IT disponible pour cet hôtel.','err');return}}return oldSubmitTicket.apply(this,arguments)};
+  if(typeof oldSubmitTicket==='function')window.submitNewTicket=async function(){if(norm(window.currentUser)?.role==='demandeur'){await prepareRequester();if(!document.getElementById('ntHotel')?.value){window.showToast?.(t('no_hotel_assigned','Votre compte Demandeur n’a aucun hôtel assigné.'),'err');return}if(!document.getElementById('ntAgent')?.value){window.showToast?.(t('no_it_available','Aucun IT disponible pour cet hôtel.'),'err');return}}return oldSubmitTicket.apply(this,arguments)};
   const oldInit=window.initSession;
   if(typeof oldInit==='function')window.initSession=function(){const r=oldInit.apply(this,arguments);setTimeout(()=>refreshProfile().then(u=>{if(u?.role==='demandeur')fillRequesterTicket()}),100);return r};
   const oldSubmitUser=window.submitUser;
@@ -52,7 +53,7 @@
     const email=document.getElementById('uEmail')?.value.trim().toLowerCase()||'';
     const hotel=(role==='demandeur'||role==='it_hotel')?(document.getElementById('uHotel')?.value||null):null;
     const hotels=role==='it_regional'?(typeof window.getSelectedHotels==='function'?window.getSelectedHotels():[]):[];
-    if(role==='demandeur'&&!hotel){window.showToast?.('Sélectionnez un hôtel pour le Demandeur','err');return}
+    if(role==='demandeur'&&!hotel){window.showToast?.(t('select_requester_hotel','Sélectionnez un hôtel pour le Demandeur'),'err');return}
     const local=(Array.isArray(window.DEMO_USERS)?window.DEMO_USERS:[]).find(x=>x.id===editId);if(!local)return;
     const updated={...local,prenom,nom,email,role,hotel,hotels};
     const pwd=document.getElementById('uPwd')?.value||'';if(pwd.trim()&&typeof window.hashPwd==='function')updated.pwd=window.hashPwd(pwd);
