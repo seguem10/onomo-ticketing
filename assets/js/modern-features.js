@@ -163,26 +163,26 @@
     const role=document.getElementById('uRole')?.value;
     if(role==='demandeur'||role==='requester'){
       const hotel=document.getElementById('uHotel')?.value||'';
-      if(!hotel){showToast('Sélectionnez un hôtel pour le Demandeur','err');return;}
+      if(!hotel){showToast(t('select_requester_hotel','Sélectionnez un hôtel pour le Demandeur'),'err');return;}
       const editId=document.getElementById('uEditId')?.value||'';
       if(!editId){
         const prenom=document.getElementById('uPrenom')?.value.trim()||'';
         const nom=document.getElementById('uNom')?.value.trim()||'';
         const email=document.getElementById('uEmail')?.value.trim().toLowerCase()||'';
         const pwdRaw=document.getElementById('uPwd')?.value||'';
-        if(!email){showToast("L'email est requis",'err');return;}
-        if(!pwdRaw.trim()){showToast('Le mot de passe temporaire est requis','err');return;}
-        if(DEMO_USERS.find(u=>u.email===email)){showToast('Email déjà utilisé','err');return;}
-        if(sbOK()){try{const existing=await sbFetch(`utilisateurs?email=eq.${encodeURIComponent(email)}&limit=1`);if(existing&&existing.length>0){showToast('Email déjà utilisé (Supabase)','err');return;}}catch(e){}}
+        if(!email){showToast(t('email_required',"L'email est requis"),'err');return;}
+        if(!pwdRaw.trim()){showToast(t('temporary_password_required','Le mot de passe temporaire est requis'),'err');return;}
+        if(DEMO_USERS.find(u=>u.email===email)){showToast(t('email_already_used','Email déjà utilisé'),'err');return;}
+        if(sbOK()){try{const existing=await sbFetch(`utilisateurs?email=eq.${encodeURIComponent(email)}&limit=1`);if(existing&&existing.length>0){showToast(t('email_already_used_supabase','Email déjà utilisé (Supabase)'),'err');return;}}catch(e){}}
         const newUser={id:uid(),email,pwd:hashPwd(pwdRaw),prenom,nom,role:'demandeur',hotel,hotels:[],createdAt:new Date().toISOString(),mustChangePassword:true,mfaEnabled:false,mfaSecret:null};
         DEMO_USERS.push(newUser);saveUsers(DEMO_USERS);
-        if(sbOK()){const ok=await sbSaveUser(newUser);if(!ok)showToast('Compte créé localement — erreur Supabase','err');}
-        populateSelects();closeModal('modalUser');showToast(`Compte créé pour ${prenom} ${nom}`.trim(),'ok');addNotif(`Nouveau compte : ${prenom} ${nom} (Demandeur)`,'user-plus','var(--green)');showEmailNotification(prenom,nom,email,'demandeur',pwdRaw);renderUsers();return;
+        if(sbOK()){const ok=await sbSaveUser(newUser);if(!ok)showToast(t('account_created_local_error','Compte créé localement — erreur Supabase'),'err');}
+        const name=`${prenom} ${nom}`.trim();populateSelects();closeModal('modalUser');showToast(t('account_created_for','Compte créé pour {name}').replace('{name}',name),'ok');addNotif(t('new_requester_account','Nouveau compte : {name} (Demandeur)').replace('{name}',name),'user-plus','var(--green)');showEmailNotification(prenom,nom,email,'demandeur',pwdRaw);renderUsers();return;
       }
     }
     const assigned=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);await originalSubmitUser();const email=document.getElementById('uEmail')?.value.trim().toLowerCase();const user=DEMO_USERS.find(item=>item.email===email);if(user&&assigned.length){user.roles=assigned;user.role=assigned[0];saveUsers(DEMO_USERS);if(sbOK())await sbUpdateUser(user.id,{roles:assigned,role:user.role});}
   };
-  const originalRoleChange=window.onRoleChange;window.onRoleChange=function(v){if(originalRoleChange)originalRoleChange(v);if(v==='demandeur'||v==='requester'){const wrap=document.getElementById('uHotelWrap');const single=document.getElementById('uHotelSingle');const multi=document.getElementById('uHotelMulti');if(wrap)wrap.style.display='block';if(single)single.style.display='block';if(multi)multi.style.display='none';const label=single?.querySelector('.field-lbl');if(label)label.innerHTML='Hôtel assigné <span style="color:var(--tx3);font-weight:400">(Demandeur)</span>';const uh=document.getElementById('uHotel');if(uh&&!uh.options.length){const hotels=HOTELS||[];uh.innerHTML="<option value=''>— Sélectionner un hôtel —</option>";hotels.forEach(h=>{const o=document.createElement('option');o.value=h.nom;o.textContent=h.nom;uh.appendChild(o);});}}};
+  const originalRoleChange=window.onRoleChange;window.onRoleChange=function(v){if(originalRoleChange)originalRoleChange(v);if(v==='demandeur'||v==='requester'){const wrap=document.getElementById('uHotelWrap');const single=document.getElementById('uHotelSingle');const multi=document.getElementById('uHotelMulti');if(wrap)wrap.style.display='block';if(single)single.style.display='block';if(multi)multi.style.display='none';const label=single?.querySelector('.field-lbl');if(label)label.innerHTML=t('assigned_hotel_requester','Hôtel assigné (Demandeur)');const uh=document.getElementById('uHotel');if(uh&&!uh.options.length){const hotels=HOTELS||[];uh.innerHTML="<option value=''>"+t('select_hotel_option','— Sélectionner un hôtel —')+"</option>";hotels.forEach(h=>{const o=document.createElement('option');o.value=h.nom;o.textContent=h.nom;uh.appendChild(o);});}}};
   // Browser SpeechRecognition accepts one recognition language at a time. This
   // implementation starts from the browser/application preference, detects
   // clear French/English/Arabic results for the following segment, and never
