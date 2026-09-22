@@ -3,7 +3,7 @@
   const POWER=['Administrateur','IT Regional','IT Hotel','Directeur'];
   const DEFAULT=[...POWER,'Demandeur'];
   const roleStore='onomo_roles_v1';
-  const roles=()=>JSON.parse(localStorage.getItem(roleStore)||JSON.stringify(DEFAULT.map(name=>({name,permissions:POWER.includes(name)?['*']:['ticket:create','ticket:read:own','comment:read:own']}))));
+  const roles=()=>JSON.parse(localStorage.getItem(roleStore)||JSON.stringify(DEFAULT.map(name=>({name,permissions:POWER.includes(name)?['*']:['ticket:create','ticket:read:own','comment:create','comment:read:own']}))));
   const saveRoles=list=>localStorage.setItem(roleStore,JSON.stringify(list));
   let roleLoadPromise=null;
   async function loadRolesFromSupabase(force=false){
@@ -91,7 +91,8 @@
   // The authoritative 15-minute, user-activity-based timeout lives in
   // runtime-sync.js. Do not retain the legacy fixed eight-hour timer here.
   window.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();});
-  const originalSwitch=window.switchView;window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['users','hotels-admin','settings'];if((!isPower(currentUser)&&restricted.includes(view))||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){showToast('Accès non autorisé.','err');return;}return originalSwitch(view,el);};
+  const deny=()=>showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');
+  const originalSwitch=window.switchView;window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['users','hotels-admin','settings'];if((!isPower(currentUser)&&restricted.includes(view))||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){deny();return;}return originalSwitch(view,el);};
   const originalSettings=window.renderSettings;window.renderSettings=function(){if(!userRoles(currentUser).includes('Administrateur')){showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');switchView('tickets',document.querySelector('[data-view="tickets"]'));return;}return originalSettings();};
   // Hiding the menu is not sufficient: a non-administrator can call global
   // handlers from DevTools. Guard every system-settings mutator as well.
@@ -112,7 +113,16 @@
   }
   guardSettingsMutators();
   window.visibleTickets=function(){return isPower(currentUser)?tickets:tickets.filter(owner);};
-  const originalCreate=window.createTicket;window.createTicket=async function(data){return originalCreate({...data,created_by:currentUser?.id||null,created_by_email:currentUser?.email||null});};
+  // Menu visibility is only a convenience. Protect ticket creation too, so a
+  // copied hash route or a call from DevTools cannot bypass the role check.
+  const originalOpenNewTicket=window.openNewTicket;window.openNewTicket=function(){
+    if(!can(currentUser,'ticket:create')||(window.isReadOnly&&window.isReadOnly(currentUser))){deny();return false;}
+    return originalOpenNewTicket.apply(this,arguments);
+  };
+  const originalCreate=window.createTicket;window.createTicket=async function(data){
+    if(!can(currentUser,'ticket:create')||(window.isReadOnly&&window.isReadOnly(currentUser))){deny();return null;}
+    return originalCreate({...data,created_by:currentUser?.id||null,created_by_email:currentUser?.email||null});
+  };
   const originalUserHotels=window.userHotels;window.userHotels=function(u){u=u||currentUser;if(u?.role==='demandeur'||u?.role==='requester')return u.hotel?[u.hotel]:[];return originalUserHotels?originalUserHotels(u):[];};
   const originalPopulateSelects=window.populateSelects;window.populateSelects=function(){originalPopulateSelects();if(currentUser?.role==='demandeur'||currentUser?.role==='requester'){const hs=document.getElementById('ntHotel');if(hs){hs.innerHTML='';const o=document.createElement('option');o.value=currentUser.hotel||'';o.textContent=currentUser.hotel||'— Hôtel non assigné —';hs.appendChild(o);}}ensureRequesterHotelField();};
   window.renderRoleManager=function(refresh=true){
