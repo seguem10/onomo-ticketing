@@ -3,6 +3,7 @@
   const POWER=['Administrateur','IT Regional','IT Hotel','Directeur'];
   const DEFAULT=[...POWER,'Demandeur'];
   const roleStore='onomo_roles_v1';
+  const t=(key,fallback)=>{const value=window.OnomoI18n?.t(key);return value&&value!==key?value:fallback;};
   const roles=()=>JSON.parse(localStorage.getItem(roleStore)||JSON.stringify(DEFAULT.map(name=>({name,permissions:POWER.includes(name)?['*']:['ticket:create','ticket:read:own','comment:create','comment:read:own']}))));
   const saveRoles=list=>localStorage.setItem(roleStore,JSON.stringify(list));
   let roleLoadPromise=null;
@@ -129,32 +130,32 @@
     if(!userRoles(currentUser).includes('Administrateur'))return;
     if(refresh)loadRolesFromSupabase().then(()=>window.renderRoleManager(false));
     const list=roles();
-    document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-hdr"><div class="card-title">Rôles et permissions</div><button class="btn btn-gold" onclick="addCustomRole()"><i class="ti ti-plus"></i>Nouveau rôle</button></div><div class="user-list">${list.map((role,index)=>`<div class="user-row"><div class="user-info"><div class="user-name">${esc(role.name)}</div><div class="user-email">${esc(role.permissions.join(', ')||'Aucune permission')}</div></div>${role.is_system?'<span class="role-tag">Système</span>':`<button class="btn btn-danger btn-sm" onclick="removeCustomRole(${index})"><i class="ti ti-trash"></i></button>`}</div>`).join('')}</div></div>`;
+    document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-hdr"><div class="card-title">${t('roles','Rôles et permissions')}</div><button class="btn btn-gold" onclick="addCustomRole()"><i class="ti ti-plus"></i>${t('new_role','Nouveau rôle')}</button></div><div class="user-list">${list.map((role,index)=>`<div class="user-row"><div class="user-info"><div class="user-name">${esc(role.name)}</div><div class="user-email">${esc(role.permissions.join(', ')||t('no_permission','Aucune permission'))}</div></div>${role.is_system?'<span class="role-tag">'+t('system_role','Système')+'</span>':`<button class="btn btn-danger btn-sm" onclick="removeCustomRole(${index})"><i class="ti ti-trash"></i></button>`}</div>`).join('')}</div></div>`;
   };
   window.addCustomRole=async function(){
-    if(!userRoles(currentUser).includes('Administrateur'))return showToast('Accès non autorisé.','err');
-    const name=prompt('Nom du rôle :');if(!name?.trim())return;
-    const permissionList=prompt('Permissions séparées par des virgules (ex. ticket:create,ticket:read:own) :','ticket:create,ticket:read:own,comment:read:own');if(permissionList===null)return;
+    if(!userRoles(currentUser).includes('Administrateur'))return showToast(t('access_denied','Accès non autorisé.'),'err');
+    const name=prompt(t('role_name_prompt','Nom du rôle :'));if(!name?.trim())return;
+    const permissionList=prompt(`${t('role_permissions_prompt','Permissions séparées par des virgules')} (ex. ticket:create,ticket:read:own) :`,'ticket:create,ticket:read:own,comment:create,comment:read:own');if(permissionList===null)return;
     const permissions=permissionList.split(',').map(item=>item.trim()).filter(Boolean),list=await loadRolesFromSupabase();
-    if(list.some(item=>item.name.toLowerCase()===name.trim().toLowerCase()))return showToast('Ce rôle existe déjà.','err');
+    if(list.some(item=>item.name.toLowerCase()===name.trim().toLowerCase()))return showToast(t('role_exists','Ce rôle existe déjà.'),'err');
     try{
       if(window.sbOK?.())await window.sbFetch('app_roles',{method:'POST',body:JSON.stringify({name:name.trim(),permissions,is_system:false})});
       else saveRoles([...list,{name:name.trim(),permissions,is_system:false}]);
-      await loadRolesFromSupabase(true);window.renderRoleManager(false);showToast('Rôle créé','ok');
-    }catch(error){console.error('Création rôle',error);showToast('Impossible de créer le rôle. Réessayez.','err');}
+      await loadRolesFromSupabase(true);window.renderRoleManager(false);showToast(t('role_created','Rôle créé'),'ok');
+    }catch(error){console.error('Création rôle',error);showToast(t('role_create_failed','Impossible de créer le rôle. Réessayez.'),'err');}
   };
   window.removeCustomRole=async function(index){
-    if(!userRoles(currentUser).includes('Administrateur'))return showToast('Accès non autorisé.','err');
-    const list=roles(),role=list[index];if(!role||role.is_system||POWER.includes(role.name)||role.name==='Demandeur')return showToast('Les rôles système ne peuvent pas être supprimés.','err');
+    if(!userRoles(currentUser).includes('Administrateur'))return showToast(t('access_denied','Accès non autorisé.'),'err');
+    const list=roles(),role=list[index];if(!role||role.is_system||POWER.includes(role.name)||role.name==='Demandeur')return showToast(t('system_role_protected','Les rôles système ne peuvent pas être supprimés.'),'err');
     if(!confirm(`Supprimer le rôle « ${role.name} » ?`))return;
     try{
       if(window.sbOK?.()&&role.id)await window.sbFetch(`app_roles?id=eq.${encodeURIComponent(role.id)}`,{method:'DELETE',prefer:'return=minimal'});
       else {list.splice(index,1);saveRoles(list);}
-      await loadRolesFromSupabase(true);window.renderRoleManager(false);showToast('Rôle supprimé','ok');
-    }catch(error){console.error('Suppression rôle',error);showToast('Impossible de supprimer le rôle.','err');}
+      await loadRolesFromSupabase(true);window.renderRoleManager(false);showToast(t('role_deleted','Rôle supprimé'),'ok');
+    }catch(error){console.error('Suppression rôle',error);showToast(t('role_delete_failed','Impossible de supprimer le rôle.'),'err');}
   };
-  function addRoleNav(){const admin=document.getElementById('sbAdminSec');if(!admin||document.querySelector('[data-view="roles"]'))return;admin.insertAdjacentHTML('beforeend','<div class="nav-item" data-view="roles" onclick="renderRoleManager();document.querySelectorAll(\'.nav-item\').forEach(i=>i.classList.remove(\'active\'));this.classList.add(\'active\')"><i class="ti ti-key"></i><span>Rôles et permissions</span></div>');}
-  function addUserRolePicker(){ensureRequesterRoleOption();const select=document.getElementById('uRole');if(!select||document.getElementById('uRolesMulti'))return;select.closest('.form-g').insertAdjacentHTML('afterend',`<div class="form-g" id="uRolesMulti"><label class="field-lbl">Rôles additionnels</label><div id="uRoleChoices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:9px;border:1px solid var(--border);border-radius:var(--r)">${roles().map(role=>`<label style="font-size:11px"><input type="checkbox" value="${esc(role.name)}"> ${esc(role.name)}</label>`).join('')}</div></div>`);}
+  function addRoleNav(){const admin=document.getElementById('sbAdminSec');if(!admin||document.querySelector('[data-view="roles"]'))return;admin.insertAdjacentHTML('beforeend','<div class="nav-item" data-view="roles" onclick="renderRoleManager();document.querySelectorAll(\'.nav-item\').forEach(i=>i.classList.remove(\'active\'));this.classList.add(\'active\')"><i class="ti ti-key"></i><span>'+t('roles','Rôles et permissions')+'</span></div>');}
+  function addUserRolePicker(){ensureRequesterRoleOption();const select=document.getElementById('uRole');if(!select||document.getElementById('uRolesMulti'))return;select.closest('.form-g').insertAdjacentHTML('afterend',`<div class="form-g" id="uRolesMulti"><label class="field-lbl">${t('additional_roles','Rôles additionnels')}</label><div id="uRoleChoices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:9px;border:1px solid var(--border);border-radius:var(--r)">${roles().map(role=>`<label style="font-size:11px"><input type="checkbox" value="${esc(role.name)}"> ${esc(role.name)}</label>`).join('')}</div></div>`);}
   const originalOpenUser=window.openModalUser;window.openModalUser=async function(){await loadRolesFromSupabase(true);originalOpenUser();addUserRolePicker();ensureRequesterHotelField();document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=input.value===document.getElementById('uRole').value);};
   const originalEditUser=window.openEditUser;window.openEditUser=async function(id){await loadRolesFromSupabase(true);originalEditUser(id);addUserRolePicker();ensureRequesterHotelField();const user=DEMO_USERS.find(item=>item.id===id);const assigned=userRoles(user);document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=assigned.includes(input.value));};
   const originalSubmitUser=window.submitUser;window.submitUser=async function(){
