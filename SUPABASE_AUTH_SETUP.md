@@ -11,6 +11,7 @@ Dans Supabase → SQL Editor, exécuter dans cet ordre :
 3. `supabase/p0_rls_hardening.sql`
 4. `supabase/p3_settings_security_reconciliation.sql`
 5. `supabase/p4_profile_privilege_guard.sql`
+6. `supabase/p5_notification_trigger_reconciliation.sql`
 
 La table `utilisateurs` doit contenir `auth_user_id`.
 

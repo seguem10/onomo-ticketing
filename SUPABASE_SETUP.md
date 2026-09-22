@@ -11,7 +11,7 @@ L’application historique utilisait une table `utilisateurs` avec des mots de p
 
 ## Durcissement P0 des accès
 
-Après les migrations précédentes, exécutez aussi `supabase/p0_rls_hardening.sql`, puis `supabase/p3_settings_security_reconciliation.sql` et `supabase/p4_profile_privilege_guard.sql`, dans le SQL Editor Supabase.
+Après les migrations précédentes, exécutez aussi `supabase/p0_rls_hardening.sql`, puis `supabase/p3_settings_security_reconciliation.sql`, `supabase/p4_profile_privilege_guard.sql` et `supabase/p5_notification_trigger_reconciliation.sql`, dans le SQL Editor Supabase.
 
 Cette migration crée la table de périmètres hôtel manquante, rétablit la compatibilité
 avec les rôles historiques utilisant la permission `*`, protège le journal des tickets
@@ -32,3 +32,7 @@ La migration P4 bloque l’auto‑élévation de privilèges dans un profil : un
 utilisateur ne peut jamais s’attribuer un rôle, un hôtel, une permission, un MFA
 ou un mot de passe local. Les mots de passe restent exclusivement gérés par
 Supabase Auth.
+
+La migration P5 conserve une seule chaîne de notifications : elle désactive les
+anciens triggers qui produisaient des doublons et garde les notifications à clés
+de traduction utilisées par l’interface FR / EN / AR.
