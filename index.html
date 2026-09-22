@@ -1269,6 +1269,22 @@ function formatAppDate(value,options){
   const date=value instanceof Date?value:new Date(value);
   return Number.isNaN(date.getTime())?'':new Intl.DateTimeFormat(appLocale(),options).format(date);
 }
+function appText(key,fallback){
+  const translated=window.OnomoI18n?.t(key);
+  return translated&&translated!==key?translated:fallback;
+}
+function localizedStatus(value){
+  const keys={nouveau:'new',en_cours:'in_progress',en_attente:'pending',résolu:'resolved',fermé:'closed'};
+  return appText(keys[value],STAT_L[value]||value||'—');
+}
+function localizedPriority(value){
+  const keys={Urgente:'urgent',Haute:'high',Normale:'normal',Basse:'low',Critique:'critical'};
+  return appText(keys[value],value||'—');
+}
+function localizedCategory(value){
+  const keys={Maintenance:'maintenance','IT / Réseau':'it_network',Chambres:'rooms',Restauration:'restaurant','Guest relations':'guest_relations','Sécurité':'security',Ménage:'housekeeping',Autre:'other'};
+  return appText(keys[value],value||'—');
+}
 function timeAgo(d){
   if(!d)return"";
   const date=new Date(d);if(Number.isNaN(date.getTime()))return"";
@@ -3127,25 +3143,26 @@ function exportPDF(type, hotelFilter, agentFilter){
   // Build print content
   let title = '';
   let data = [];
+  const allLabel=appText('all','Tous');
 
   if(type === 'hotel'){
-    title = 'Rapport par hôtel' + (hotelFilter ? ' — ' + hotelFilter : ' — Tous');
+    title = appText('hotel_report','Rapport par hôtel') + (hotelFilter ? ' — ' + hotelFilter : ' — ' + allLabel);
     data = hotelFilter ? tickets.filter(t=>t.hotel===hotelFilter) : tickets;
   } else if(type === 'agent'){
-    title = 'Rapport par agent' + (agentFilter ? ' — ' + agentFilter : ' — Tous');
+    title = appText('agent_report','Rapport par agent') + (agentFilter ? ' — ' + agentFilter : ' — ' + allLabel);
     data = agentFilter ? tickets.filter(t=>t.assigne_a===agentFilter) : tickets;
   } else if(type === 'anomalies'){
-    title = 'Rapport d\'anomalies et tendances';
+    title = appText('anomalies_report','Rapport anomalies');
     data = tickets;
   } else {
-    title = 'Rapport global';
+    title = appText('global_report','Rapport global');
     data = tickets;
   }
 
   const now = formatAppDate(new Date(), {day:'2-digit',month:'long',year:'numeric'});
   const brandName = settings.brandName || 'DeskHotel';
 
-  let html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+  let html = `<!DOCTYPE html><html lang="${window.OnomoI18n?.language||'fr'}" dir="${window.OnomoI18n?.language==='ar'?'rtl':'ltr'}"><head><meta charset="UTF-8">
   <title>${title}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -3195,8 +3212,8 @@ function exportPDF(type, hotelFilter, agentFilter){
 
   // HEADER
   html += `<div class="hdr">
-    <div><div class="brand">${brandName}</div><div class="report-title">${title}</div><div class="report-date">Généré le ${now}</div></div>
-    <div style="text-align:right;font-size:10px;color:#71717A">Système de ticketing IT<br>Confidentiel</div>
+    <div><div class="brand">${brandName}</div><div class="report-title">${title}</div><div class="report-date">${appText('generated_on','Généré le')} ${now}</div></div>
+    <div style="text-align:right;font-size:10px;color:#71717A">${appText('ticketing_system','Système de ticketing IT')}<br>${appText('confidential','Confidentiel')}</div>
   </div>`;
 
   if(type === 'anomalies'){
@@ -3206,7 +3223,7 @@ function exportPDF(type, hotelFilter, agentFilter){
   }
 
   // FOOTER
-  html += `<div class="footer"><span>${brandName} — Rapport confidentiel</span><span>Généré le ${now} — ${data.length} tickets</span></div>`;
+  html += `<div class="footer"><span>${brandName} — ${appText('confidential','Confidentiel')}</span><span>${appText('generated_on','Généré le')} ${now} — ${data.length} ${appText('tickets','Tickets')}</span></div>`;
   html += '</body></html>';
 
   const win = window.open('','_blank','width=900,height=700');
@@ -3224,10 +3241,10 @@ function buildStandardReportHTML(data, type, hotelFilter, agentFilter){
 
   // KPIs
   html += `<div class="kpi-row">
-    <div class="kpi"><div class="kpi-lbl">Total tickets</div><div class="kpi-val">${data.length}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Ouverts</div><div class="kpi-val" style="color:#2563EB">${open}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Urgents actifs</div><div class="kpi-val" style="color:${urg>0?'#DC2626':'#059669'}">${urg}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Taux résolution</div><div class="kpi-val" style="color:${rate>70?'#059669':rate>40?'#D97706':'#DC2626'}">${rate}%</div></div>
+    <div class="kpi"><div class="kpi-lbl">${appText('total_tickets','Total tickets')}</div><div class="kpi-val">${data.length}</div></div>
+    <div class="kpi"><div class="kpi-lbl">${appText('open_plural','Ouverts')}</div><div class="kpi-val" style="color:#2563EB">${open}</div></div>
+    <div class="kpi"><div class="kpi-lbl">${appText('active_urgent','Urgents actifs')}</div><div class="kpi-val" style="color:${urg>0?'#DC2626':'#059669'}">${urg}</div></div>
+    <div class="kpi"><div class="kpi-lbl">${appText('resolution_rate_label','Taux résolution')}</div><div class="kpi-val" style="color:${rate>70?'#059669':rate>40?'#D97706':'#DC2626'}">${rate}%</div></div>
   </div>`;
 
   // Charts by category
@@ -3237,44 +3254,42 @@ function buildStandardReportHTML(data, type, hotelFilter, agentFilter){
 
   html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
     <div class="section">
-      <div class="section-title">Par catégorie</div>
+      <div class="section-title">${appText('by_category_label','Par catégorie')}</div>
       ${CATS_LOCAL.map(cat=>{
         const cnt=data.filter(t=>t.categorie===cat).length;
         const pct=Math.round(cnt/maxCat*100);
-        return `<div class="bar-row"><div class="bar-lbl">${cat.split('/')[0].trim()}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${CAT_COLORS_LOCAL[cat]}"></div></div><div class="bar-cnt">${cnt}</div></div>`;
+        return `<div class="bar-row"><div class="bar-lbl">${localizedCategory(cat)}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${CAT_COLORS_LOCAL[cat]}"></div></div><div class="bar-cnt">${cnt}</div></div>`;
       }).join('')}
     </div>
     <div class="section">
-      <div class="section-title">Par priorité</div>
+      <div class="section-title">${appText('by_priority','Par priorité')}</div>
       ${['Urgente','Haute','Normale','Basse'].map(p=>{
         const cnt=data.filter(t=>t.priorite===p).length;
         const pct=data.length?Math.round(cnt/data.length*100):0;
         const col=p==='Urgente'?'#DC2626':p==='Haute'?'#D97706':p==='Normale'?'#2563EB':'#059669';
-        return `<div class="bar-row"><div class="bar-lbl">${p}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div><div class="bar-cnt">${cnt}</div></div>`;
+        return `<div class="bar-row"><div class="bar-lbl">${localizedPriority(p)}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div><div class="bar-cnt">${cnt}</div></div>`;
       }).join('')}
       <div style="margin-top:12px">
-      <div class="section-title">Par statut</div>
+      <div class="section-title">${appText('by_status','Par statut')}</div>
       ${['nouveau','en_cours','en_attente','résolu','fermé'].map(s=>{
-        const STAT_L2={nouveau:'Nouveau',en_cours:'En cours',en_attente:'En attente',résolu:'Résolu',fermé:'Fermé'};
         const cnt=data.filter(t=>t.statut===s).length;
-        return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #F7F6F3"><span>${STAT_L2[s]}</span><strong>${cnt}</strong></div>`;
+        return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #F7F6F3"><span>${localizedStatus(s)}</span><strong>${cnt}</strong></div>`;
       }).join('')}
       </div>
     </div>
   </div>`;
 
   // Ticket list (max 50)
-  const STAT_L2={nouveau:'Nouveau',en_cours:'En cours',en_attente:'En attente',résolu:'Résolu',fermé:'Fermé'};
   html += `<div class="section">
-    <div class="section-title">Liste des tickets (${Math.min(data.length,50)} sur ${data.length})</div>
-    <table><thead><tr><th>N°</th><th>Sujet</th><th>Hôtel</th><th>Catégorie</th><th>Priorité</th><th>Statut</th><th>Agent</th><th>Date</th></tr></thead><tbody>
+    <div class="section-title">${appText('ticket_list','Liste des tickets')} (${Math.min(data.length,50)} / ${data.length})</div>
+    <table><thead><tr><th>${appText('ticket_number','N°')}</th><th>${appText('subject','Sujet')}</th><th>${appText('hotel','Hôtel')}</th><th>${appText('category','Catégorie')}</th><th>${appText('priority','Priorité')}</th><th>${appText('status','Statut')}</th><th>${appText('agent','Agent')}</th><th>${appText('date','Date')}</th></tr></thead><tbody>
     ${data.slice(0,50).map(t=>`<tr>
       <td style="font-family:monospace;font-size:9px">${t.numero||''}</td>
       <td style="max-width:160px">${(t.titre||'').slice(0,60)}${(t.titre||'').length>60?'…':''}</td>
       <td>${(t.hotel||'').replace('Onomo ','')}</td>
-      <td>${t.categorie||''}</td>
-      <td><span class="badge b-${(t.priorite||'normale').toLowerCase()}">${t.priorite||''}</span></td>
-      <td><span class="badge b-${t.statut||'nouveau'}">${STAT_L2[t.statut]||t.statut}</span></td>
+      <td>${localizedCategory(t.categorie)}</td>
+      <td><span class="badge b-${(t.priorite||'normale').toLowerCase()}">${localizedPriority(t.priorite)}</span></td>
+      <td><span class="badge b-${t.statut||'nouveau'}">${localizedStatus(t.statut)}</span></td>
       <td>${t.assigne_a||'—'}</td>
       <td>${t.created_at?formatAppDate(t.created_at):''}</td>
     </tr>`).join('')}
@@ -4020,10 +4035,10 @@ function sendPushNotif(title, body){
    EXPORT CSV
 ══════════════════════════════════════════════ */
 function exportCSV(list){
-  const cols = ['Numéro','Titre','Hôtel','Catégorie','Priorité','Statut','Assigné à','Créé le'];
+  const cols = [appText('ticket_number','Numéro'),appText('subject','Titre'),appText('hotel','Hôtel'),appText('category','Catégorie'),appText('priority','Priorité'),appText('status','Statut'),appText('assigned','Assigné à'),appText('created_on','Créé le')];
   const rows = list.map(t => [
     t.numero, `"${(t.titre||'').replace(/"/g,'""')}"`, t.hotel,
-    t.categorie, t.priorite, STAT_L[t.statut]||t.statut,
+    localizedCategory(t.categorie), localizedPriority(t.priorite), localizedStatus(t.statut),
     t.assigne_a||'', formatAppDate(t.created_at,{dateStyle:'short',timeStyle:'short'})
   ].join(','));
   const csv = [cols.join(','), ...rows].join('\n');
@@ -4032,7 +4047,7 @@ function exportCSV(list){
   const a = document.createElement('a'); a.href = url;
   a.download = `tickets_${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(url);
-  showToast('Export CSV téléchargé','ok');
+  showToast(appText('export_downloaded','Export CSV téléchargé'),'ok');
 }
 
 /* ══════════════════════════════════════════════
