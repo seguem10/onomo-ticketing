@@ -122,7 +122,35 @@
     'Rôle':'role','Role':'role','الدور':'role'
   });
   const translatedNodes=new WeakMap();
-  function translateLegacy(root=document.body){const entries=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length),wholeNodeOnly=new Set(['Admin','Administrator','مسؤول','IT','تقنية المعلومات']);const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(node=>{const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','TEXTAREA'].includes(parent.tagName)||translatedNodes.get(node)===active)return;let value=node.nodeValue,changed=false;for(const [source,key] of entries){if(wholeNodeOnly.has(source)&&value.trim()!==source)continue;if(value.includes(source)){const target=t(key);if(target!==source){value=value.split(source).join(target);changed=true;}}}const waiting=value.replace(/(?:dont|including|منها)\s+(\d+)\s+(?:en attente|pending|قيد الانتظار)/gi,(_m,count)=>t('waiting_count').replace('{count}',count));if(waiting!==value){value=waiting;changed=true;}if(changed)node.nodeValue=value;translatedNodes.set(node,active);});}
+  function translateLegacy(root=document.body){
+    const entries=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length);
+    const wholeNodeOnly=new Set(['Admin','Administrator','مسؤول','IT','تقنية المعلومات']);
+    const word=/[\p{L}\p{N}]/u;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      const parent=node.parentElement;
+      if(!parent||['SCRIPT','STYLE','TEXTAREA'].includes(parent.tagName)||parent.closest('.t-title,.detail-title,.c-text,.k-card-title,[data-user-content]')||translatedNodes.get(node)===active)return;
+      let value=node.nodeValue,changed=false;
+      for(const [source,key] of entries){
+        if(wholeNodeOnly.has(source)&&value.trim()!==source)continue;
+        if(!value.includes(source))continue;
+        const target=t(key);if(target===source)continue;
+        let position=0;
+        while((position=value.indexOf(source,position))!==-1){
+          const before=Array.from(value.slice(0,position)).pop()||'';
+          const after=Array.from(value.slice(position+source.length))[0]||'';
+          if((word.test(source[0])&&word.test(before))||(word.test(Array.from(source).pop())&&word.test(after))){position+=source.length;continue;}
+          value=value.slice(0,position)+target+value.slice(position+source.length);
+          position+=target.length;changed=true;
+        }
+      }
+      const waiting=value.replace(/(?:dont|including|منها)\s+(\d+)\s+(?:en attente|pending|قيد الانتظار)/gi,(_m,count)=>t('waiting_count').replace('{count}',count));
+      if(waiting!==value){value=waiting;changed=true;}
+      if(changed)node.nodeValue=value;
+      translatedNodes.set(node,active);
+    });
+  }
   function translateAttributes(){document.querySelectorAll('[aria-label],[title],[placeholder]').forEach(el=>['aria-label','title','placeholder'].forEach(attr=>{const value=el.getAttribute(attr),key=value&&phrases[value];if(key)el.setAttribute(attr,t(key));}));}
   function updateStatic(){document.documentElement.lang=active;document.documentElement.dir=active==='ar'?'rtl':'ltr';document.title=t('app_name');document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent=t('support_it'));translateLegacy();translateAttributes();}
   async function setLanguage(value,persist=true){active=normalize(value);try{const response=await fetch(`locales/${active}.json`);if(response.ok)dictionary={...dictionary,[active]:{...fallback[active],...extended[active],...dictionary[active],...await response.json()}};}catch(_){ }if(persist)localStorage.setItem('onomo_language',active);if(persist&&window.currentUser){currentUser.language=active;if(window.sbOK?.())window.sbUpdateUser(currentUser.id,{language:active});}document.querySelectorAll('.language-selector').forEach(select=>select.value=active);updateStatic();window.dispatchEvent(new CustomEvent('onomo:languagechange',{detail:{language:active}}));}

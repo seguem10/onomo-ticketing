@@ -1757,6 +1757,7 @@ function renderTicketList(list,title){
 async function openDetail(id){
   currentTicket=tickets.find(t=>t.id===id);
   if(!currentTicket)return;
+  ticketEvents=[];
   currentView="detail";
   document.getElementById("topbarTitle").textContent="Détail ticket";
   document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
@@ -1809,7 +1810,7 @@ function renderDetail(){
             <div class="meta-item"><div class="meta-lbl">Créé</div><div class="meta-val">${timeAgo(t.created_at)}</div></div>
           </div>
           <div class="meta-lbl" style="margin-bottom:6px">Description</div>
-          <div class="desc-box">${esc(t.description)||"<span style='color:var(--tx3);font-style:italic'>Aucune description fournie.</span>"}</div>
+          <div class="desc-box"${t.description?' data-user-content="true"':''}>${esc(t.description)||"<span style='color:var(--tx3);font-style:italic'>Aucune description fournie.</span>"}</div>
           ${controls}
         </div>
         <!-- Comments -->
@@ -1844,6 +1845,7 @@ function renderDetail(){
         </div>
       </div>
     </div>`;
+  renderTicketEvents();
 }
 let commentSubmissionPending=false;
 async function submitComment(){
@@ -4289,8 +4291,8 @@ document.addEventListener('keydown', e => {
  </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/locales-data.js"></script>
-<script src="assets/js/i18n.js?v=20260922-1"></script>
-<script src="assets/js/modern-features.js?v=20260922-1"></script>
+<script src="assets/js/i18n.js?v=20260922-3"></script>
+<script src="assets/js/modern-features.js?v=20260922-3"></script>
 <script src="assets/js/runtime-sync.js?v=20260921-2"></script>
 </body>
 </html>

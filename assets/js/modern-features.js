@@ -199,6 +199,10 @@
     const preferred=()=>{const candidates=[...(navigator.languages||[]),navigator.language,window.OnomoI18n?.language].filter(Boolean).map(String);return candidates.some(value=>value.startsWith('ar'))?'ar-MA':candidates.some(value=>value.startsWith('en'))?'en-US':'fr-FR';};
     const detectedLanguage=text=>/[؀-ۿ]/.test(text)?'ar-MA':/\b(le|la|les|de|des|est|pas|avec|pour|bonjour)\b/i.test(text)?'fr-FR':/\b(the|and|is|with|for|hello|please)\b/i.test(text)?'en-US':null;
     let recognition=null,active=false,language=preferred(),restartTimer=null;
+    window.addEventListener('onomo:languagechange',()=>{
+      button.innerHTML=`<i class="ti ti-${active?'player-stop':'microphone'}"></i>${active?stopLabel():buttonLabel()}`;
+      if(active)status.textContent=text('voice_listening','Écoute active — langue détectée automatiquement.');
+    });
     const restart=()=>{if(active){clearTimeout(restartTimer);restartTimer=setTimeout(start,250);}};
     function start(){
       recognition=new Speech();recognition.continuous=true;recognition.interimResults=true;recognition.lang=language;
