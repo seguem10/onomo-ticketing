@@ -1261,20 +1261,25 @@ function hexToRgb(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(
 /* ══════════════════════════════════════════════
    UTILS
 ══════════════════════════════════════════════ */
+function appLocale(){
+  const language=window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
+  return language==='ar'?'ar-MA':language==='en'?'en-US':'fr-FR';
+}
+function formatAppDate(value,options){
+  const date=value instanceof Date?value:new Date(value);
+  return Number.isNaN(date.getTime())?'':new Intl.DateTimeFormat(appLocale(),options).format(date);
+}
 function timeAgo(d){
   if(!d)return"";
-  const s=(Date.now()-new Date(d).getTime())/1000;
-  if(s<60)return"à l'instant";
-  if(s<3600)return`il y a ${Math.floor(s/60)} min`;
-  if(s<86400)return`il y a ${Math.floor(s/3600)}h`;
-  return new Date(d).toLocaleDateString("fr-FR");
+  const date=new Date(d);if(Number.isNaN(date.getTime()))return"";
+  const seconds=(Date.now()-date.getTime())/1000;
+  const relative=new Intl.RelativeTimeFormat(appLocale(),{numeric:'auto'});
+  if(Math.abs(seconds)<60)return relative.format(0,'second');
+  if(Math.abs(seconds)<3600)return relative.format(-Math.round(seconds/60),'minute');
+  if(Math.abs(seconds)<86400)return relative.format(-Math.round(seconds/3600),'hour');
+  return formatAppDate(date);
 }
-function timeSince(d){
-  const s=(Date.now()-new Date(d).getTime())/1000;
-  if(s<60)return"maintenant";
-  if(s<3600)return`${Math.floor(s/60)} min`;
-  return`${Math.floor(s/3600)}h`;
-}
+function timeSince(d){return timeAgo(d);}
 function genNum(){return`ONO-${Date.now().toString().slice(-5)}`;}
 function initials(s){return(s||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();}
 function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
@@ -3137,7 +3142,7 @@ function exportPDF(type, hotelFilter, agentFilter){
     data = tickets;
   }
 
-  const now = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'});
+  const now = formatAppDate(new Date(), {day:'2-digit',month:'long',year:'numeric'});
   const brandName = settings.brandName || 'DeskHotel';
 
   let html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
@@ -3271,7 +3276,7 @@ function buildStandardReportHTML(data, type, hotelFilter, agentFilter){
       <td><span class="badge b-${(t.priorite||'normale').toLowerCase()}">${t.priorite||''}</span></td>
       <td><span class="badge b-${t.statut||'nouveau'}">${STAT_L2[t.statut]||t.statut}</span></td>
       <td>${t.assigne_a||'—'}</td>
-      <td>${t.created_at?new Date(t.created_at).toLocaleDateString('fr-FR'):''}</td>
+      <td>${t.created_at?formatAppDate(t.created_at):''}</td>
     </tr>`).join('')}
     </tbody></table>
   </div>`;
@@ -4019,7 +4024,7 @@ function exportCSV(list){
   const rows = list.map(t => [
     t.numero, `"${(t.titre||'').replace(/"/g,'""')}"`, t.hotel,
     t.categorie, t.priorite, STAT_L[t.statut]||t.statut,
-    t.assigne_a||'', new Date(t.created_at).toLocaleString('fr-FR')
+    t.assigne_a||'', formatAppDate(t.created_at,{dateStyle:'short',timeStyle:'short'})
   ].join(','));
   const csv = [cols.join(','), ...rows].join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
