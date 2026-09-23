@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const roleNames: Record<string, string> = { admin: "Administrateur", it_regional: "IT Regional", it_hotel: "IT Hotel", direction: "Directeur", demandeur: "Demandeur" };
+const roleNames: Record<string, string> = { admin: "Administrateur", it_regional: "IT Regional", it_hotel: "IT Hotel", direction: "Directeur", demandeur: "Demandeur", requester: "Demandeur" };
 const databaseRoleName = (value: unknown): string | null => {
   if (typeof value !== "string") return null;
   const name = value.trim().slice(0, 120);
@@ -37,12 +37,16 @@ Deno.serve(async (req) => {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const requested = Array.isArray(body.roles) ? body.roles : [body.role];
   const roles = [...new Set(requested.map(databaseRoleName).filter((role): role is string => Boolean(role)))];
-  const role = typeof body.role === "string" && body.role in roleNames ? body.role : roles[0];
+  const requestedRole = typeof body.role === "string" ? body.role.trim() : "";
+  // Keep the profile's canonical internal role while accepting the legacy
+  // requester alias from older clients.
+  const role = requestedRole in roleNames ? (requestedRole === "requester" ? "demandeur" : requestedRole) : roles[0];
   const hotel = typeof body.hotel === "string" && body.hotel.trim() ? body.hotel.trim().slice(0, 160) : null;
   const hotels = Array.isArray(body.hotels) ? [...new Set(body.hotels.filter((v): v is string => typeof v === "string" && v.trim()).map(v => v.trim().slice(0, 160)))].slice(0, 100) : [];
   if (!prenom || !nom || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !roles.length || !role) return reply(req, { error: "Prénom, nom, email valide et au moins un rôle sont requis." }, 400);
   if (!passwordIsStrong(body.password)) return reply(req, { error: "Le mot de passe doit contenir 12 caractères minimum, une majuscule, une minuscule, un chiffre et un caractère spécial." }, 400);
   if (role === "it_hotel" && !hotel) return reply(req, { error: "Un hôtel est requis pour le rôle IT Hôtel." }, 400);
+  if (role === "demandeur" && !hotel) return reply(req, { error: "Un hôtel est requis pour le rôle Demandeur." }, 400);
   if (role === "it_regional" && !hotels.length) return reply(req, { error: "Au moins un hôtel est requis pour le rôle IT Régional." }, 400);
   const admin = createClient(URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password: body.password, email_confirm: true, user_metadata: { prenom, nom } });

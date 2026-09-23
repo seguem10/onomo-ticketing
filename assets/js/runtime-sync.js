@@ -374,13 +374,18 @@
       const email=document.getElementById('uEmail')?.value.trim().toLowerCase()||'';
       const password=document.getElementById('uPwd')?.value||'';
       const role=document.getElementById('uRole')?.value||'it_hotel';
-      const hotel=role==='it_hotel'?(document.getElementById('uHotel')?.value||null):null;
+      // A requester is scoped to one hotel exactly like Hotel IT. Sending a
+      // null value here created an Auth account that could not later create a
+      // correctly scoped ticket.
+      const isRequester=role==='demandeur'||role==='requester';
+      const hotel=(role==='it_hotel'||isRequester)?(document.getElementById('uHotel')?.value||null):null;
       const hotels=role==='it_regional'&&typeof getSelectedHotels==='function'?getSelectedHotels():[];
       const roles=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
       const finalRoles=roles.length?roles:[role];
       if(!email){showToast(t('email_required',"L'email est requis"),'err');return;}
       if(!validPassword(password)){showToast(passwordPolicyMessage(),'err');return;}
       if(role==='it_hotel'&&!hotel){showToast(t('select_it_hotel',"Sélectionnez un hôtel pour l'IT Hôtel"),'err');return;}
+      if(isRequester&&!hotel){showToast(t('select_requester_hotel','Sélectionnez un hôtel pour le demandeur'),'err');return;}
       if(role==='it_regional'&&!hotels.length){showToast(t('select_it_regional',"Sélectionnez au moins un hôtel pour l'IT Régional"),'err');return;}
       if(DEMO_USERS.some(user=>user.email===email)){showToast(t('email_already_used','Email déjà utilisé'),'err');return;}
       try{
