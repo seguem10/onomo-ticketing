@@ -21,7 +21,14 @@
     const c=emailCfg();
     if(!to||!window.emailjs||!c.serviceId||!c.templateId||!c.publicKey)return false;
     try{
-      const params={to_email:to,recipient_email:to,agent_email:to,email:to,agent_prenom:nameOf(recipient),recipient_name:nameOf(recipient),ticket_numero:ticket?.numero||ticket?.id||'',ticket_titre:ticket?.titre||'',ticket_hotel:ticket?.hotel||'',ticket_priorite:ticket?.priorite||'',ticket_categorie:ticket?.categorie||'',ticket_statut:(typeof STAT_L!=='undefined'&&STAT_L[ticket?.statut])||ticket?.statut||'',ticket_description:ticket?.description||'',app_url:(typeof APP_URL!=='undefined'&&APP_URL)||window.location.href,name:(settingsOf().brandName)||'ONOMO Support IT',event,message:event+'\n\nTicket: '+(ticket?.numero||ticket?.id||'')+'\nTitre: '+(ticket?.titre||'')+'\nHôtel: '+(ticket?.hotel||'')+'\nPriorité: '+(ticket?.priorite||'')+'\nCatégorie: '+(ticket?.categorie||'')+'\nStatut: '+((typeof STAT_L!=='undefined'&&STAT_L[ticket?.statut])||ticket?.statut||'')+'\n\n'+(ticket?.description||'')};
+      const display=(value,keys={})=>recipientText(recipient,keys[norm(value)]||'',String(value||''));
+      const priority=display(ticket?.priorite,{basse:'low',low:'low',normale:'normal',normal:'normal',haute:'high',high:'high',critique:'critical',critical:'critical'});
+      const category=display(ticket?.categorie,{maintenance:'maintenance',menage:'housekeeping',housekeeping:'housekeeping',chambres:'rooms',rooms:'rooms',restauration:'restaurant',restaurant:'restaurant',securite:'security',security:'security',autre:'other',other:'other'});
+      const rawStatus=ticket?.statut||'';
+      const status=display(rawStatus,{nouveau:'new',new:'new',en_cours:'in_progress','en cours':'in_progress',in_progress:'in_progress',en_attente:'pending','en attente':'pending',pending:'pending',resolu:'resolved','résolu':'resolved',resolved:'resolved',ferme:'closed','fermé':'closed',closed:'closed'});
+      const field=(key,fallback)=>recipientText(recipient,key,fallback);
+      const message=[event,'',`${field('ticket_number','Ticket')}: ${ticket?.numero||ticket?.id||''}`,`${field('subject','Subject')}: ${ticket?.titre||''}`,`${field('hotel','Hotel')}: ${ticket?.hotel||''}`,`${field('priority','Priority')}: ${priority}`,`${field('category','Category')}: ${category}`,`${field('status','Status')}: ${status}`,'',ticket?.description||''].join('\n');
+      const params={to_email:to,recipient_email:to,agent_email:to,email:to,agent_prenom:nameOf(recipient),recipient_name:nameOf(recipient),ticket_numero:ticket?.numero||ticket?.id||'',ticket_titre:ticket?.titre||'',ticket_hotel:ticket?.hotel||'',ticket_priorite:priority,ticket_categorie:category,ticket_statut:status,ticket_description:ticket?.description||'',app_url:(typeof APP_URL!=='undefined'&&APP_URL)||window.location.href,name:(settingsOf().brandName)||'ONOMO Support IT',event,message};
       await window.emailjs.send(c.serviceId,c.templateId,params,{publicKey:c.publicKey,limitRate:{throttle:0}});
       return true;
     }catch(e){console.error('[ONOMO EMAIL] failed',event,to,e);return false;}
