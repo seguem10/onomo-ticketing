@@ -633,6 +633,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
       <div class="form-g"><label class="form-lbl" data-i18n="email">Adresse email</label><input id="loginEmail" class="form-ctrl" type="email" data-i18n-placeholder="email_placeholder" placeholder="vous@hotel.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="form-g"><label class="form-lbl" data-i18n="password">Mot de passe</label><div class="input-wrap"><input id="loginPwd" class="form-ctrl" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"><button class="eye-btn" onclick="togglePwd('loginPwd',this)" tabindex="-1"><i class="ti ti-eye"></i></button></div></div>
       <button class="btn-primary" id="loginBtn" onclick="doLogin()"><i class="ti ti-login"></i><span data-i18n="login">Se connecter</span></button>
+      <button type="button" style="display:block;margin:12px auto 0;border:0;background:none;color:var(--brand);cursor:pointer;font-size:12px;font-weight:600" onclick="requestPasswordReset()" data-i18n="forgot_password">Mot de passe oublié ?</button>
 
     </div>
   </div>

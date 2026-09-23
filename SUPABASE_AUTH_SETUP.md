@@ -13,6 +13,9 @@ Dans Supabase → SQL Editor, exécuter dans cet ordre :
 5. `supabase/p4_profile_privilege_guard.sql`
 6. `supabase/p5_notification_trigger_reconciliation.sql`
 7. `supabase/p6_ticket_creation_history_fix.sql`
+8. `supabase/p7_requester_it_scope.sql`
+9. `supabase/p8_canonical_ticket_numbers.sql`
+10. `supabase/p9_my_permissions_rpc.sql`
 
 La table `utilisateurs` doit contenir `auth_user_id`.
 
@@ -153,3 +156,15 @@ Après déploiement Vercel :
 Ne jamais mettre `service_role` ou une clé secrète Supabase dans `index.html`, `runtime-sync.js` ou un autre fichier JavaScript exécuté dans le navigateur.
 
 Supabase recommande de garder `service_role` côté serveur. La fonction Edge est utilisée précisément pour cette opération privilégiée.
+
+## 8. Réinitialisation de mot de passe
+
+Dans **Authentication → URL Configuration**, ajoutez l'URL de redirection :
+
+```text
+https://onomo-ticketing.vercel.app/#reset-password
+```
+
+Ajoutez aussi l'URL équivalente de préproduction si elle est utilisée. Le lien
+« Mot de passe oublié ? » envoie ensuite un email Supabase standard ; la page
+ne révèle jamais si l'adresse demandée correspond à un compte existant.

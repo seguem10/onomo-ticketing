@@ -14,6 +14,10 @@
     try{
       authClient=window.supabase.createClient(s.sbUrl,s.sbKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'onomo-supabase-auth'}});
       authSubscription=authClient.auth.onAuthStateChange((event,session)=>{
+        if(event==='PASSWORD_RECOVERY'&&session?.user){
+          setTimeout(openPasswordRecovery,0);
+          return;
+        }
         if(event==='SIGNED_OUT'){
           if(currentUser)return;
           clearSession();
@@ -93,6 +97,46 @@
     }catch(error){console.warn('Déconnexion pour inactivité impossible',error);}
     finally{idleLogoutInProgress=false;}
   }
+  async function requestPasswordReset(){
+    const email=document.getElementById('loginEmail')?.value.trim().toLowerCase()||'';
+    if(!email){showToast(t('email_required','L’email est requis'),'err');return false;}
+    const client=getAuthClient();
+    if(!client){showToast(t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.'),'err');return false;}
+    try{
+      // Supabase intentionally returns the same confirmation for known and
+      // unknown addresses, avoiding account enumeration.
+      await client.auth.resetPasswordForEmail(email,{redirectTo:`${location.origin}${location.pathname}#reset-password`});
+      showToast(t('reset_email_sent','Si un compte correspond à cette adresse, un lien de réinitialisation a été envoyé.'),'ok');
+      return true;
+    }catch(error){
+      console.warn('Demande de réinitialisation impossible',error);
+      showToast(t('reset_email_sent','Si un compte correspond à cette adresse, un lien de réinitialisation a été envoyé.'),'ok');
+      return true;
+    }
+  }
+  function openPasswordRecovery(){
+    document.getElementById('passwordRecoveryModal')?.remove();
+    const overlay=document.createElement('div');
+    overlay.id='passwordRecoveryModal';overlay.className='overlay open';
+    overlay.innerHTML=`<div class="modal" style="max-width:440px"><div class="modal-hdr"><div class="modal-title"><i class="ti ti-lock-reset"></i>${t('reset_password','Réinitialiser le mot de passe')}</div></div><div class="modal-body"><div class="form-g"><label class="field-lbl">${t('reset_new_password','Nouveau mot de passe')}</label><input id="recoveryPassword" class="field-ctrl" type="password" autocomplete="new-password"></div><div class="form-g"><label class="field-lbl">${t('confirm_new_password','Confirmer le nouveau mot de passe')}</label><input id="recoveryPasswordConfirm" class="field-ctrl" type="password" autocomplete="new-password"></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="completePasswordRecovery()">${t('reset_password','Réinitialiser le mot de passe')}</button></div></div>`;
+    document.body.appendChild(overlay);
+  }
+  async function completePasswordRecovery(){
+    const password=document.getElementById('recoveryPassword')?.value||'',confirm=document.getElementById('recoveryPasswordConfirm')?.value||'';
+    if(password!==confirm){showToast(t('password_mismatch','Les mots de passe ne correspondent pas'),'err');return false;}
+    if(!validPassword(password)){showToast(passwordPolicyMessage(),'err');return false;}
+    const client=getAuthClient(),session=await getAuthSession();
+    if(!client||!session?.user){showToast(t('reset_link_invalid','Le lien de réinitialisation est invalide ou a expiré.'),'err');return false;}
+    try{
+      const {error}=await client.auth.updateUser({password});if(error)throw error;
+      document.getElementById('passwordRecoveryModal')?.remove();
+      history.replaceState(null,'',location.pathname);
+      showToast(t('reset_success','Mot de passe réinitialisé. Vous pouvez vous connecter.'),'ok');
+      return true;
+    }catch(error){console.warn('Réinitialisation du mot de passe impossible',error);showToast(t('reset_link_invalid','Le lien de réinitialisation est invalide ou a expiré.'),'err');return false;}
+  }
+  window.requestPasswordReset=requestPasswordReset;
+  window.completePasswordRecovery=completePasswordRecovery;
   function checkInactivity(){
     if(!currentUser||idleLogoutInProgress)return;
     const last=Number(localStorage.getItem(ACTIVITY_KEY)||0);
