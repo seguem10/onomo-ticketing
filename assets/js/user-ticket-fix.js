@@ -19,7 +19,17 @@
     }catch(e){console.warn('ONOMO profil non synchronisé',e)}
     return norm(window.currentUser);
   }
-  function fillRequesterTicket(){
+  async function requesterIT(){
+    if(typeof window.sbFetch!=='function'||typeof window.sbOK!=='function'||!window.sbOK())return [];
+    try{const rows=await window.sbFetch('rpc/requester_available_it',{method:'POST',body:'{}',prefer:'return=representation'});return Array.isArray(rows)?rows:[];}
+    catch(error){console.warn('ONOMO IT autorisés indisponibles',error);return []}
+  }
+  function assignmentNotice(select,message,kind='info'){
+    let note=document.getElementById('ntAgentScopeNotice');
+    if(!note){note=document.createElement('div');note.id='ntAgentScopeNotice';note.style.cssText='font-size:11px;margin-top:6px;line-height:1.45';select.parentElement?.appendChild(note)}
+    note.style.color=kind==='err'?'var(--red-t,#b42318)':'var(--tx3)';note.textContent=message||'';
+  }
+  async function fillRequesterTicket(){
     const u=norm(window.currentUser);if(!u||u.role!=='demandeur')return;
     const hotel=u.hotel||'';
     const hs=document.getElementById('ntHotel');
@@ -27,20 +37,32 @@
     const a=document.getElementById('ntAgent');
     if(a){
       a.innerHTML="<option value=''>"+t('select_it_option','— Sélectionner un IT —')+"</option>";
-      const us=allUsers();
-      const matching=us.filter(x=>(x.role==='it_hotel'&&x.hotel===hotel)||(x.role==='it_regional'&&normHotels(x.hotels).includes(hotel)));
-      const pool=matching.length?matching:us.filter(x=>x.role==='it_hotel'||x.role==='it_regional');
-      pool.forEach(x=>{const name=`${x.prenom||''} ${x.nom||''}`.trim();if(!name)return;const scope=x.role==='it_hotel'?x.hotel:normHotels(x.hotels).join(', ');const o=document.createElement('option');o.value=name;o.textContent=name+(scope?` (${scope})`:'');a.appendChild(o)});
-      if(matching[0])a.value=`${matching[0].prenom||''} ${matching[0].nom||''}`.trim();
+      const available=await requesterIT();
+      const groups={local:[],regional:[]};available.forEach(x=>groups[x.scope_type==='regional'?'regional':'local'].push(x));
+      [['local',t('it_your_hotel','IT de votre hôtel')],['regional',t('regional_it','IT régional')]].forEach(([scope,label])=>{
+        if(!groups[scope].length)return;const group=document.createElement('optgroup');group.label=label;
+        groups[scope].forEach(x=>{const name=`${x.prenom||''} ${x.nom||''}`.trim();if(!name||!x.assigned_to)return;const o=document.createElement('option');o.value=x.assigned_to;o.dataset.assignedTo=x.assigned_to;o.dataset.assigneeName=name;o.textContent=name;group.appendChild(o)});a.appendChild(group);
+      });
+      a.disabled=available.length===0;
+      if(available[0]){a.value=available[0].assigned_to;assignmentNotice(a,'');}
+      else assignmentNotice(a,t('no_it_available','Aucun responsable IT n’est actuellement configuré pour votre hôtel.'),'err');
     }
   }
-  async function prepareRequester(){await refreshProfile();fillRequesterTicket()}
+  async function prepareRequester(){await refreshProfile();await fillRequesterTicket()}
+  window.OnomoRequesterScope={refresh:fillRequesterTicket};
   const oldOpen=window.openNewTicket;
   if(typeof oldOpen==='function')window.openNewTicket=async function(){await prepareRequester();return oldOpen.apply(this,arguments)};
   const oldPopulate=window.populateSelects;
-  if(typeof oldPopulate==='function')window.populateSelects=function(){const r=oldPopulate.apply(this,arguments);if(norm(window.currentUser)?.role==='demandeur')fillRequesterTicket();return r};
+  if(typeof oldPopulate==='function')window.populateSelects=function(){const r=oldPopulate.apply(this,arguments);if(norm(window.currentUser)?.role==='demandeur')void fillRequesterTicket();return r};
   const oldSubmitTicket=window.submitNewTicket;
   if(typeof oldSubmitTicket==='function')window.submitNewTicket=async function(){if(norm(window.currentUser)?.role==='demandeur'){await prepareRequester();if(!document.getElementById('ntHotel')?.value){window.showToast?.(t('no_hotel_assigned','Votre compte Demandeur n’a aucun hôtel assigné.'),'err');return}if(!document.getElementById('ntAgent')?.value){window.showToast?.(t('no_it_available','Aucun IT disponible pour cet hôtel.'),'err');return}}return oldSubmitTicket.apply(this,arguments)};
+  const oldCreateTicket=window.createTicket;
+  if(typeof oldCreateTicket==='function')window.createTicket=async function(data){
+    if(norm(window.currentUser)?.role!=='demandeur')return oldCreateTicket.apply(this,arguments);
+    const option=document.getElementById('ntAgent')?.selectedOptions?.[0];const assignedTo=option?.dataset?.assignedTo||option?.value||'';const assigneeName=option?.dataset?.assigneeName||'';
+    if(!assignedTo||!assigneeName){window.showToast?.(t('no_it_available','Aucun responsable IT n’est actuellement configuré pour votre hôtel.'),'err');return null;}
+    return oldCreateTicket.call(this,{...data,assigned_to:assignedTo,assigne_a:assigneeName});
+  };
   const oldInit=window.initSession;
   if(typeof oldInit==='function')window.initSession=function(){const r=oldInit.apply(this,arguments);setTimeout(()=>refreshProfile().then(u=>{if(u?.role==='demandeur')fillRequesterTicket()}),100);return r};
   const oldSubmitUser=window.submitUser;

@@ -3,6 +3,7 @@
   'use strict';
   const roleNorm=r=>({demandeur:'demandeur',requester:'demandeur'}[String(r||'').toLowerCase().trim()]||String(r||'').toLowerCase().trim());
   async function fillRequesterAgent(){
+    if(window.OnomoRequesterScope?.refresh){await window.OnomoRequesterScope.refresh();return;}
     const u=window.currentUser;
     if(roleNorm(u?.role)!=='demandeur')return;
     const select=document.getElementById('ntAgent');
@@ -10,7 +11,7 @@
     let its=[];
     try{
       if(typeof window.sbFetch==='function'){
-        const rows=await window.sbFetch('rpc/requester_it_users',{method:'POST',body:'{}',prefer:'return=representation'});
+        const rows=await window.sbFetch('rpc/requester_available_it',{method:'POST',body:'{}',prefer:'return=representation'});
         its=Array.isArray(rows)?rows:[];
       }
     }catch(e){console.warn('ONOMO liste IT:',e);}
@@ -18,13 +19,14 @@
     its.forEach(x=>{
       const name=`${x.prenom||''} ${x.nom||''}`.trim();
       if(!name)return;
-      const scope=x.role==='it_hotel'?x.hotel:(Array.isArray(x.hotels)?x.hotels:[]).join(', ');
       const option=document.createElement('option');
-      option.value=name;
-      option.textContent=name+(scope?` (${scope})`:'');
+      option.value=x.assigned_to||'';
+      option.dataset.assignedTo=x.assigned_to||'';
+      option.dataset.assigneeName=name;
+      option.textContent=name;
       select.appendChild(option);
     });
-    if(its[0])select.value=`${its[0].prenom||''} ${its[0].nom||''}`.trim();
+    if(its[0])select.value=its[0].assigned_to||'';
   }
   function loadProfileFix(){
     if(document.querySelector('script[data-onomo-requester-profile-fix]'))return;
