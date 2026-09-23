@@ -50,8 +50,24 @@
   }
   async function prepareRequester(){await refreshProfile();await fillRequesterTicket()}
   window.OnomoRequesterScope={refresh:fillRequesterTicket};
+  function showRequesterAgentLoading(){
+    const a=document.getElementById('ntAgent');
+    if(!a)return;
+    a.innerHTML=`<option value="">${t('loading','Chargement…')}</option>`;
+    a.disabled=true;
+    assignmentNotice(a,'');
+  }
   const oldOpen=window.openNewTicket;
-  if(typeof oldOpen==='function')window.openNewTicket=async function(){await prepareRequester();return oldOpen.apply(this,arguments)};
+  if(typeof oldOpen==='function')window.openNewTicket=async function(){
+    // The legacy opener rebuilds every select.  It must run first; otherwise it
+    // overwrites the scoped IT list with its broad local fallback.
+    const result=oldOpen.apply(this,arguments);
+    if(norm(window.currentUser)?.role==='demandeur'){
+      showRequesterAgentLoading();
+      await prepareRequester();
+    }
+    return result;
+  };
   const oldPopulate=window.populateSelects;
   if(typeof oldPopulate==='function')window.populateSelects=function(){const r=oldPopulate.apply(this,arguments);if(norm(window.currentUser)?.role==='demandeur')void fillRequesterTicket();return r};
   const oldSubmitTicket=window.submitNewTicket;
