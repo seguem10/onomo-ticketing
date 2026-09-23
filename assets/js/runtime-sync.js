@@ -5,7 +5,11 @@
   let syncTimer=null, channel=null, realtimeChannel=null, realtimeClient=null, authClient=null, authSubscription=null, loading=false, syncQueued=false, syncQueuedTimer=null, restoring=false;
   const t=(key,fallback)=>window.OnomoI18n?.t(key)||fallback;
   const cfg=()=>{try{return typeof settings!=='undefined'?settings:window.settings;}catch(_){return window.settings;}};
-  const hasAuthConfiguration=()=>{const s=cfg();return Boolean(window.supabase&&s?.sbUrl&&s?.sbKey);};
+  /* The presence of production credentials is enough to disable every local
+     session fallback.  Do not depend on the SDK global here: if its script
+     fails to load, restoring a browser-cached profile would otherwise turn a
+     temporary outage into a local authentication bypass. */
+  const hasAuthConfiguration=()=>{const s=cfg();return Boolean(s?.sbUrl&&s?.sbKey);};
 
   function getAuthClient(){
     if(authClient)return authClient;
