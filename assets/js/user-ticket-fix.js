@@ -81,6 +81,9 @@
   };
   const oldInit=window.initSession;
   if(typeof oldInit==='function')window.initSession=function(){const r=oldInit.apply(this,arguments);setTimeout(()=>refreshProfile().then(u=>{if(u?.role==='demandeur')fillRequesterTicket()}),100);return r};
+  window.addEventListener('onomo:languagechange',()=>{
+    if(norm(window.currentUser)?.role==='demandeur'&&document.getElementById('ntAgent'))void fillRequesterTicket();
+  });
   const oldSubmitUser=window.submitUser;
   if(typeof oldSubmitUser==='function')window.submitUser=async function(){
     const editId=document.getElementById('uEditId')?.value||'';
