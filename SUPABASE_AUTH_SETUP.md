@@ -18,6 +18,7 @@ Dans Supabase → SQL Editor, exécuter dans cet ordre :
 10. `supabase/p9_my_permissions_rpc.sql`
 11. `supabase/p10_profile_rls_reconciliation.sql`
 12. `supabase/p11_ticket_rls_reconciliation.sql`
+13. `supabase/p12_ticket_related_rls_reconciliation.sql`
 
 La table `utilisateurs` doit contenir `auth_user_id`.
 
