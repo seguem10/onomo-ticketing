@@ -182,10 +182,29 @@
   function updateStatic(){document.documentElement.lang=active;document.documentElement.dir=active==='ar'?'rtl':'ltr';document.title=t('app_name');document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent=t('support_it'));translateLegacy();translateAttributes();}
   async function setLanguage(value,persist=true){active=normalize(value);try{const response=await fetch(`locales/${active}.json`);if(response.ok)dictionary={...dictionary,[active]:{...fallback[active],...extended[active],...dictionary[active],...await response.json()}};}catch(_){ }if(persist)localStorage.setItem('onomo_language',active);if(persist&&window.currentUser){currentUser.language=active;if(window.sbOK?.())window.sbUpdateUser(currentUser.id,{language:active});}document.querySelectorAll('.language-selector').forEach(select=>select.value=active);updateStatic();window.dispatchEvent(new CustomEvent('onomo:languagechange',{detail:{language:active}}));}
   function selector(){const build=location=>{if(document.getElementById(`languageSelector-${location}`))return;const select=document.createElement('select');select.id=`languageSelector-${location}`;select.className='language-selector';select.setAttribute('aria-label','Language');select.innerHTML='<option value="fr">FR</option><option value="en">EN</option><option value="ar">العربية</option>';select.value=active;select.addEventListener('change',event=>setLanguage(event.target.value));document.querySelector(location==='login'?'.login-brand':'.topbar')?.append(select);};build('login');build('app');}
-  window.OnomoI18n={t,translate,setLanguage,get language(){return active},validate(){const keys=Object.keys(dictionary.fr);return ['en','ar'].flatMap(lang=>keys.filter(key=>!(key in dictionary[lang])).map(key=>`${lang}:${key}`));}};
+  function auditVisibleText(root=document.body){
+    if(active==='fr')return [];
+    const sources=Object.entries(phrases).filter(([,key])=>{
+      const translated=t(key);
+      return translated && translated!==key;
+    });
+    const leaks=new Set();
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    while(walker.nextNode()){
+      const node=walker.currentNode,parent=node.parentElement;
+      if(!parent||['SCRIPT','STYLE','TEXTAREA'].includes(parent.tagName)||parent.closest('.t-title,.detail-title,.c-text,.k-card-title,[data-user-content]'))continue;
+      const value=node.nodeValue||'';
+      for(const [source,key] of sources){
+        const translated=t(key);
+        if(source!==translated&&value.includes(source)){leaks.add(key);break;}
+      }
+    }
+    return [...leaks].sort();
+  }
+  window.OnomoI18n={t,translate,setLanguage,get language(){return active},validate(){const keys=Object.keys(dictionary.fr);return ['en','ar'].flatMap(lang=>keys.filter(key=>!(key in dictionary[lang])).map(key=>`${lang}:${key}`));},auditVisibleText};
   document.addEventListener('DOMContentLoaded',()=>{active=normalize(localStorage.getItem('onomo_language')||detect());selector();setLanguage(active,false);new MutationObserver(()=>translateLegacy()).observe(document.body,{childList:true,subtree:true});});
   let rerenderTimer=null;
-  window.addEventListener('onomo:languagechange',()=>{clearTimeout(rerenderTimer);rerenderTimer=setTimeout(()=>{try{if(window.currentUser&&typeof window.renderView==='function'&&typeof window.currentView==='string')window.renderView();else translateLegacy();}catch(error){console.warn('Rendu multilingue impossible',error);}},0);});
+  window.addEventListener('onomo:languagechange',()=>{clearTimeout(rerenderTimer);rerenderTimer=setTimeout(()=>{try{if(window.currentUser&&typeof window.renderView==='function'&&typeof window.currentView==='string')window.renderView();else translateLegacy();/* Dynamic views are rendered asynchronously. Run a second translation pass after their DOM has settled. */setTimeout(()=>{updateStatic();const leaks=auditVisibleText();if(leaks.length)console.warn('Traductions visibles à compléter',leaks);},0);}catch(error){console.warn('Rendu multilingue impossible',error);}},0);});
   function loadOnomoAutomation(){if(document.querySelector('script[data-onomo-automation]'))return;const s=document.createElement('script');s.src='assets/js/voice-email-admin.js?v=20260923-3';s.dataset.onomoAutomation='1';document.body.appendChild(s);}
   function loadAdminActivity(){if(document.querySelector('script[data-onomo-activity]'))return;const s=document.createElement('script');s.src='assets/js/admin-activity.js';s.dataset.onomoActivity='1';document.body.appendChild(s);}
   function loadUserTicketFix(){if(document.querySelector('script[data-onomo-user-ticket-fix]'))return;const s=document.createElement('script');s.src='assets/js/user-ticket-fix.js?v=20260923-3';s.dataset.onomoUserTicketFix='1';document.body.appendChild(s);}
