@@ -1,4 +1,4 @@
-const VERSION='onomo-support-it-v6';
+const VERSION='onomo-support-it-v7';
 const SHELL=['./','./index.html','./assets/pwa/manifest.webmanifest','./assets/js/i18n.js','./assets/js/modern-features.js','./assets/js/runtime-sync.js','./locales/fr.json','./locales/en.json','./locales/ar.json','./assets/pwa/icons/icon-192.png','./assets/pwa/icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==VERSION).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
