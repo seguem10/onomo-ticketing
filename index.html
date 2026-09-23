@@ -1548,11 +1548,15 @@ async function createTicket(data){
   // Write to Supabase
   if(sbOK()){
     try{
-      const {id:localIdIgnored, ...sbData} = t; // Supabase génère son propre UUID
+      // The database is the only authority for permanent ticket numbers.
+      // Do not send the optimistic browser value: concurrent users must
+      // receive a number from the same server-side sequence.
+      const {id:localIdIgnored,numero:localNumeroIgnored,ticket_number:localNumberIgnored,...sbData} = t;
       const created = await sbCreateTicket(sbData);
       if(!created)throw new Error('Création du ticket refusée par Supabase');
-      // Replace local id with real Supabase id
-      tickets = tickets.map(x=>x.id===localId?{...x,id:created.id}:x);
+      // Replace the complete optimistic object so its permanent id and
+      // canonical database-generated number appear without a page refresh.
+      tickets = tickets.map(x=>x.id===localId?{...x,...created}:x);
       saveTickets(tickets);
     }catch(e){
       console.error('Supabase createTicket failed:',e);
