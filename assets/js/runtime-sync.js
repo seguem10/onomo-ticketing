@@ -88,7 +88,7 @@
     try{
       await window.doLogout?.();
       const error=document.getElementById('loginErr'),message=document.getElementById('loginErrMsg');
-      if(message)message.textContent=sessionExpiredMessage();
+      if(message){message.dataset.i18n='session_expired';message.textContent=sessionExpiredMessage();}
       error?.classList.add('show');
     }catch(error){console.warn('Déconnexion pour inactivité impossible',error);}
     finally{idleLogoutInProgress=false;}
