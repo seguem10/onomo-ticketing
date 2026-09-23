@@ -45,7 +45,8 @@ with required_functions(proname) as (
   values
     ('has_permission'), ('is_admin'), ('my_permissions'),
     ('ticket_workflow'), ('guard_ticket_write_scope'),
-    ('guard_profile_privilege_update'), ('requester_available_it')
+    ('guard_profile_privilege_update'), ('requester_available_it'),
+    ('prevent_audit_log_mutation')
 )
 select required_functions.proname,
        case when pg_proc.proname is not null then 'PASS' else 'FAIL — function missing' end as result
