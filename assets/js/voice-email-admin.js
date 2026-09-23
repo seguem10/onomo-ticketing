@@ -8,6 +8,8 @@
   const nameOf=u=>(`${u?.prenom||''} ${u?.nom||''}`).trim()||u?.email||'Utilisateur';
   const settingsOf=()=>typeof settings!=='undefined'?settings:window.settings||{};
   const current=()=>typeof currentUser!=='undefined'?currentUser:window.currentUser;
+  const t=(key,fallback,variables)=>window.OnomoI18n?.translate?.(key,window.OnomoI18n.language,variables)||fallback;
+  const recipientText=(recipient,key,fallback,variables)=>window.OnomoI18n?.translate?.(key,recipient?.language,variables)||fallback;
   function emailCfg(){
     let serviceId='',templateId='',publicKey='';
     try{serviceId=typeof EMAILJS_SERVICE_ID!=='undefined'?EMAILJS_SERVICE_ID:''}catch(_){}
@@ -30,7 +32,7 @@
     if(ticket?.assigned_to)target=us.find(u=>String(u.auth_user_id||u.id)===String(ticket.assigned_to));
     if(!target&&ticket?.assigne_a)target=us.find(u=>norm(u.email)===norm(ticket.assigne_a)||norm(nameOf(u))===norm(ticket.assigne_a));
     if(!target&&ticket?.assigne_a&&String(ticket.assigne_a).includes('@'))target={email:ticket.assigne_a,prenom:'IT',nom:''};
-    if(target?.email)await sendEmail(target.email,target,ticket,'Nouveau ticket assigné');
+    if(target?.email)await sendEmail(target.email,target,ticket,recipientText(target,'event_ticket_assigned','Nouveau ticket assigné'));
   }
   async function notifyChanged(before,after){
     if(!after)return;
@@ -41,31 +43,36 @@
     const requester=us.find(u=>String(u.auth_user_id||u.id)===String(after.created_by||'')||norm(u.email)===norm(after.created_by_email));
     if(requester?.email)recipients.push(requester);
     us.filter(u=>['admin','administrateur','it_regional','it regional'].includes(userRole(u))).forEach(u=>recipients.push(u));
-    const event=changedStatus?'Ticket mis à jour — statut : '+((typeof STAT_L!=='undefined'&&STAT_L[after.statut])||after.statut||''):'Ticket mis à jour — assignation';
-    for(const r of uniqueRecipients(recipients))await sendEmail(r.email,r,after,event);
+    const status=(typeof STAT_L!=='undefined'&&STAT_L[after.statut])||after.statut||'';
+    for(const r of uniqueRecipients(recipients)){
+      const event=changedStatus
+        ?recipientText(r,'event_ticket_status','Ticket mis à jour — statut : '+status,{status})
+        :recipientText(r,'event_ticket_assignment','Ticket mis à jour — assignation');
+      await sendEmail(r.email,r,after,event);
+    }
   }
   function authClient(){return window.OnomoAuth?.getClient?.()||null}
   async function callAiVoice(blob){
-    const client=authClient();if(!client)throw new Error('Supabase Auth indisponible. Reconnectez-vous.');
+    const client=authClient();if(!client)throw new Error(t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.'));
     const form=new FormData();form.append('audio',blob,blob.type.includes('mp4')?'voice.mp4':'voice.webm');
     const hotel=document.getElementById('ntHotel')?.value||'';const u=current();const allowedHotels=Array.isArray(u?.hotels)?u.hotels:(hotel?[hotel]:[]);
     form.append('hotel',hotel);form.append('hotels',JSON.stringify(allowedHotels));form.append('categories',JSON.stringify(['IT / Réseau','Chambres','Restauration','Guest relations','Sécurité','Autre']));
     const {data:{session}}=await client.auth.getSession();if(!session?.access_token)throw new Error('Session Supabase absente.');
     const s=settingsOf(),res=await fetch(`${s.sbUrl}/functions/v1/ai-ticket-analysis`,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,apikey:s.sbKey},body:form});
-    const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(_){data={error:text}}if(!res.ok)throw new Error(data.error||`Analyse vocale impossible (${res.status})`);return data;
+    const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(_){data={error:text}}if(!res.ok)throw new Error(data.error||t('voice_analysis_failed',`Analyse vocale impossible (${res.status})`,{status:res.status}));return data;
   }
   let recorder=null,chunks=[],recording=false;
-  function voiceButtonState(state){const b=document.getElementById('onomoVoiceTicketBtn');if(!b)return;if(state==='recording'){b.innerHTML='<i class="ti ti-player-stop"></i> Arrêter';b.classList.add('btn-danger');b.disabled=false}else if(state==='processing'){b.innerHTML='<i class="ti ti-loader-2 spin"></i> Analyse IA…';b.classList.remove('btn-danger');b.disabled=true}else{b.innerHTML='<i class="ti ti-microphone"></i> Créer par la voix';b.classList.remove('btn-danger');b.disabled=false}}
+  function voiceButtonState(state){const b=document.getElementById('onomoVoiceTicketBtn');if(!b)return;if(state==='recording'){b.innerHTML='<i class="ti ti-player-stop"></i> '+t('voice_stop','Arrêter');b.classList.add('btn-danger');b.disabled=false}else if(state==='processing'){b.innerHTML='<i class="ti ti-loader-2 spin"></i> '+t('voice_processing','Analyse IA…');b.classList.remove('btn-danger');b.disabled=true}else{b.innerHTML='<i class="ti ti-microphone"></i> '+t('voice_create','Créer par la voix');b.classList.remove('btn-danger');b.disabled=false}}
   async function startVoice(){
     if(recording){recorder?.stop();return}
-    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){showToast('La création vocale n’est pas disponible dans ce navigateur.','err');return}
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){showToast(t('voice_unavailable','La création vocale n’est pas disponible dans ce navigateur.'),'err');return}
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
       chunks=[];recording=true;voiceButtonState('recording');const mime=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'';recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
       recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
-      recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());recording=false;voiceButtonState('processing');try{const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'}),result=await callAiVoice(blob);const desc=document.getElementById('ntDesc'),title=document.getElementById('ntTitre'),cat=document.getElementById('ntCat'),prio=document.getElementById('ntPrio'),hotel=document.getElementById('ntHotel');if(desc)desc.value=result.description||result.transcript||'';if(title)title.value=result.titre||'';if(cat&&result.categorie)cat.value=result.categorie;if(prio&&result.priorite)prio.value=result.priorite;if(hotel&&result.hotel&&[...hotel.options].some(o=>o.value===result.hotel))hotel.value=result.hotel;showToast((result.summary||'Analyse IA terminée.')+' Création du ticket…','ok');if(typeof submitNewTicket==='function')setTimeout(()=>submitNewTicket(),300)}catch(e){console.error('[ONOMO VOICE]',e);showToast(e.message||'Analyse vocale impossible.','err')}finally{voiceButtonState('idle')}};
-      recorder.start(250);showToast('Parlez clairement. Vous pouvez parler en français, anglais ou darija. Cliquez sur Arrêter à la fin.','ok');
-    }catch(e){recording=false;voiceButtonState('idle');console.error('[ONOMO VOICE]',e);showToast('Accès au microphone refusé ou indisponible.','err')}
+      recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());recording=false;voiceButtonState('processing');try{const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'}),result=await callAiVoice(blob);const desc=document.getElementById('ntDesc'),title=document.getElementById('ntTitre'),cat=document.getElementById('ntCat'),prio=document.getElementById('ntPrio'),hotel=document.getElementById('ntHotel');if(desc)desc.value=result.description||result.transcript||'';if(title)title.value=result.titre||'';if(cat&&result.categorie)cat.value=result.categorie;if(prio&&result.priorite)prio.value=result.priorite;if(hotel&&result.hotel&&[...hotel.options].some(o=>o.value===result.hotel))hotel.value=result.hotel;showToast(result.summary||t('voice_complete','Analyse IA terminée. Création du ticket…'),'ok');if(typeof submitNewTicket==='function')setTimeout(()=>submitNewTicket(),300)}catch(e){console.error('[ONOMO VOICE]',e);showToast(e.message||t('voice_analysis_failed','Analyse vocale impossible.'),'err')}finally{voiceButtonState('idle')}};
+      recorder.start(250);showToast(t('voice_prompt','Parlez clairement. Vous pouvez parler en français, anglais ou arabe. Cliquez sur Arrêter à la fin.'),'ok');
+    }catch(e){recording=false;voiceButtonState('idle');console.error('[ONOMO VOICE]',e);showToast(t('voice_microphone_denied','Accès au microphone refusé ou indisponible.'),'err')}
   }
   // The browser SpeechRecognition control in modern-features.js is the single
   // supported dictation entry point.  Keeping this legacy recorder hidden
