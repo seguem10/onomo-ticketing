@@ -1,12 +1,29 @@
 /* Extensions Onomo Support IT : rôles, accès restreint et dictée multilingue. */
 (function(){
   const POWER=['Administrateur','IT Regional','IT Hotel','Directeur'];
-  const DEFAULT=[...POWER,'Demandeur'];
+  // Offline/demo defaults deliberately mirror the production RBAC migration.
+  // They are a fallback only; a connected account receives its own permissions
+  // from Supabase via my_permissions().
+  const DEFAULT_ROLES=[
+    {name:'Administrateur',permissions:['*'],is_system:true},
+    {name:'IT Regional',permissions:['ticket:create','ticket:read:all','ticket:update:all','comment:create','comment:read'],is_system:true},
+    {name:'IT Hotel',permissions:['ticket:create','ticket:read:all','ticket:update:all','comment:create','comment:read'],is_system:true},
+    {name:'Directeur',permissions:['ticket:read:all','report:read'],is_system:true},
+    {name:'Demandeur',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true}
+  ];
+  const SYSTEM_DEFAULTS=new Map(DEFAULT_ROLES.map(role=>[role.name,role]));
   const roleStore='onomo_roles_v1';
   const t=(key,fallback)=>{const value=window.OnomoI18n?.t(key);return value&&value!==key?value:fallback;};
-  const roles=()=>JSON.parse(localStorage.getItem(roleStore)||JSON.stringify(DEFAULT.map(name=>({name,permissions:POWER.includes(name)?['*']:['ticket:create','ticket:read:own','comment:create','comment:read:own']}))));
+  const roles=()=>{
+    try{
+      const stored=JSON.parse(localStorage.getItem(roleStore)||'null');
+      if(!Array.isArray(stored))return DEFAULT_ROLES.map(role=>({...role,permissions:[...role.permissions]}));
+      // Do not retain an old browser cache that gave system roles a wildcard.
+      return stored.map(role=>SYSTEM_DEFAULTS.has(role.name)?{...role,...SYSTEM_DEFAULTS.get(role.name),permissions:[...SYSTEM_DEFAULTS.get(role.name).permissions]}:role);
+    }catch(_){return DEFAULT_ROLES.map(role=>({...role,permissions:[...role.permissions]}));}
+  };
   const saveRoles=list=>localStorage.setItem(roleStore,JSON.stringify(list));
-  let roleLoadPromise=null;
+  let roleLoadPromise=null,effectivePermissions=null,permissionLoadPromise=null;
   async function loadRolesFromSupabase(force=false){
     if(!currentUser||!window.sbOK?.()||typeof window.sbFetch!=='function')return roles();
     if(roleLoadPromise&&!force)return roleLoadPromise;
@@ -25,8 +42,28 @@
   }
   const userRoles=user=>{const aliases={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',demandeur:'Demandeur',requester:'Demandeur'};const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
   const isPower=user=>userRoles(user).some(role=>POWER.includes(role));
-  const permissions=user=>userRoles(user).flatMap(name=>roles().find(role=>role.name===name)?.permissions||[]);
-  const can=(user,permission)=>isPower(user)||permissions(user).includes('*')||permissions(user).includes(permission);
+  const isAdmin=user=>userRoles(user).includes('Administrateur');
+  const permissions=user=>effectivePermissions||userRoles(user).flatMap(name=>roles().find(role=>role.name===name)?.permissions||[]);
+  const can=(user,permission)=>isAdmin(user)||permissions(user).includes('*')||permissions(user).includes(permission);
+  async function loadMyPermissions(force=false){
+    if(!currentUser||!window.sbOK?.()||typeof window.sbFetch!=='function')return permissions(currentUser);
+    if(permissionLoadPromise&&!force)return permissionLoadPromise;
+    permissionLoadPromise=(async()=>{
+      try{
+        const rows=await window.sbFetch('rpc/my_permissions',{method:'POST',body:'{}',prefer:'return=representation'});
+        const values=Array.isArray(rows)?rows:[];
+        effectivePermissions=[...new Set(values.map(String))];
+        applyAccess();
+        return effectivePermissions;
+      }catch(error){
+        // The backend remains authoritative. Retain the least-privilege local
+        // role defaults while a migration or connection is unavailable.
+        console.warn('Chargement des permissions personnelles indisponible',error);
+        return permissions(currentUser);
+      }finally{permissionLoadPromise=null;}
+    })();
+    return permissionLoadPromise;
+  }
   const owner=t=>t.created_by===currentUser?.id||t.created_by_email===currentUser?.email;
   function applyAccess(){
     const full=isPower(currentUser), admin=userRoles(currentUser).includes('Administrateur');
@@ -85,7 +122,7 @@
     if(view)window.switchView?.(view,document.querySelector(`[data-view="${view}"]`));
   }
   window.addEventListener('hashchange',applyHashRoute);
-  const originalInit=window.initSession;window.initSession=function(){originalInit();applyAccess();if(!isPower(currentUser))switchView('tickets',document.querySelector('[data-view="tickets"]'));setTimeout(applyHashRoute,0);};
+  const originalInit=window.initSession;window.initSession=function(){effectivePermissions=null;originalInit();applyAccess();void loadMyPermissions();if(!isPower(currentUser))switchView('tickets',document.querySelector('[data-view="tickets"]'));setTimeout(applyHashRoute,0);};
   const loginGuard={key:'onomo_login_guard',maxAttempts:5,lockMinutes:15,read(){try{return JSON.parse(localStorage.getItem(this.key)||'{}')}catch(_){return{}}},write(value){localStorage.setItem(this.key,JSON.stringify(value))},locked(email){const entry=this.read()[email];return entry?.until&&Date.now()<entry.until},failure(email){const all=this.read(),entry=all[email]||{count:0};entry.count++;if(entry.count>=this.maxAttempts){entry.until=Date.now()+this.lockMinutes*60000;entry.count=0;}all[email]=entry;this.write(all);return entry.until},success(email){const all=this.read();delete all[email];this.write(all)}};
   const originalLogin=window.doLogin;window.doLogin=async function(){const email=document.getElementById('loginEmail')?.value.trim().toLowerCase();if(loginGuard.locked(email)){const err=document.getElementById('loginErr');document.getElementById('loginErrMsg').textContent=window.OnomoI18n?.t('login_locked')||'Trop de tentatives. Réessayez dans quelques minutes.';err?.classList.add('show');return;}await originalLogin();const failed=document.getElementById('loginErr')?.classList.contains('show');if(failed)loginGuard.failure(email);else if(currentUser){loginGuard.success(email);sessionStorage.setItem('onomo_session_started',String(Date.now()));}};
   const originalLogout=window.doLogout;window.doLogout=function(){sessionStorage.removeItem('onomo_session_started');return originalLogout();};
