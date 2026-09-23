@@ -1014,6 +1014,13 @@ let filterStat     = "tous";
 let currentView    = "dashboard";
 let reportHotel    = null;
 let aiResult       = null;
+// External feature scripts are loaded as separate classic scripts.  `let`
+// bindings are not properties of `window`, so expose a narrow live bridge
+// rather than letting those scripts read a stale or undefined copy.
+Object.defineProperties(window,{
+  currentUser:{configurable:true,get:()=>currentUser,set:value=>{currentUser=value;}},
+  DEMO_USERS:{configurable:true,get:()=>DEMO_USERS,set:value=>{DEMO_USERS=Array.isArray(value)?value:[];}}
+});
 // Settings / Customisation (persisted in localStorage)
 // ╔══════════════════════════════════════════════════════════╗
 // ║  CONFIG SUPABASE — À REMPLIR UNE SEULE FOIS              ║
@@ -4291,7 +4298,7 @@ document.addEventListener('keydown', e => {
  </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/locales-data.js"></script>
-<script src="assets/js/i18n.js?v=20260923-3"></script>
+<script src="assets/js/i18n.js?v=20260923-4"></script>
 <script src="assets/js/modern-features.js?v=20260922-3"></script>
 <script src="assets/js/runtime-sync.js?v=20260921-2"></script>
 </body>
