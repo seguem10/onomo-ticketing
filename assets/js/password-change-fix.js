@@ -1,6 +1,7 @@
 /* ONOMO Support IT - stable password change without navigation. */
 (function(){
   'use strict';
+  const t=(key,fallback)=>{const value=window.OnomoI18n?.t?.(key);return value&&value!==key?value:fallback;};
   function toast(message,type){try{window.showToast?.(message,type||'ok');}catch(_){}
   }
   function getButton(){return document.querySelector('#mainContent button[onclick*="changeMyPassword"]')||Array.from(document.querySelectorAll('#mainContent button')).find(b=>/mot de passe/i.test(String(b.textContent||'')));}
@@ -13,7 +14,7 @@
     ? window.changeMyPassword.bind(window)
     : null;
   async function changePassword(){
-    if(!secureChangePassword){toast('Fonction de sécurité indisponible. Rechargez la page.','err');return false;}
+    if(!secureChangePassword){toast(t('security_feature_unavailable','Fonction de sécurité indisponible. Rechargez la page.'),'err');return false;}
     const b=lockForm();if(b){b.disabled=true;b.setAttribute('aria-busy','true');}
     try{
       const changed=await secureChangePassword();

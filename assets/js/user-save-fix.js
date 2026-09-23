@@ -1,6 +1,7 @@
 /* ONOMO Support IT - sauvegarde fiable des modifications utilisateurs */
 (function(){
   'use strict';
+  const t=(key,fallback)=>{const value=window.OnomoI18n?.t?.(key);return value&&value!==key?value:fallback;};
 
   const roleNorm=r=>({
     admin:'admin',administrateur:'admin','administrateur système':'admin',
@@ -44,14 +45,14 @@
 
   async function saveEdit(){
     const id=document.getElementById('uEditId')?.value||'';
-    if(!id){window.showToast?.('Utilisateur introuvable.','err');return false;}
+    if(!id){window.showToast?.(t('user_not_found','Utilisateur introuvable.'),'err');return false;}
     const d=formData();
-    if(!d.email){window.showToast?.("L'email est requis",'err');return false;}
-    if(d.role==='it_hotel'&&!d.hotel){window.showToast?.("Sélectionnez un hôtel pour l'IT Hôtel",'err');return false;}
-    if(d.role==='it_regional'&&!d.hotels.length){window.showToast?.("Sélectionnez au moins un hôtel pour l'IT Régional",'err');return false;}
-    if(d.role==='demandeur'&&!d.hotel){window.showToast?.('Sélectionnez un hôtel pour le Demandeur','err');return false;}
+    if(!d.email){window.showToast?.(t('email_required',"L'email est requis"),'err');return false;}
+    if(d.role==='it_hotel'&&!d.hotel){window.showToast?.(t('select_it_hotel',"Sélectionnez un hôtel pour l'IT Hôtel"),'err');return false;}
+    if(d.role==='it_regional'&&!d.hotels.length){window.showToast?.(t('select_it_regional',"Sélectionnez au moins un hôtel pour l'IT Régional"),'err');return false;}
+    if(d.role==='demandeur'&&!d.hotel){window.showToast?.(t('select_requester_hotel','Sélectionnez un hôtel pour le demandeur'),'err');return false;}
     if(typeof window.sbFetch!=='function'){
-      window.showToast?.('Supabase est indisponible. Modification non enregistrée.','err');
+      window.showToast?.(t('supabase_update_unavailable','Supabase est indisponible. Modification non enregistrée.'),'err');
       return false;
     }
 
@@ -73,12 +74,12 @@
       if(window.currentUser&&String(window.currentUser.id)===String(id))window.currentUser={...window.currentUser,...fresh};
       window.populateSelects?.();
       window.closeModal?.('modalUser');
-      window.showToast?.('Compte mis à jour dans Supabase','ok');
+      window.showToast?.(t('account_updated_sync','Compte mis à jour dans Supabase'),'ok');
       window.renderUsers?.();
       return true;
     }catch(error){
       console.error('ONOMO sauvegarde utilisateur:',error);
-      window.showToast?.(error?.message||'Modification non enregistrée dans Supabase','err');
+      window.showToast?.(error?.message||t('account_update_failed','Modification non enregistrée dans Supabase'),'err');
       return false;
     }
   }
