@@ -110,6 +110,9 @@ supabase secrets set ANTHROPIC_API_KEY=votre_cle_anthropic
 supabase functions deploy ai-ticket-analysis
 ```
 
+La fonction vérifie la session et la permission `ticket:create`, et limite les
+origines navigateur à la production ONOMO, aux aperçus Vercel et à localhost.
+
 L'analyse attend actuellement du JSON (titre et description). La dictée vocale
 requiert en plus un fournisseur de transcription dédié : l'application affiche
 une erreur explicite tant que celui-ci n'est pas configuré, au lieu de simuler
