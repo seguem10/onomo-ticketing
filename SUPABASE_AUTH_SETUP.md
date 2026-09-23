@@ -24,6 +24,10 @@ Dans Supabase → SQL Editor, exécuter dans cet ordre :
 
 La table `utilisateurs` doit contenir `auth_user_id`.
 
+Après les migrations, exécuter aussi `supabase/verify_security.sql`. Ce script
+est en lecture seule et doit afficher `PASS` pour toutes les tables, policies
+et fonctions attendues.
+
 ## 2. Créer le premier administrateur
 
 Pour le premier compte, créer manuellement un utilisateur dans :
