@@ -20,6 +20,7 @@ Dans Supabase → SQL Editor, exécuter dans cet ordre :
 12. `supabase/p11_ticket_rls_reconciliation.sql`
 13. `supabase/p12_ticket_related_rls_reconciliation.sql`
 14. `supabase/p13_rbac_reconciliation.sql`
+15. `supabase/p14_audit_and_settings_rls_reconciliation.sql`
 
 La table `utilisateurs` doit contenir `auth_user_id`.
 
