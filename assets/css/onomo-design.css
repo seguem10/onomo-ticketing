@@ -1,0 +1,86 @@
+/* ONOMO UI foundation: visual layer only, safe for the existing ticket workflow. */
+:root{
+  --primary:#172033;
+  --primary-strong:#0b1220;
+  --primary-soft:#edf0f5;
+  --accent:#c9972a;
+  --accent-strong:#9b6d0f;
+  --accent-soft:#fcf4e3;
+  --canvas:#f6f7f9;
+  --surface:#ffffff;
+  --surface-muted:#f8f9fb;
+  --line:#e5e7eb;
+  --ink:#172033;
+  --ink-muted:#667085;
+  --brand:var(--accent);
+  --brand-d:var(--accent-strong);
+  --brand-l:var(--accent-soft);
+  --brand-text:#75500a;
+  --dark:var(--primary);
+  --dark2:#202b41;
+  --dark3:#344055;
+  --bg:var(--canvas);
+  --surface2:var(--surface-muted);
+  --surface3:#eef1f5;
+  --border:var(--line);
+  --border2:#cfd5df;
+  --tx:var(--ink);
+  --tx2:var(--ink-muted);
+  --tx3:#98a2b3;
+  --r:10px;
+  --rm:14px;
+  --rl:18px;
+  --sh:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.04);
+  --sh2:0 8px 24px rgba(16,24,40,.07);
+  --sh3:0 20px 50px rgba(16,24,40,.16);
+}
+
+*{scrollbar-color:#c9ced8 transparent}
+html{scroll-behavior:smooth}
+body{background:var(--canvas);color:var(--ink)}
+:focus-visible{outline:3px solid rgba(201,151,42,.42);outline-offset:2px}
+button,.nav-item,.ftab,.ticket-table tbody tr{transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+
+/* App shell */
+.sidebar{width:272px!important;background:linear-gradient(180deg,#131c2d 0%,#101827 100%)!important;padding:18px 14px!important;box-shadow:12px 0 32px rgba(15,23,42,.05)}
+.sb-brand{position:relative;padding:6px 10px 20px!important;border-bottom-color:rgba(255,255,255,.12)!important}
+.sb-logo{min-height:42px}.sb-logo .onomo-wordmark{height:39px;max-width:184px;padding:4px 6px;border-radius:8px;background:#fff}
+.sb-logo-sub{margin:7px 0 0 4px!important;padding-left:0!important;color:#aeb8c7!important;letter-spacing:.16em!important}
+.sidebar-collapse-btn{position:absolute;right:8px;top:8px;width:30px;height:30px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:rgba(255,255,255,.06);color:#e8edf5;cursor:pointer}
+.sidebar-collapse-btn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+.sb-nav{padding-top:15px!important}.sb-sec-lbl{padding:16px 10px 7px!important;color:#9da9ba!important;font-size:10px!important;font-weight:700!important}
+.nav-item{min-height:42px;border-radius:10px!important;padding:10px 11px!important;margin:3px 0!important;color:#d8dfeb!important}
+.nav-item:hover{background:rgba(255,255,255,.08)!important;transform:translateX(2px)}
+.nav-item.active{background:linear-gradient(90deg,rgba(201,151,42,.98),rgba(174,124,25,.96))!important;color:#17120a!important;box-shadow:0 6px 14px rgba(0,0,0,.17)}
+.nav-item.active i{color:#17120a!important}.nav-badge{background:rgba(255,255,255,.13)!important;color:#fff!important}.nav-item.active .nav-badge{background:rgba(23,32,51,.2)!important;color:#17120a!important}
+.sb-foot{border-top-color:rgba(255,255,255,.12)!important}.sb-av{background:var(--accent)!important;color:#1d2637!important}.logout-btn{border-radius:8px!important;padding:8px!important}.logout-btn:hover{background:rgba(255,255,255,.08)!important}
+
+/* Header and content */
+.main-area{background:var(--canvas)!important}.topbar{height:76px!important;padding:0 30px!important;background:rgba(255,255,255,.94)!important;backdrop-filter:blur(14px);box-shadow:0 1px 0 rgba(16,24,40,.04)}
+.topbar-title{font-size:18px!important;letter-spacing:-.025em}.search-box{height:40px!important;border-radius:10px!important;background:#f8f9fb!important}.btn-icon{min-width:38px;min-height:38px!important;border-radius:10px!important}.btn-gold,.btn-primary{min-height:40px;background:var(--primary)!important;color:#fff!important;border-radius:10px!important}.btn-gold:hover,.btn-primary:hover{background:var(--primary-strong)!important;box-shadow:0 7px 16px rgba(23,32,51,.18)!important;transform:translateY(-1px)}
+.content{max-width:1600px!important;padding:28px 32px 44px!important}.card,.report-section,.kpi-card{border-radius:var(--rl)!important;box-shadow:var(--sh)!important}.card:hover{box-shadow:var(--sh2)!important}.card-hdr{padding:18px 20px!important}.card-title,.section-title{letter-spacing:-.015em}.stat-card{border-radius:var(--rl)!important;min-height:154px}.stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh2)}.stat-icon{border-radius:12px!important}.stat-val,.kpi-val{letter-spacing:-.04em}.panel-row{gap:20px!important}.side-col{gap:20px!important}
+
+/* Tables, status and feedback */
+.ticket-table th{height:45px!important;font-size:10px!important;letter-spacing:.06em!important}.ticket-table td{height:61px!important}.ticket-table tbody tr:hover{background:#fbfaf7!important}.t-num{color:var(--accent-strong)!important;font-weight:700!important}.badge{min-height:24px;padding:4px 9px!important}.ftab{min-height:31px;padding:5px 11px!important;border-radius:999px!important}.ftab.active{background:var(--accent-soft)!important;color:var(--accent-strong)!important;border-color:rgba(201,151,42,.38)!important}.empty-state{padding:58px 26px!important}.empty-state i{display:grid!important;place-items:center;width:52px;height:52px;margin:0 auto 14px!important;border-radius:16px;background:var(--accent-soft);color:var(--accent-strong)!important;font-size:26px!important}.empty-state p{font-size:14px!important;color:var(--ink)!important}.alert{border-radius:14px!important;box-shadow:var(--sh)!important}
+
+/* Modal and form ergonomics */
+.overlay{backdrop-filter:blur(3px)}.modal{border-radius:18px!important;box-shadow:var(--sh3)!important}.modal-hdr{padding-bottom:16px!important}.field-ctrl{min-height:42px;border-radius:10px!important}.field-ctrl:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(201,151,42,.16)!important}.modal-foot{padding-top:16px!important}.notif-panel{border-radius:16px!important;box-shadow:var(--sh3)!important}.toast{border-radius:12px!important}
+
+/* Official logo on the dark login surface. */
+#loginScreen{background:radial-gradient(900px 460px at 50% -4%,#35466d 0%,#1b2945 45%,#101827 100%)!important}.login-logo .onomo-wordmark{height:54px;max-width:230px;padding:6px 8px;border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.18)}.login-card{border-radius:20px!important}.login-card .btn-primary{background:var(--accent)!important;color:#19140a!important}.login-card .btn-primary:hover{background:#d9a63a!important}
+
+/* Compact sidebar is opt-in, stored locally by ui-polish.js. */
+@media (min-width: 900px){
+  body.sidebar-compact .sidebar{width:78px!important;padding:18px 12px!important;overflow:visible}
+  body.sidebar-compact .sb-brand{padding:6px 7px 17px!important}
+  body.sidebar-compact .sb-logo{overflow:hidden;width:39px}
+  body.sidebar-compact .sb-logo .onomo-wordmark{width:39px;max-width:none;height:39px;object-fit:cover;object-position:left}
+  body.sidebar-compact .sb-logo-sub,body.sidebar-compact .sb-sec-lbl,body.sidebar-compact .nav-item>span:not(.nav-badge),body.sidebar-compact .sb-user>div:not(.sb-av),body.sidebar-compact .logout-btn{font-size:0!important;opacity:0;pointer-events:none}
+  body.sidebar-compact .nav-item{justify-content:center;padding:10px!important;position:relative}
+  body.sidebar-compact .nav-item i{font-size:19px!important;width:auto!important}
+  body.sidebar-compact .nav-item .nav-badge{position:absolute;top:4px;right:4px;min-width:16px;padding:1px 4px!important;font-size:8px!important;opacity:1!important}
+  body.sidebar-compact .sb-foot{padding:12px 6px!important}.sidebar-compact .sb-user{justify-content:center}.sidebar-compact .sidebar-collapse-btn{right:5px}.sidebar-compact .sidebar-collapse-btn i{transform:rotate(180deg)}
+  body.sidebar-compact .nav-item:hover::after{content:attr(data-tooltip);position:absolute;left:74px;z-index:70;padding:7px 9px;border-radius:8px;background:#101827;color:#fff;font-size:11px;white-space:nowrap;box-shadow:var(--sh2)}
+}
+@media (max-width: 899px){.sidebar-collapse-btn{display:none}.content{padding:20px 18px 38px!important}.topbar{height:66px!important;padding:0 16px!important}.sidebar{width:272px!important}.login-logo .onomo-wordmark{height:46px;max-width:205px}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
