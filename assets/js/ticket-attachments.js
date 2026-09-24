@@ -36,4 +36,26 @@
     if(uploaded)window.showToast?.(`${uploaded} pièce(s) jointe(s) envoyée(s).`,'ok');
     return uploaded===files.length;
   };
+  const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const formatSize=bytes=>bytes<1024?`${bytes} o`:bytes<1048576?`${(bytes/1024).toFixed(1)} Ko`:`${(bytes/1048576).toFixed(1)} Mo`;
+  window.loadTicketAttachments=async function(ticketId){
+    const target=document.getElementById('ticketAttachmentList');if(!target||!ticketId)return;
+    try{
+      const rows=await window.sbFetch(`ticket_attachments?ticket_id=eq.${encodeURIComponent(ticketId)}&order=created_at.asc`);
+      if(!Array.isArray(rows)||!rows.length){target.textContent='Aucune pièce jointe.';return;}
+      const me=String(window.currentUser?.auth_user_id||window.currentUser?.id||'');
+      target.innerHTML=rows.map(row=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><i class="ti ti-file" style="color:var(--brand)"></i><div style="min-width:0;flex:1"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(row.file_name)}</div><div style="font-size:10px;color:var(--tx3)">${formatSize(Number(row.file_size)||0)}</div></div><button class="btn btn-outline btn-sm" onclick="window.downloadTicketAttachment('${row.id}')"><i class="ti ti-download"></i></button>${String(row.uploaded_by)===me||window.currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="window.deleteTicketAttachment('${row.id}')"><i class="ti ti-trash"></i></button>`:''}</div>`).join('');
+      window.__onomoAttachments=rows;
+    }catch(error){console.error('Attachment list failed',error);target.textContent='Impossible de charger les pièces jointes.';}
+  };
+  window.downloadTicketAttachment=async function(id){
+    const row=(window.__onomoAttachments||[]).find(item=>String(item.id)===String(id));const client=window.OnomoAuth?.getClient?.();if(!row||!client)return;
+    const {data,error}=await client.storage.from('ticket-attachments').createSignedUrl(row.storage_path,60);if(error||!data?.signedUrl){window.showToast?.('Téléchargement impossible.','err');return;}window.open(data.signedUrl,'_blank','noopener');
+  };
+  window.deleteTicketAttachment=async function(id){
+    const row=(window.__onomoAttachments||[]).find(item=>String(item.id)===String(id));const client=window.OnomoAuth?.getClient?.();if(!row||!client)return;
+    if(!window.confirm('Supprimer cette pièce jointe ?'))return;
+    try{await window.sbFetch(`ticket_attachments?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',prefer:'return=minimal'});const {error}=await client.storage.from('ticket-attachments').remove([row.storage_path]);if(error)throw error;await window.loadTicketAttachments(row.ticket_id);}
+    catch(error){console.error('Attachment deletion failed',error);window.showToast?.('Suppression de la pièce jointe impossible.','err');}
+  };
 })();

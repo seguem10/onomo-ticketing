@@ -1845,6 +1845,7 @@ function renderDetail(){
           <div class="comment-title"><i class="ti ti-history"></i>Historique</div>
           <div id="ticketHistoryList" style="font-size:12px;color:var(--tx2)">Chargement de l’historique…</div>
         </div>
+        <div class="card" style="padding:20px;margin-top:14px"><div class="comment-title"><i class="ti ti-paperclip"></i>Pièces jointes</div><div id="ticketAttachmentList" style="font-size:12px;color:var(--tx2)">Chargement des pièces jointes…</div></div>
       </div>
       <div class="detail-sidebar">
         <div class="card" style="padding:14px;margin-bottom:12px">
@@ -1868,6 +1869,7 @@ function renderDetail(){
       </div>
     </div>`;
   renderTicketEvents();
+  window.loadTicketAttachments?.(t.id);
 }
 let commentSubmissionPending=false;
 async function submitComment(){
