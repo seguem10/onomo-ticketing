@@ -5,6 +5,7 @@
   const MAX_BYTES=10*1024*1024;
   const TYPES=new Set(['application/pdf','image/jpeg','image/png','image/webp','text/plain','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
   let pending=[];
+  let pendingValidation=Promise.resolve();
   const copy={
     fr:{attachments:'Pièces jointes',help:'(PDF, image, TXT, DOCX ou XLSX — 10 Mo maximum par fichier)',rejected:'Fichier refusé : format non autorisé ou taille supérieure à 10 Mo.',ready:'{count} fichier(s) prêt(s) à être envoyé(s) après création du ticket.',session:'Pièces jointes non envoyées : session Supabase indisponible.',createdWithout:'Ticket créé, mais les pièces jointes n’ont pas été envoyées.',uploadFailed:'Pièce jointe non envoyée : {name}',sent:'{count} pièce(s) jointe(s) envoyée(s).',none:'Aucune pièce jointe.',loading:'Chargement des pièces jointes…',loadFailed:'Impossible de charger les pièces jointes.',downloadFailed:'Téléchargement impossible.',confirmDelete:'Supprimer cette pièce jointe ?',deleteFailed:'Suppression de la pièce jointe impossible.',bytes:'o'},
     en:{attachments:'Attachments',help:'(PDF, image, TXT, DOCX or XLSX — 10 MB maximum per file)',rejected:'File rejected: unsupported format or size above 10 MB.',ready:'{count} file(s) ready to upload after the ticket is created.',session:'Attachments were not uploaded: Supabase session unavailable.',createdWithout:'Ticket created, but the attachments were not uploaded.',uploadFailed:'Attachment was not uploaded: {name}',sent:'{count} attachment(s) uploaded.',none:'No attachments.',loading:'Loading attachments…',loadFailed:'Unable to load attachments.',downloadFailed:'Download unavailable.',confirmDelete:'Delete this attachment?',deleteFailed:'Unable to delete the attachment.',bytes:'B'},
@@ -14,14 +15,42 @@
   const refreshStaticCopy=()=>{const label=document.getElementById('attachmentFieldLabel'),help=document.getElementById('attachmentFieldHelp'),title=document.getElementById('attachmentPanelTitle');if(label){const icon=label.querySelector('i');label.childNodes[0].nodeValue=tr('attachments')+' ';}if(help)help.textContent=tr('help');if(title){const icon=title.querySelector('i');title.innerHTML=`${icon?.outerHTML||'<i class="ti ti-paperclip"></i>'}${tr('attachments')}`;}};
   const status=message=>{const el=document.getElementById('ntAttachmentStatus');if(el)el.textContent=message;};
   const safeName=name=>String(name||'file').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-160);
+  const expectedExtensions={
+    'application/pdf':['pdf'], 'image/jpeg':['jpg','jpeg'], 'image/png':['png'], 'image/webp':['webp'],
+    'text/plain':['txt'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['docx'],
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['xlsx']
+  };
+  const startsWith=(bytes,...signature)=>signature.every((value,index)=>bytes[index]===value);
+  async function hasExpectedSignature(file){
+    const bytes=new Uint8Array(await file.slice(0,16384).arrayBuffer());
+    if(file.type==='application/pdf')return startsWith(bytes,0x25,0x50,0x44,0x46);
+    if(file.type==='image/jpeg')return startsWith(bytes,0xff,0xd8,0xff);
+    if(file.type==='image/png')return startsWith(bytes,0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a);
+    if(file.type==='image/webp')return startsWith(bytes,0x52,0x49,0x46,0x46)&&startsWith(bytes.slice(8),0x57,0x45,0x42,0x50);
+    if(file.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'||file.type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')return startsWith(bytes,0x50,0x4b,0x03,0x04)||startsWith(bytes,0x50,0x4b,0x05,0x06)||startsWith(bytes,0x50,0x4b,0x07,0x08);
+    if(file.type==='text/plain'){try{new TextDecoder('utf-8',{fatal:true}).decode(bytes);return !bytes.includes(0);}catch(_){return false;}}
+    return false;
+  }
+  async function isAllowedFile(file){
+    if(!file||file.size<1||file.size>MAX_BYTES||!TYPES.has(file.type))return false;
+    const extension=(String(file.name||'').split('.').pop()||'').toLowerCase();
+    if(!expectedExtensions[file.type]?.includes(extension))return false;
+    try{return await hasExpectedSignature(file);}catch(_){return false;}
+  }
   window.queueTicketAttachments=function(files){
     const selected=Array.from(files||[]);
-    const invalid=selected.find(file=>file.size>MAX_BYTES||!TYPES.has(file.type));
-    if(invalid){pending=[];const input=document.getElementById('ntAttachments');if(input)input.value='';status(tr('rejected'));window.showToast?.(tr('rejected'),'err');return;}
-    pending=selected;
-    status(pending.length?tr('ready',{count:pending.length}):'');
+    pending=[];
+    pendingValidation=(async()=>{
+      const accepted=await Promise.all(selected.map(isAllowedFile));
+      if(accepted.some(value=>!value)){const input=document.getElementById('ntAttachments');if(input)input.value='';status(tr('rejected'));window.showToast?.(tr('rejected'),'err');return false;}
+      pending=selected;
+      status(pending.length?tr('ready',{count:pending.length}):'');
+      return true;
+    })();
+    return pendingValidation;
   };
   window.uploadPendingTicketAttachments=async function(ticketId){
+    if(!await pendingValidation)return false;
     if(!pending.length)return true;
     const client=window.OnomoAuth?.getClient?.();
     const session=await window.OnomoAuth?.getSession?.();
