@@ -289,6 +289,17 @@
           syncComments(ticketId);
           queueTicketSync();
         })
+        .on('postgres_changes',{event:'*',schema:'public',table:'ticket_attachments'},payload=>{
+          const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;
+          if(currentView==='detail'&&String(currentTicket?.id)===String(ticketId)){
+            window.loadTicketAttachments?.(ticketId);
+            window.loadTicketEvents?.(ticketId);
+          }
+        })
+        .on('postgres_changes',{event:'*',schema:'public',table:'ticket_events'},payload=>{
+          const ticketId=payload.new?.ticket_id||payload.old?.ticket_id;
+          if(currentView==='detail'&&String(currentTicket?.id)===String(ticketId))window.loadTicketEvents?.(ticketId);
+        })
         .on('postgres_changes',{event:'*',schema:'public',table:'notifications'},()=>syncNotifications())
         .subscribe(status=>{if(status==='SUBSCRIBED')console.log('Supabase Realtime connecté');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Supabase Realtime indisponible, polling actif');});
     }catch(error){console.warn('Supabase Realtime indisponible',error);}
