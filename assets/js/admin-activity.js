@@ -16,10 +16,12 @@
   }
   window.onomoActivityLog=log;
   function brand(){
-    const logo='assets/pwa/onomo-logo.svg';
+    // Keep the official logo intact. This module runs after the main UI and used
+    // to replace it with the legacy white SVG every 1.5 seconds.
+    const logo='assets/pwa/onomo-hotels.png';
     document.querySelectorAll('.login-logo,.sb-logo').forEach(el=>{
       if(el.querySelector('img[data-onomo-logo]'))return;
-      el.innerHTML='<img data-onomo-logo src="'+logo+'" alt="ONOMO" style="display:block;width:auto;height:34px;max-width:180px;object-fit:contain;filter:brightness(0) invert(1)">';
+      el.innerHTML='<img data-onomo-logo class="onomo-wordmark" src="'+logo+'" alt="ONOMO Hotels" style="display:block;width:auto;height:34px;max-width:180px;object-fit:contain;filter:none">';
       if(el.classList.contains('login-logo'))el.querySelector('img').style.height='48px';
     });
     document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(l=>l.href=logo);
