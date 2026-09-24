@@ -262,10 +262,10 @@
       notifications=rows.map(row=>{
         const body=row.body&&typeof row.body==='object'?row.body:{};
         const type=String(row.type||'info');
-        const icon=type==='assignment'?'user-check':type==='comment'?'message':type==='closed'?'circle-check':type==='urgent'?'alert-triangle':'ticket';
+        const icon=type==='assignment'?'user-check':type==='comment'?'message':type==='attachment'?'paperclip':type==='closed'?'circle-check':type==='urgent'?'alert-triangle':'ticket';
         const color=type==='urgent'?'var(--red)':type==='closed'?'var(--green)':'var(--brand)';
         const template=body.key&&window.OnomoI18n?.t(body.key);
-        const text=template&&template!==body.key?template.replace(/\{(ticket|status)\}/g,(_m,key)=>String(body[key]||'')):String(body.message||body.title||'Mise à jour de ticket');
+        const text=template&&template!==body.key?template.replace(/\{(ticket|status|file_name)\}/g,(_m,key)=>String(body[key]||'')):String(body.message||body.title||'Mise à jour de ticket');
         // Only records loaded from Supabase can be marked read in the database.
         // Local toast notifications deliberately have no persisted flag.
         return {id:row.id,persisted:true,text,icon,color,read:Boolean(row.read_at),time:row.created_at};
