@@ -87,4 +87,16 @@ button,.nav-item,.ftab,.ticket-table tbody tr{transition:background-color .18s e
   body.sidebar-compact .nav-item:hover::after{content:attr(data-tooltip);position:absolute;left:74px;z-index:70;padding:7px 9px;border-radius:8px;background:#101827;color:#fff;font-size:11px;white-space:nowrap;box-shadow:var(--sh2)}
 }
 @media (max-width: 899px){.sidebar-collapse-btn{display:none}.content{padding:20px 18px 38px!important}.topbar{height:66px!important;padding:0 16px!important}.sidebar{width:272px!important}.login-logo .onomo-wordmark{height:46px;max-width:205px}.dashboard-hero{align-items:flex-start;flex-direction:column;padding:21px 20px}.dashboard-hero h1{font-size:22px}.dashboard-hero-actions{width:100%;justify-content:space-between}.dashboard-scope{max-width:calc(100% - 130px)}}
+@media (max-width: 620px){
+  .ticket-table,.ticket-table tbody,.ticket-table tr,.ticket-table td{display:block;width:100%}
+  .ticket-table thead{display:none}
+  .ticket-table tbody{padding:10px;background:var(--surface-muted)}
+  .ticket-table tbody tr{margin:0 0 10px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden}
+  .ticket-table tbody tr:last-child{margin-bottom:0}
+  .ticket-table td{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px!important;height:auto!important;padding:9px 12px!important;border-bottom:1px solid var(--line)!important;text-align:right}
+  .ticket-table td::before{content:attr(data-label);flex:0 0 92px;color:var(--tx3);font-size:10px;font-weight:700;letter-spacing:.04em;text-align:left;text-transform:uppercase}
+  .ticket-table td:first-child{padding-top:13px!important}.ticket-table td:last-child{border-bottom:0!important;padding-bottom:13px!important}
+  .ticket-table td:nth-child(2){display:block;text-align:left}.ticket-table td:nth-child(2)::before{display:block;margin-bottom:5px}.ticket-table .t-title{white-space:normal;max-width:none}.ticket-table .assignee-cell,.ticket-table .cat-label{justify-content:flex-end}.ticket-table .time-cell{font-size:11px}
+  html[dir="rtl"] .ticket-table td{text-align:left}html[dir="rtl"] .ticket-table td::before{text-align:right}html[dir="rtl"] .ticket-table td:nth-child(2){text-align:right}html[dir="rtl"] .ticket-table .assignee-cell,html[dir="rtl"] .ticket-table .cat-label{justify-content:flex-start}
+}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}

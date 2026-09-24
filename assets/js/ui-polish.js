@@ -30,6 +30,29 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSidebarCompactMode, { once: true });
-  else initSidebarCompactMode();
+  function labelTicketCells(root = document) {
+    root.querySelectorAll('.ticket-table').forEach((table) => {
+      const labels = Array.from(table.querySelectorAll('thead th')).map((cell) => cell.textContent.trim());
+      table.querySelectorAll('tbody tr').forEach((row) => {
+        Array.from(row.children).forEach((cell, index) => {
+          if (labels[index]) cell.setAttribute('data-label', labels[index]);
+        });
+      });
+    });
+  }
+
+  function observeDynamicTables() {
+    const root = document.getElementById('mainContent');
+    if (!root) return;
+    labelTicketCells(root);
+    new MutationObserver(() => labelTicketCells(root)).observe(root, { childList: true, subtree: true });
+  }
+
+  function init() {
+    initSidebarCompactMode();
+    observeDynamicTables();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+  else init();
 }());
