@@ -48,9 +48,9 @@ drop policy if exists ticket_attachment_objects_delete on storage.objects;
 create policy ticket_attachment_objects_read on storage.objects for select to authenticated
   using (bucket_id='ticket-attachments' and exists(select 1 from public.tickets t where t.id::text=split_part(name,'/',1)));
 create policy ticket_attachment_objects_insert on storage.objects for insert to authenticated
-  with check (bucket_id='ticket-attachments' and owner_id=auth.uid() and exists(select 1 from public.tickets t where t.id::text=split_part(name,'/',1)));
+  with check (bucket_id='ticket-attachments' and owner_id=auth.uid()::text and exists(select 1 from public.tickets t where t.id::text=split_part(name,'/',1)));
 create policy ticket_attachment_objects_delete on storage.objects for delete to authenticated
-  using (bucket_id='ticket-attachments' and (owner_id=auth.uid() or (select public.is_admin())));
+  using (bucket_id='ticket-attachments' and (owner_id=auth.uid()::text or (select public.is_admin())));
 
 revoke all on public.ticket_attachments from anon;
 grant select,insert,delete on public.ticket_attachments to authenticated;
