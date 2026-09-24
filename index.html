@@ -1922,8 +1922,13 @@ async function loadTicketEvents(ticketId){
   }
 }
 function ticketEventLabel(event){
-  const labels={created:"Ticket créé",updated:"Ticket mis à jour",reassigned:"Ticket réassigné",closed:"Ticket fermé",reopened:"Ticket rouvert",commented:"Commentaire ajouté"};
-  return labels[event.action]||"Mise à jour du ticket";
+  const language=window.OnomoI18n?.language||localStorage.getItem("onomo_language")||"fr";
+  const labels={
+    fr:{created:"Ticket créé",updated:"Ticket mis à jour",reassigned:"Ticket réassigné",closed:"Ticket fermé",reopened:"Ticket rouvert",commented:"Commentaire ajouté",attachment_added:"Pièce jointe ajoutée",attachment_deleted:"Pièce jointe supprimée",fallback:"Mise à jour du ticket"},
+    en:{created:"Ticket created",updated:"Ticket updated",reassigned:"Ticket reassigned",closed:"Ticket closed",reopened:"Ticket reopened",commented:"Comment added",attachment_added:"Attachment added",attachment_deleted:"Attachment deleted",fallback:"Ticket updated"},
+    ar:{created:"تم إنشاء التذكرة",updated:"تم تحديث التذكرة",reassigned:"تمت إعادة تعيين التذكرة",closed:"تم إغلاق التذكرة",reopened:"تمت إعادة فتح التذكرة",commented:"تمت إضافة تعليق",attachment_added:"تمت إضافة مرفق",attachment_deleted:"تم حذف المرفق",fallback:"تم تحديث التذكرة"}
+  };
+  return (labels[language]||labels.fr)[event.action]||(labels[language]||labels.fr).fallback;
 }
 function ticketEventActor(event){
   const users=Array.isArray(DEMO_USERS)?DEMO_USERS:[];
@@ -1941,6 +1946,13 @@ function ticketEventValue(field,value){
 function ticketEventDetail(event){
   const oldValues=event.old_values&&typeof event.old_values==="object"?event.old_values:{};
   const newValues=event.new_values&&typeof event.new_values==="object"?event.new_values:{};
+  if(event.action==="attachment_added"||event.action==="attachment_deleted"){
+    const data=Object.keys(newValues).length?newValues:oldValues;
+    const size=Number(data.file_size)||0;
+    const unit=size<1024?"B":size<1048576?"KB":"MB";
+    const displayed=size<1024?size:(size<1048576?size/1024:size/1048576).toFixed(1);
+    return [data.file_name, size?`${displayed} ${unit}`:""] .filter(Boolean).join(" · ");
+  }
   if(event.action==="commented")return newValues.message?`« ${newValues.message} »`:"";
   const changes=[];
   if(oldValues.statut!==undefined&&oldValues.statut!==newValues.statut)changes.push(`Statut : ${ticketEventValue("statut",oldValues.statut)} → ${ticketEventValue("statut",newValues.statut)}`);
