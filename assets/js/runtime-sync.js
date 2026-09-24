@@ -85,6 +85,48 @@
     catch(error){console.warn('Binding Supabase ticket CRUD non remplacé',error);}
   }
 
+  /* The original shell predates Supabase Auth and falls back to browser data
+     whenever a read fails. That is useful for an offline demo, but unsafe in
+     a configured production workspace: stale local tickets must never appear
+     as authorised data after an RLS, network, or token error. */
+  function installSecureInitialDataLoad(){
+    const legacyLoad=window.loadAllData;
+    if(typeof legacyLoad!=='function'||legacyLoad.__onomoSecureLoad)return;
+    const secureLoad=async function(){
+      if(!hasAuthConfiguration())return legacyLoad.apply(this,arguments);
+      const session=await getAuthSession();
+      if(!session?.user)throw new Error('Session Supabase absente');
+      try{
+        installAuthenticatedSbFetch();
+        const [ticketRows,commentRows,userRows,hotelRows]=await Promise.all([
+          window.sbFetch('tickets?order=created_at.desc&limit=1000'),
+          window.sbFetch('commentaires?order=created_at.asc&limit=5000'),
+          window.sbFetch('utilisateurs?order=created_at.asc&limit=500'),
+          window.sbFetch('hotels?order=nom.asc&limit=500')
+        ]);
+        if(!Array.isArray(ticketRows)||!Array.isArray(commentRows)||!Array.isArray(userRows)||!Array.isArray(hotelRows)){
+          throw new Error('Réponse Supabase invalide');
+        }
+        tickets=ticketRows;
+        commentaires=commentRows;
+        if(typeof saveTickets==='function')saveTickets(tickets);
+        if(typeof saveCommentaires==='function')saveCommentaires(commentaires);
+        if(typeof dbRowToUser==='function')DEMO_USERS=userRows.map(dbRowToUser);
+        HOTELS=hotelRows;
+        if(typeof populateSelects==='function')populateSelects();
+        return true;
+      }catch(error){
+        tickets=[];
+        commentaires=[];
+        console.error('Chargement sécurisé Supabase impossible',error);
+        window.showToast?.(t('secure_data_load_failed','Impossible de charger les données sécurisées. Vérifiez votre connexion puis réessayez.'),'err');
+        return false;
+      }
+    };
+    secureLoad.__onomoSecureLoad=true;
+    window.loadAllData=secureLoad;
+  }
+
   const writeSession=()=>{try{if(currentUser)localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,user:currentUser,at:Date.now()}));}catch(_) {}};
   const clearSession=()=>{try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(ACTIVITY_KEY);}catch(_) {}};
   const touch=()=>{try{if(currentUser)localStorage.setItem(ACTIVITY_KEY,String(Date.now()));}catch(_) {}};
@@ -251,13 +293,14 @@
         .subscribe(status=>{if(status==='SUBSCRIBED')console.log('Supabase Realtime connecté');if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Supabase Realtime indisponible, polling actif');});
     }catch(error){console.warn('Supabase Realtime indisponible',error);}
   }
-  function startSync(){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();if(syncTimer)clearInterval(syncTimer);syncTickets();syncNotifications();startRealtime();syncTimer=setInterval(syncTickets,10000);}
+  function startSync(){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();installSecureInitialDataLoad();if(syncTimer)clearInterval(syncTimer);syncTickets();syncNotifications();startRealtime();syncTimer=setInterval(syncTickets,10000);}
 
   async function restoreSupabaseProfile(session){
     if(!session?.user||restoring)return false;
     restoring=true;
     try{
       installAuthenticatedSbFetch();
+      installSecureInitialDataLoad();
       const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
       if(rows?.[0]){
         currentUser=dbRowToUser(rows[0]);
@@ -313,6 +356,7 @@
           if(error)throw error;
           if(data?.session?.user){
             installAuthenticatedSbFetch();
+            installSecureInitialDataLoad();
             const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(data.session.user.id)}&limit=1`);
             if(rows?.[0]){
               currentUser=dbRowToUser(rows[0]);
@@ -340,7 +384,7 @@
   }
 
   const previousInit=window.initSession;
-  if(typeof previousInit==='function')window.initSession=function(){previousInit();writeSession();touch();startSync();hideMobileNavigationBeforeLogin();};
+  if(typeof previousInit==='function')window.initSession=function(){installSecureInitialDataLoad();previousInit();writeSession();touch();startSync();hideMobileNavigationBeforeLogin();};
   const previousLogout=window.doLogout;
   if(typeof previousLogout==='function')window.doLogout=async function(){clearSession();if(syncTimer)clearInterval(syncTimer);if(realtimeChannel){try{await realtimeClient?.removeChannel(realtimeChannel);}catch(_){}realtimeChannel=null;}try{await getAuthClient()?.auth.signOut();}catch(error){console.warn('Supabase Auth logout impossible',error);}return previousLogout();};
   const previousUpdate=window.updateTicket;

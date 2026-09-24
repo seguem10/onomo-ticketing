@@ -1509,25 +1509,27 @@ async function loadAllData(){
         saveUsers(DEMO_USERS);
         console.log(`Supabase: ${DEMO_USERS.length} utilisateurs chargés`);
       } else if(sbUsers && sbUsers.length === 0){
-        // Supabase vide → pousser tous les comptes locaux
-        console.log("Supabase vide — push des comptes locaux...");
-        for(const u of loadUsers()){ await sbSaveUser(u); }
-        DEMO_USERS = loadUsers();
-        console.log('Comptes poussés vers Supabase');
+        // A production database is the authority. Never migrate browser
+        // accounts automatically: an empty or RLS-filtered response must not
+        // create local identities in Supabase.
+        DEMO_USERS = [];
       }
       // Hotels
       if(sbHotels && sbHotels.length > 0){
         HOTELS = sbHotels;
         saveHotels(HOTELS);
-      } else if(sbHotels && sbHotels.length === 0 && HOTELS.length > 0){
-        for(const h of HOTELS){ await sbSaveHotel(h); }
+      } else if(sbHotels && sbHotels.length === 0){
+        HOTELS = [];
       }
       console.log(`Supabase: ${tickets.length} tickets, ${DEMO_USERS.length} users, ${HOTELS.length} hôtels`);
     }catch(e){
-      console.error('Supabase load failed, using localStorage:', e);
-      tickets = loadTickets();
-      commentaires = loadCommentaires();
-      showToast("Supabase indisponible — données locales chargées","err");
+      console.error('Supabase load failed:', e);
+      // Once Supabase is configured, browser storage is only a cache and can
+      // never be used as an alternative data source after an authenticated
+      // request fails.
+      tickets = [];
+      commentaires = [];
+      showToast("Impossible de charger les données sécurisées. Vérifiez votre connexion puis réessayez.","err");
     }
   } else {
     tickets = loadTickets();
@@ -4313,7 +4315,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/locales-data.js"></script>
 <script src="assets/js/i18n.js?v=20260923-7"></script>
 <script src="assets/js/modern-features.js?v=20260922-3"></script>
-<script src="assets/js/runtime-sync.js?v=20260921-2"></script>
+<script src="assets/js/runtime-sync.js?v=20260924-1"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
 <script src="assets/js/dashboard-polish.js?v=20260924-1"></script>
 </body>
