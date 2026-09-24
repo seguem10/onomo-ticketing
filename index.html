@@ -719,6 +719,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
     <div class="modal-hdr"><div class="modal-title"><i class="ti ti-ticket" style="margin-right:6px;color:var(--tx3)"></i>Nouveau ticket</div><button class="modal-close" onclick="closeModal('modalTicket')"><i class="ti ti-x"></i></button></div>
     <div class="form-g"><label class="field-lbl">Sujet *</label><input id="ntTitre" class="field-ctrl" placeholder="Ex : WiFi salle de conférence hors service" oninput="onTitreInput(this.value)"></div>
     <div class="form-g"><label class="field-lbl">Description</label><textarea id="ntDesc" class="field-ctrl" rows="3" placeholder="Contexte, numéro de chambre, gravité observée…"></textarea></div>
+    <div class="form-g"><label class="field-lbl">Pièces jointes <span style="font-weight:400;color:var(--tx3)">(PDF, image, TXT, DOCX ou XLSX — 10 Mo maximum par fichier)</span></label><input id="ntAttachments" class="field-ctrl" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.docx,.xlsx" onchange="window.queueTicketAttachments?.(this.files)"><div id="ntAttachmentStatus" style="font-size:11px;color:var(--tx3);margin-top:6px" aria-live="polite"></div></div>
     <div id="aiBtnWrap" style="margin-bottom:12px;display:none"><button class="btn btn-outline btn-sm" onclick="runAI()" id="aiBtnEl"><i class="ti ti-brain"></i>Analyser avec l'IA</button></div>
     <div id="aiBox" class="ai-panel" style="display:none">
       <div class="ai-hdr"><i class="ti ti-sparkles"></i><span>Suggestion IA</span></div>
@@ -3063,9 +3064,11 @@ async function submitNewTicket(){
   try{
     const created=await createTicket(data);
     if(!created)return;
+    if(typeof window.uploadPendingTicketAttachments==='function')await window.uploadPendingTicketAttachments(created.id);
     closeModal("modalTicket");
     document.getElementById("ntTitre").value="";
     document.getElementById("ntDesc").value="";
+    const attachmentInput=document.getElementById("ntAttachments");if(attachmentInput)attachmentInput.value="";
     showToast("Ticket créé avec succès","ok");
     renderView();
   }finally{
@@ -4318,5 +4321,6 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/runtime-sync.js?v=20260924-1"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
 <script src="assets/js/dashboard-polish.js?v=20260924-1"></script>
+<script src="assets/js/ticket-attachments.js?v=20260924-1"></script>
 </body>
 </html>
