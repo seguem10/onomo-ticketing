@@ -45,7 +45,7 @@
   function renderDashboardHero() {
     const root = document.getElementById('mainContent');
     const user = window.currentUser;
-    if (!root || !user || root.querySelector('.dashboard-hero')) return;
+    if (!root || !user || root.querySelector('.dashboard-hero') || root.querySelector('.dash-welcome')) return;
 
     const locale = copy[language()] || copy.fr;
     const role = user.role || '';
