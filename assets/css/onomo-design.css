@@ -847,3 +847,57 @@ url("https://www.kayak.com.au/rimg/himg/08/c4/c7/leonardo-236437654-ONOMO_Casabl
   .toast{left:12px!important;right:12px!important;bottom:76px!important}
   .fab{bottom:78px!important;right:16px!important}
 }
+
+
+/* PROFILE + COMPACT SIDEBAR + TABLET FINAL POLISH — visual only */
+#mainContent:has(#pOld)>div{max-width:820px!important;margin:0 auto}
+#mainContent:has(#pOld) .page-head{margin-bottom:14px!important}
+#mainContent:has(#pOld) .page-head h2{font-size:24px!important;line-height:1.1!important;letter-spacing:-.035em!important;color:#18212b!important;margin:0 0 5px!important}
+#mainContent:has(#pOld) .page-head p{font-size:10px!important;color:#98a2b3!important}
+#mainContent:has(#pOld) .card{border:1px solid #e7e9ed!important;border-radius:11px!important;box-shadow:0 1px 3px rgba(16,24,40,.04)!important;background:#fff!important}
+#mainContent:has(#pOld) .card:first-of-type{padding:18px!important}
+#mainContent:has(#pOld) .card:first-of-type>div:first-child,
+#mainContent:has(#pOld) .card:last-of-type>div:first-child{font-size:11px!important;color:#344054!important;margin-bottom:14px!important}
+#mainContent:has(#pOld) .card:first-of-type>div:nth-child(2){gap:0!important;border:1px solid #edf0f3;border-radius:9px;overflow:hidden}
+#mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div{padding:13px 14px;background:#fbfcfd;border-right:1px solid #edf0f3;border-bottom:1px solid #edf0f3}
+#mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div:nth-child(even){border-right:0}
+#mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div:nth-last-child(-n+2){border-bottom:0}
+#mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div>div:first-child{font-size:8px!important;color:#98a2b3!important;text-transform:uppercase;letter-spacing:.04em}
+#mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div>div:last-child{font-size:10px!important;color:#344054!important;font-weight:600!important}
+#mainContent:has(#pOld) .card:last-of-type{padding:18px!important}
+#mainContent:has(#pOld) label{font-size:9px!important;color:#667085!important}
+#mainContent:has(#pOld) #pOld,
+#mainContent:has(#pOld) #pNew,
+#mainContent:has(#pOld) #pConfirm{height:38px!important;padding:0 11px!important;border:1px solid #dfe3e8!important;border-radius:7px!important;background:#fff!important;color:#111827!important;font-size:10px!important;box-shadow:none!important}
+#mainContent:has(#pOld) #pOld:focus,
+#mainContent:has(#pOld) #pNew:focus,
+#mainContent:has(#pOld) #pConfirm:focus{border-color:#c9972a!important;box-shadow:0 0 0 3px rgba(201,151,42,.10)!important}
+#mainContent:has(#pOld) .btn-primary{width:auto!important;min-width:210px!important;height:38px!important;padding:0 15px!important;border-radius:7px!important;background:#18232e!important;color:#fff!important;font-size:10px!important;box-shadow:none!important}
+
+@media(min-width:900px){
+  body.sidebar-compact #appScreen .sidebar{width:68px!important;padding:10px 8px!important}
+  body.sidebar-compact #appScreen .sb-brand{min-height:48px!important;padding:2px 4px 10px!important}
+  body.sidebar-compact #appScreen .sb-logo{width:36px!important;margin:auto!important}
+  body.sidebar-compact #appScreen .sb-logo .onomo-wordmark{width:36px!important;height:30px!important;border-radius:6px!important;padding:3px!important;object-fit:cover!important;object-position:left!important}
+  body.sidebar-compact #appScreen .nav-item{width:42px!important;height:36px!important;min-height:36px!important;margin:3px auto!important;padding:0!important;border-radius:9px!important}
+  body.sidebar-compact #appScreen .nav-item i{font-size:16px!important}
+  body.sidebar-compact #appScreen .sb-user{width:42px!important;margin:auto!important;padding:5px!important}
+  body.sidebar-compact #appScreen .sb-av{width:30px!important;height:30px!important}
+  body.sidebar-compact #appScreen .sidebar-collapse-btn{top:13px!important;right:-11px!important;background:#fff!important;color:#475467!important;border:1px solid #e3e7ec!important;box-shadow:0 3px 10px rgba(16,24,40,.08)!important}
+}
+@media(min-width:769px) and (max-width:1100px){
+  #appScreen .content{padding:18px!important}
+  .stats-grid-six{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .dash-analytics{grid-template-columns:1fr 1fr!important}
+  .dash-activity{grid-column:1/-1!important}
+  .tickets-page-actions{flex-wrap:wrap!important;justify-content:flex-end!important}
+  .tickets-search{min-width:210px!important}
+}
+@media(max-width:620px){
+  #mainContent:has(#pOld)>div{max-width:none!important}
+  #mainContent:has(#pOld) .page-head h2{font-size:20px!important}
+  #mainContent:has(#pOld) .card:first-of-type>div:nth-child(2){grid-template-columns:1fr!important}
+  #mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div{border-right:0!important;border-bottom:1px solid #edf0f3!important}
+  #mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div:last-child{border-bottom:0!important}
+  #mainContent:has(#pOld) .btn-primary{width:100%!important}
+}
