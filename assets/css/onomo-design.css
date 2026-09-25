@@ -1033,3 +1033,130 @@ body.dark-mode #mobileBottomNav .mbnav-item.active{color:#d7b45f!important}
   .kanban-board{grid-template-columns:1fr!important}
   .kanban-col{min-height:0!important}
 }
+
+
+/* MODALS + SPECIAL PANELS FINAL POLISH — visual only */
+#modalStatus .modal,
+#modalConfirmUser .modal{max-width:390px!important}
+#modalUser .modal,
+#modalHotel .modal{max-width:560px!important}
+#modalStatus .modal,
+#modalUser .modal,
+#modalHotel .modal,
+#modalConfirmUser .modal,
+#modalEmailNotif .modal{padding:0!important;overflow:hidden!important;border-radius:12px!important;background:#fff!important;border:1px solid #e7e9ed!important;box-shadow:0 24px 60px rgba(16,24,40,.18)!important}
+#modalStatus .modal-hdr,
+#modalUser .modal-hdr,
+#modalHotel .modal-hdr,
+#modalConfirmUser .modal-hdr,
+#modalEmailNotif .modal-hdr{margin:0!important;padding:14px 16px!important;background:#fbfbfc!important;border-bottom:1px solid #e7e9ed!important}
+#modalStatus .modal-title,
+#modalUser .modal-title,
+#modalHotel .modal-title,
+#modalConfirmUser .modal-title,
+#modalEmailNotif .modal-title{font-size:11px!important;color:#344054!important}
+#modalStatus .modal-close,
+#modalUser .modal-close,
+#modalHotel .modal-close,
+#modalConfirmUser .modal-close,
+#modalEmailNotif .modal-close{width:28px;height:28px;display:grid;place-items:center;border-radius:7px!important;color:#98a2b3!important}
+#modalStatus .modal-close:hover,
+#modalUser .modal-close:hover,
+#modalHotel .modal-close:hover,
+#modalConfirmUser .modal-close:hover,
+#modalEmailNotif .modal-close:hover{background:#f2f4f7!important;color:#475467!important}
+#modalStatus .modal>.form-g,
+#modalUser .modal>.form-g,
+#modalUser .modal>.form-row,
+#modalUser #uEditBanner,
+#modalHotel .modal>.form-g,
+#modalHotel .modal>.form-row,
+#modalConfirmUser .modal>p,
+#modalConfirmUser #confirmUserName,
+#modalEmailNotif .modal>div:not(.modal-hdr):not(.modal-foot),
+#modalEmailNotif .modal>textarea{margin-left:16px!important;margin-right:16px!important}
+#modalStatus .modal>.form-g:first-of-type,
+#modalUser #uEditBanner,
+#modalHotel .modal>.form-row:first-of-type,
+#modalConfirmUser .modal>p:first-of-type,
+#modalEmailNotif .modal>div:nth-child(2){margin-top:16px!important}
+#modalStatus .field-lbl,
+#modalUser .field-lbl,
+#modalHotel .field-lbl{font-size:9px!important;color:#667085!important}
+#modalStatus .field-ctrl,
+#modalUser .field-ctrl,
+#modalHotel .field-ctrl,
+#modalEmailNotif .field-ctrl{height:36px!important;border-radius:7px!important;font-size:10px!important;background:#fff!important;border-color:#dfe3e8!important;color:#344054!important}
+#modalEmailNotif textarea.field-ctrl{height:auto!important;min-height:210px!important;padding:10px!important;background:#fbfcfd!important;font-family:Inter,system-ui,sans-serif!important;line-height:1.55!important}
+#modalUser #uEditBanner{padding:9px 10px!important;border-radius:8px!important;background:#eff8ff!important;border-color:#b2ddff!important;color:#175cd3!important;font-size:9px!important}
+#modalUser #uRoleDesc,
+#modalUser #uPwdNote{font-size:8px!important;color:#98a2b3!important}
+#modalUser #uHotelsCheckbox{background:#fbfcfd!important;border:1px solid #e3e7ec!important;border-radius:8px!important;padding:8px!important}
+#modalUser #uHotelsCheckbox label{font-size:9px!important;padding:4px 2px!important}
+#modalConfirmUser .modal-title{color:#b42318!important}
+#modalConfirmUser #confirmUserName{padding:10px 11px!important;border-radius:8px!important;background:#fff5f4!important;border:1px solid #fecdca!important;color:#912018!important;font-size:10px!important}
+#modalConfirmUser .modal>p{font-size:9px!important;color:#667085!important;line-height:1.55!important}
+#modalStatus .modal-foot,
+#modalUser .modal-foot,
+#modalHotel .modal-foot,
+#modalConfirmUser .modal-foot,
+#modalEmailNotif .modal-foot{margin:16px 0 0!important;padding:12px 16px!important;background:#fbfbfc!important;border-top:1px solid #e7e9ed!important}
+#modalStatus .modal-foot .btn,
+#modalUser .modal-foot .btn,
+#modalHotel .modal-foot .btn,
+#modalConfirmUser .modal-foot .btn,
+#modalEmailNotif .modal-foot .btn{min-width:100px!important;justify-content:center!important}
+#modalConfirmUser .modal-foot .btn[style*="var(--red)"]{background:#b42318!important;color:#fff!important;border-color:#b42318!important}
+#modalEmailNotif .modal>div:nth-child(2){padding:9px 10px!important;border-radius:8px!important;background:#eff8ff!important;border-color:#b2ddff!important;color:#175cd3!important;font-size:9px!important}
+
+/* AI suggestion panel */
+.ai-panel{background:#f8f7ff!important;border:1px solid #e7defc!important;border-radius:9px!important;padding:11px 12px!important;margin-bottom:12px!important}
+.ai-hdr{margin-bottom:6px!important}
+.ai-hdr i{font-size:13px!important;color:#6941c6!important}
+.ai-hdr span{font-size:9px!important;color:#6941c6!important;font-weight:700!important}
+.ai-summary{font-size:9px!important;line-height:1.55!important;color:#5d4c86!important;margin-bottom:7px!important}
+.ai-chips{gap:5px!important}
+.ai-chip{padding:2px 7px!important;border-radius:999px!important;font-size:8px!important;background:#fff!important;color:#6941c6!important;border-color:#d9c8ff!important}
+.ai-note{font-size:8px!important;color:#8f7ab6!important;margin-top:6px!important}
+
+/* Alerts */
+.alert{padding:9px 11px!important;border-radius:8px!important;font-size:9px!important;box-shadow:none!important}
+.alert i{font-size:14px!important}
+.alert-danger{background:#fff5f4!important;border-color:#fecdca!important;color:#912018!important}
+.alert-info{background:#eff8ff!important;border-color:#b2ddff!important;color:#175cd3!important}
+.alert-warn{background:#fffaeb!important;border-color:#fedf89!important;color:#93370d!important}
+
+body.dark-mode #modalStatus .modal,
+body.dark-mode #modalUser .modal,
+body.dark-mode #modalHotel .modal,
+body.dark-mode #modalConfirmUser .modal,
+body.dark-mode #modalEmailNotif .modal{background:#171f28!important;border-color:#2a3542!important}
+body.dark-mode #modalStatus .modal-hdr,
+body.dark-mode #modalUser .modal-hdr,
+body.dark-mode #modalHotel .modal-hdr,
+body.dark-mode #modalConfirmUser .modal-hdr,
+body.dark-mode #modalEmailNotif .modal-hdr,
+body.dark-mode #modalStatus .modal-foot,
+body.dark-mode #modalUser .modal-foot,
+body.dark-mode #modalHotel .modal-foot,
+body.dark-mode #modalConfirmUser .modal-foot,
+body.dark-mode #modalEmailNotif .modal-foot{background:#171f28!important;border-color:#2a3542!important}
+body.dark-mode #modalStatus .modal-title,
+body.dark-mode #modalUser .modal-title,
+body.dark-mode #modalHotel .modal-title,
+body.dark-mode #modalEmailNotif .modal-title{color:#f2f4f7!important}
+body.dark-mode #modalStatus .field-ctrl,
+body.dark-mode #modalUser .field-ctrl,
+body.dark-mode #modalHotel .field-ctrl,
+body.dark-mode #modalEmailNotif .field-ctrl{background:#1d2732!important;border-color:#394654!important;color:#f2f4f7!important}
+body.dark-mode .ai-panel{background:#241f31!important;border-color:#4a3a6a!important}
+body.dark-mode .ai-chip{background:#1d2732!important}
+@media(max-width:620px){
+  #modalStatus .modal,
+  #modalUser .modal,
+  #modalHotel .modal,
+  #modalConfirmUser .modal,
+  #modalEmailNotif .modal{width:calc(100% - 16px)!important;max-width:none!important;margin:8px!important}
+  #modalUser .form-row,
+  #modalHotel .form-row{grid-template-columns:1fr!important}
+}
