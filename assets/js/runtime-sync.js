@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   const SESSION_KEY='onomo_active_session_v1', ACTIVITY_KEY='onomo_last_activity_v1', INACTIVITY=15*60*1000;
-  let syncTimer=null, channel=null, realtimeChannel=null, realtimeClient=null, authClient=null, authSubscription=null, loading=false, syncQueued=false, syncQueuedTimer=null, restoring=false;
+  let syncTimer=null, channel=null, realtimeChannel=null, realtimeClient=null, authClient=null, authSubscription=null, loading=false, syncQueued=false, syncQueuedTimer=null, restoring=false, restoreProfilePromise=null, restoreRetries=0;
   const t=(key,fallback)=>window.OnomoI18n?.t(key)||fallback;
   const cfg=()=>{try{return typeof settings!=='undefined'?settings:window.settings;}catch(_){return window.settings;}};
   /* The presence of production credentials is enough to disable every local
@@ -307,26 +307,35 @@
   function startSync(){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();installSecureInitialDataLoad();if(syncTimer)clearInterval(syncTimer);syncTickets();syncNotifications();startRealtime();syncTimer=setInterval(syncTickets,10000);}
 
   async function restoreSupabaseProfile(session){
-    if(!session?.user||restoring)return false;
-    restoring=true;
-    try{
-      installAuthenticatedSbFetch();
-      installSecureInitialDataLoad();
-      const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
-      if(rows?.[0]){
-        currentUser=dbRowToUser(rows[0]);
-        currentUser.auth_user_id=session.user.id;
-        if(currentUser.language)window.OnomoI18n?.setLanguage(currentUser.language,false);
-        initSession();
-        writeSession();
-        touch();
-        startSync();
-        return true;
-      }
-      console.warn('Session Auth valide mais aucun profil utilisateurs lié à auth_user_id');
-      return false;
-    }catch(error){console.warn('Profil Supabase non disponible',error);return false;}
-    finally{restoring=false;}
+    if(!session?.user)return false;
+    /* INITIAL_SESSION and restoreSession can arrive together on a page
+       refresh. Await one profile request instead of treating the second call
+       as a failure and returning the user to the login screen. */
+    if(restoreProfilePromise)return restoreProfilePromise;
+    restoreProfilePromise=(async()=>{
+      restoring=true;
+      try{
+        installAuthenticatedSbFetch();
+        installSecureInitialDataLoad();
+        const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
+        if(rows?.[0]){
+          currentUser=dbRowToUser(rows[0]);
+          currentUser.auth_user_id=session.user.id;
+          if(currentUser.language)window.OnomoI18n?.setLanguage(currentUser.language,false);
+          initSession();
+          writeSession();
+          touch();
+          startSync();
+          restoreRetries=0;
+          return true;
+        }
+        console.warn('Session Auth valide mais aucun profil utilisateurs lié à auth_user_id');
+        return false;
+      }catch(error){console.warn('Profil Supabase non disponible',error);return false;}
+      finally{restoring=false;}
+    })();
+    try{return await restoreProfilePromise;}
+    finally{restoreProfilePromise=null;}
   }
 
   async function restoreSession(){
@@ -340,6 +349,13 @@
        authentication authority. Local restoration remains available only for
        an explicit offline/demo configuration without Supabase Auth. */
     if(hasAuthConfiguration()){
+      /* A valid Supabase token must survive a short network/RLS delay. Retry
+         the profile lookup before clearing only the local UI marker. */
+      if(session?.user&&restoreRetries<2){
+        restoreRetries++;
+        setTimeout(restoreSession,1000*restoreRetries);
+        return;
+      }
       clearSession();
       return;
     }

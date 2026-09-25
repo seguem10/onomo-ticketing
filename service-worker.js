@@ -1,7 +1,8 @@
-const CACHE_NAME='onomo-shell-v26';
-const SHELL=['./','./index.html','./manifest.webmanifest','./assets/css/app.css','./assets/css/responsive.css','./assets/css/interactions.css','./assets/css/onomo-design.css','./assets/js/ui.js','./assets/js/ui-polish.js','./assets/js/dashboard-polish.js','./assets/js/app.js','./assets/js/runtime-sync.js','./assets/js/i18n.js','./assets/js/locales-data.js','./assets/js/modern-features.js','./assets/js/corrections.js','./assets/pwa/onomo-hotels.png'];
+const CACHE_NAME='onomo-shell-v27';
+const SHELL=['./','./index.html','./manifest.webmanifest','./assets/css/app.css','./assets/css/responsive.css','./assets/css/interactions.css','./assets/css/onomo-design.css','./assets/js/ui.js','./assets/js/ui-polish.js','./assets/js/dashboard-polish.js','./assets/js/app.js','./assets/js/runtime-sync.js','./assets/js/i18n.js','./assets/js/locales-data.js','./assets/js/modern-features.js','./assets/js/corrections.js','./assets/js/pwa-update.js','./assets/pwa/onomo-hotels.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const request=event.request,isNavigation=request.mode==='navigate',isScript=request.destination==='script',isStyle=request.destination==='style';
