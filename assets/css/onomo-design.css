@@ -185,3 +185,47 @@ hr,.divider{border-color:#e9ebef!important}
 ::-webkit-scrollbar-thumb{background:#cbd0d9;border:3px solid transparent;background-clip:padding-box;border-radius:999px}
 ::-webkit-scrollbar-thumb:hover{background:#adb5c2;border:3px solid transparent;background-clip:padding-box}
 @media(max-width:620px){.page-header,.view-header{margin-bottom:17px}.filters,.filter-bar,.toolbar{border-radius:12px!important}.card,.report-section,.kpi-card{border-radius:15px!important}}
+
+
+/* ONOMO visual refresh v2.2 — dashboard and ticket focus. */
+.stats-grid,.kpi-grid{gap:18px!important}
+.stat-card,.kpi-card{padding:20px!important}
+.stat-card .stat-val,.kpi-card .kpi-val{font-size:30px!important;font-weight:780!important;line-height:1.05!important;color:var(--primary)!important}
+.stat-card .stat-lbl,.kpi-card .kpi-lbl{margin-top:7px!important;color:#687386!important;font-size:12px!important;font-weight:650!important}
+.stat-card .stat-icon,.kpi-card .kpi-icon{width:44px!important;height:44px!important;display:grid!important;place-items:center!important}
+.panel-row>.card,.dashboard-grid>.card{min-width:0}
+.card-hdr{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.card-hdr .card-title{margin:0}
+.ticket-table{background:#fff}
+.ticket-table th{position:relative;padding-top:13px!important;padding-bottom:13px!important}
+.ticket-table td{padding-top:13px!important;padding-bottom:13px!important}
+.ticket-table .t-title{font-weight:680!important;color:#283347!important}
+.ticket-table .t-num{font-size:11px!important;letter-spacing:.025em}
+.ticket-table .time-cell{color:#8a93a3!important}
+.ticket-table .assignee-cell{font-weight:600!important;color:#475467!important}
+.ticket-table .cat-label{color:#667085!important}
+.detail-layout{align-items:start}
+.detail-main{display:grid;gap:18px}
+.detail-main>.card{margin-bottom:0!important}
+.detail-sidebar{display:grid;gap:18px}
+.detail-sidebar>.card{margin-bottom:0!important}
+.detail-header{padding-bottom:18px;border-bottom:1px solid #edf0f3}
+.detail-num{display:inline-flex;align-items:center;min-height:25px;padding:4px 9px;border-radius:999px;background:var(--accent-soft);font-size:10px!important}
+.detail-title{margin-top:10px!important;color:var(--primary)!important}
+.meta-lbl{font-size:10px!important;letter-spacing:.055em!important;text-transform:uppercase}
+.meta-val{color:#344054!important;font-weight:620!important}
+.desc-box{color:#344054!important}
+.progress-steps{background:linear-gradient(180deg,#fff,#fcfcfd)}
+.step-label{font-weight:650!important}
+.step-time{color:#98a2b3!important}
+.c-item:hover .c-text{border-color:#dde2e9;background:#fff!important}
+.c-name{font-weight:700!important;color:#344054!important}
+.c-time{color:#98a2b3!important}
+.c-input-wrap{border-top:1px solid #edf0f3}
+.c-input{background:#fff!important}
+#ticketHistoryList{position:relative}
+#ticketHistoryList>div{transition:border-color .16s ease,background .16s ease,transform .16s ease}
+#ticketHistoryList>div:hover{border-color:#dfe3e9!important;background:#fff;transform:translateX(2px)}
+.back-row .btn,.back-row a{font-weight:650!important}
+@media(max-width:899px){.stats-grid,.kpi-grid{gap:14px!important}.stat-card,.kpi-card{padding:17px!important}}
+@media(max-width:620px){.stat-card .stat-val,.kpi-card .kpi-val{font-size:25px!important}.detail-header{padding-bottom:15px}.detail-num{margin-bottom:2px}.detail-main,.detail-sidebar{gap:14px}}
