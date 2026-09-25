@@ -750,3 +750,50 @@ url("https://www.onomohotels.com/app/uploads/2023/04/omomo-hotel-casablanca-city
   #appScreen .user-row,#appScreen .hotel-row{align-items:flex-start!important;gap:10px!important}
   #appScreen .modal:not(#modalTicket .modal){width:calc(100% - 20px)!important;margin:10px!important}
 }
+
+
+/* REPORTS + ADMIN REFERENCE POLISH — visual only */
+#appScreen .kpi-row{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;margin-bottom:14px!important}
+#appScreen .kpi-card{min-height:118px!important;padding:16px!important;background:#fff!important;border:1px solid #e7e9ed!important;border-radius:11px!important;box-shadow:0 1px 3px rgba(16,24,40,.035)!important}
+#appScreen .kpi-lbl{font-size:9px!important;letter-spacing:0!important;text-transform:none!important;color:#667085!important;margin-bottom:9px!important}
+#appScreen .kpi-val{font-size:28px!important;letter-spacing:-.045em!important;color:#18212b!important}
+#appScreen .kpi-sub{font-size:8px!important;color:#98a2b3!important;margin-top:5px!important}
+#appScreen .two-col{gap:12px!important;margin-bottom:12px!important}
+#appScreen .report-section{padding:16px!important;background:#fff!important;border:1px solid #e7e9ed!important;border-radius:11px!important;box-shadow:0 1px 3px rgba(16,24,40,.035)!important}
+#appScreen .section-title{font-size:10px!important;color:#344054!important;margin-bottom:14px!important}
+#appScreen .section-title i{color:#9a6b12!important;font-size:14px!important}
+#appScreen .chart-wrap{padding:4px 0!important}
+#appScreen .bar-row{margin-bottom:10px!important}
+#appScreen .bar-lbl{font-size:9px!important;color:#667085!important;width:100px!important}
+#appScreen .bar-track{height:8px!important;background:#f0f2f5!important}
+#appScreen .bar-fill{border-radius:999px!important}
+#appScreen .bar-cnt{font-size:9px!important;color:#475467!important}
+#appScreen .rate-track{height:6px!important;background:#f0f2f5!important}
+#appScreen .report-section .ticket-table thead th{background:#fafafa!important}
+#appScreen .report-section .ticket-table td{font-size:9px!important}
+#appScreen .report-section .mini-av{width:24px!important;height:24px!important}
+#appScreen .report-section .assignee-cell{gap:7px!important}
+#appScreen .user-row,#appScreen .hotel-row{border-left:3px solid transparent!important}
+#appScreen .user-row:hover,#appScreen .hotel-row:hover{border-left-color:#c9972a!important}
+#appScreen .user-row .btn,#appScreen .hotel-row .btn{width:30px!important;height:30px!important;padding:0!important;justify-content:center!important}
+#appScreen .user-row .role-tag{white-space:nowrap}
+#appScreen .hotel-row>div:last-child{flex-wrap:wrap;justify-content:flex-end}
+#appScreen .settings-section,#appScreen .report-section,#appScreen .card{backdrop-filter:none!important}
+#appScreen .btn-outline{background:#fff!important;border-color:#dde2e8!important;color:#475467!important}
+#appScreen .btn-outline:hover{background:#fafafa!important;border-color:#cfd5dd!important}
+#appScreen .btn[style*="var(--red-l)"]{background:#fff5f4!important;color:#b42318!important;border-color:#fecdca!important}
+#appScreen .btn[style*="var(--purple-l)"]{background:#f7f5ff!important;color:#6941c6!important;border-color:#e9d7fe!important}
+#appScreen .field-ctrl[style*="max-width"]{height:34px!important;font-size:10px!important;border-radius:7px!important}
+#appScreen .code-box{border-radius:9px!important;font-size:9px!important;line-height:1.65!important}
+@media(max-width:1100px){
+  #appScreen .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:620px){
+  #appScreen .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  #appScreen .kpi-card{min-height:96px!important;padding:13px!important}
+  #appScreen .kpi-val{font-size:23px!important}
+  #appScreen .two-col{grid-template-columns:1fr!important}
+  #appScreen .report-section{padding:13px!important}
+  #appScreen .user-row,#appScreen .hotel-row{flex-direction:column!important}
+  #appScreen .user-row>div:last-child,#appScreen .hotel-row>div:last-child{width:100%;justify-content:flex-start!important}
+}
