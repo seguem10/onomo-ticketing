@@ -1981,3 +1981,260 @@ body.dark-mode .ticket-table-reference tr:hover{
 body.dark-mode .ticket-table-reference .t-title{
   color:#f2f4f7!important;
 }
+
+
+/* MOBILE ADMIN + REPORTS PASS — visual only */
+@media(max-width:720px){
+  /* Administration lists as clean mobile cards */
+  #appScreen .user-row,
+  #appScreen .hotel-row{
+    position:relative!important;
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr)!important;
+    gap:9px 10px!important;
+    margin:0 10px 9px!important;
+    padding:13px!important;
+    border:1px solid #e4e7ec!important;
+    border-left:1px solid #e4e7ec!important;
+    border-radius:11px!important;
+    background:#fff!important;
+    box-shadow:0 1px 3px rgba(16,24,40,.035)!important;
+  }
+  #appScreen .user-row:first-of-type,
+  #appScreen .hotel-row:first-of-type{margin-top:10px!important}
+  #appScreen .user-row:last-child,
+  #appScreen .hotel-row:last-child{margin-bottom:10px!important}
+  #appScreen .user-row:hover,
+  #appScreen .hotel-row:hover{
+    border-left-color:#e4e7ec!important;
+    background:#fffaf6!important;
+  }
+  #appScreen .user-row .user-av{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:36px!important;
+    height:36px!important;
+    align-self:start!important;
+  }
+  #appScreen .user-row .user-info{
+    grid-column:2!important;
+    grid-row:1!important;
+    min-width:0!important;
+  }
+  #appScreen .user-row .user-name{
+    display:flex!important;
+    align-items:center!important;
+    flex-wrap:wrap!important;
+    gap:4px!important;
+    font-size:11px!important;
+  }
+  #appScreen .user-row .user-info>div:nth-child(2){
+    overflow-wrap:anywhere!important;
+    line-height:1.45!important;
+  }
+  #appScreen .user-row .user-info>div:nth-child(3){
+    line-height:1.4!important;
+  }
+  #appScreen .user-row>div:last-child{
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    width:100%!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:6px!important;
+    flex-wrap:wrap!important;
+    padding-top:9px!important;
+    border-top:1px solid #edf0f3!important;
+  }
+  #appScreen .user-row .role-tag{
+    min-height:22px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+  }
+  #appScreen .user-row .btn{
+    width:32px!important;
+    height:32px!important;
+    min-width:32px!important;
+    min-height:32px!important;
+    margin-left:0!important;
+  }
+  #appScreen .user-row .btn:has(.ti-shield-check){
+    width:auto!important;
+    padding:0 9px!important;
+  }
+
+  #appScreen .hotel-row{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  #appScreen .hotel-row>div:first-child{
+    min-width:0!important;
+  }
+  #appScreen .hotel-row .hotel-name{
+    font-size:11px!important;
+    line-height:1.45!important;
+  }
+  #appScreen .hotel-row .hotel-sub{
+    margin-top:3px!important;
+    font-size:9px!important;
+    line-height:1.45!important;
+    overflow-wrap:anywhere!important;
+  }
+  #appScreen .hotel-row>div:last-child{
+    width:100%!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:7px!important;
+    padding-top:9px!important;
+    border-top:1px solid #edf0f3!important;
+  }
+  #appScreen .hotel-row>div:last-child>span{
+    margin-right:auto!important;
+  }
+  #appScreen .hotel-row .btn{
+    width:32px!important;
+    height:32px!important;
+    min-width:32px!important;
+    min-height:32px!important;
+  }
+
+  /* Report toolbar and KPI blocks */
+  #appScreen .kpi-row{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  #appScreen .kpi-card{
+    min-height:92px!important;
+    padding:12px!important;
+  }
+  #appScreen .kpi-lbl{
+    margin-bottom:7px!important;
+    font-size:8px!important;
+  }
+  #appScreen .kpi-val{
+    font-size:22px!important;
+  }
+  #appScreen .kpi-sub{
+    font-size:8px!important;
+  }
+  #appScreen .two-col{
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+  }
+  #appScreen .report-section{
+    padding:12px!important;
+    border-radius:10px!important;
+  }
+  #appScreen .section-title{
+    margin-bottom:11px!important;
+  }
+  #appScreen .bar-row{
+    display:grid!important;
+    grid-template-columns:82px minmax(0,1fr) 24px!important;
+    gap:7px!important;
+    margin-bottom:9px!important;
+  }
+  #appScreen .bar-lbl{
+    width:auto!important;
+    text-align:left!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  #appScreen .bar-track{
+    min-width:0!important;
+  }
+
+  /* Agent performance table -> compact rows on phone */
+  #appScreen .report-section>.ticket-table{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  #appScreen .report-section>.ticket-table thead{
+    display:none!important;
+  }
+  #appScreen .report-section>.ticket-table tbody{
+    display:grid!important;
+    gap:8px!important;
+  }
+  #appScreen .report-section>.ticket-table tr{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:7px 12px!important;
+    padding:11px!important;
+    border:1px solid #e4e7ec!important;
+    border-radius:10px!important;
+    background:#fbfcfd!important;
+  }
+  #appScreen .report-section>.ticket-table td{
+    display:block!important;
+    width:auto!important;
+    height:auto!important;
+    padding:0!important;
+    border:0!important;
+    font-size:9px!important;
+  }
+  #appScreen .report-section>.ticket-table td:first-child{
+    grid-column:1/-1!important;
+    padding-bottom:7px!important;
+    margin-bottom:1px!important;
+    border-bottom:1px solid #edf0f3!important;
+  }
+  #appScreen .report-section>.ticket-table td:nth-child(n+3)::before{
+    display:block;
+    margin-bottom:2px;
+    color:#98a2b3;
+    font-size:7px;
+    font-weight:650;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  #appScreen .report-section>.ticket-table td:nth-child(3)::before{content:"Assignés"}
+  #appScreen .report-section>.ticket-table td:nth-child(4)::before{content:"Résolus"}
+  #appScreen .report-section>.ticket-table td:nth-child(5)::before{content:"Ouverts"}
+  #appScreen .report-section>.ticket-table td:nth-child(6)::before{content:"Taux"}
+
+  /* Admin/report page headers generated inline: avoid button overflow */
+  #appScreen #mainContent>div[style*="justify-content:space-between"][style*="margin-bottom"],
+  #appScreen #mainContent>div[style*="justify-content:flex-end"][style*="margin-bottom"]{
+    gap:8px!important;
+  }
+  #appScreen #mainContent>div[style*="justify-content:flex-end"][style*="margin-bottom"]{
+    justify-content:flex-start!important;
+    overflow-x:auto!important;
+    padding-bottom:2px!important;
+    scrollbar-width:none!important;
+  }
+  #appScreen #mainContent>div[style*="justify-content:flex-end"][style*="margin-bottom"]::-webkit-scrollbar{
+    display:none!important;
+  }
+  #appScreen #mainContent>div[style*="justify-content:flex-end"][style*="margin-bottom"] .btn{
+    flex:0 0 auto!important;
+  }
+
+  /* Settings controls should not force width on phone */
+  #appScreen .settings-section .form-row{
+    grid-template-columns:1fr!important;
+  }
+  #appScreen .settings-section [style*="display:flex"][style*="gap:8px"]{
+    max-width:100%!important;
+    flex-wrap:wrap!important;
+  }
+}
+
+body.dark-mode #appScreen .user-row,
+body.dark-mode #appScreen .hotel-row{
+  background:#171f28!important;
+  border-color:#2a3542!important;
+}
+body.dark-mode #appScreen .user-row>div:last-child,
+body.dark-mode #appScreen .hotel-row>div:last-child,
+body.dark-mode #appScreen .report-section>.ticket-table td:first-child{
+  border-color:#2a3542!important;
+}
+body.dark-mode #appScreen .report-section>.ticket-table tr{
+  background:#1d2732!important;
+  border-color:#2a3542!important;
+}
