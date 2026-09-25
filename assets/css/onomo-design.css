@@ -5127,3 +5127,114 @@ html[dir="rtl"] body.dark-mode .detail-info-section{
 html[dir="rtl"] body.dark-mode #modalTicket .modal{
   border-right-color:#2a3542!important;
 }
+
+
+/* PWA / INSTALLED APP VISUAL PASS — standalone only */
+@media (display-mode:standalone), (display-mode:fullscreen){
+  html,body{
+    min-height:100dvh!important;
+    background:#f6f7f9!important;
+  }
+  #appScreen,
+  #appScreen .app-inner,
+  #appScreen .main-area{
+    min-height:100dvh!important;
+  }
+  #appScreen .topbar{
+    padding-top:max(env(safe-area-inset-top),0px)!important;
+  }
+  #appScreen .content{
+    padding-bottom:calc(86px + env(safe-area-inset-bottom))!important;
+  }
+  #mobileBottomNav{
+    padding-bottom:max(6px,env(safe-area-inset-bottom))!important;
+    min-height:calc(58px + env(safe-area-inset-bottom))!important;
+  }
+  #appScreen .sidebar{
+    padding-top:max(10px,env(safe-area-inset-top))!important;
+    padding-bottom:max(10px,env(safe-area-inset-bottom))!important;
+  }
+  .fab{
+    bottom:calc(78px + env(safe-area-inset-bottom))!important;
+  }
+  .toast{
+    bottom:calc(78px + env(safe-area-inset-bottom))!important;
+  }
+  .pwa-install-bar{
+    display:none!important;
+  }
+
+  /* Installed-app login */
+  #loginScreen{
+    min-height:100dvh!important;
+  }
+  #loginScreen .login-shell{
+    min-height:100dvh!important;
+  }
+
+  /* Full-screen system surfaces respect device cutouts/home indicator. */
+  #modalTicket .modal-hdr,
+  #modalUser .modal-hdr,
+  #modalHotel .modal-hdr,
+  #modalStatus .modal-hdr,
+  #modalConfirmUser .modal-hdr,
+  #modalEmailNotif .modal-hdr,
+  #modalMFA .modal-hdr,
+  #passwordRecoveryModal .modal-hdr{
+    padding-top:max(12px,env(safe-area-inset-top))!important;
+  }
+  #modalTicket .modal-foot,
+  #modalUser .modal-foot,
+  #modalHotel .modal-foot,
+  #modalStatus .modal-foot,
+  #modalConfirmUser .modal-foot,
+  #modalEmailNotif .modal-foot,
+  #modalMFA .modal-foot,
+  #passwordRecoveryModal .modal-foot{
+    padding-bottom:max(12px,env(safe-area-inset-bottom))!important;
+  }
+
+  /* Standalone should feel like an app: no accidental rubber-band horizontal layout. */
+  body,
+  #appScreen,
+  #appScreen .app-inner,
+  #appScreen .main-area,
+  #mainContent{
+    max-width:100vw!important;
+    overflow-x:hidden!important;
+  }
+}
+
+/* iOS installed mode fallback */
+@supports (-webkit-touch-callout:none){
+  @media(max-width:768px){
+    body{
+      min-height:-webkit-fill-available;
+    }
+    #appScreen,
+    #appScreen .app-inner,
+    #loginScreen,
+    #loginScreen .login-shell{
+      min-height:-webkit-fill-available!important;
+    }
+  }
+}
+
+/* Window-controls-overlay capable desktop PWA: keep topbar content away from caption buttons. */
+@media (display-mode:window-controls-overlay){
+  #appScreen .topbar{
+    padding-left:max(18px,env(titlebar-area-x,0px))!important;
+    min-height:max(56px,env(titlebar-area-height,56px))!important;
+  }
+  #appScreen .topbar-title{
+    max-width:env(titlebar-area-width,100%)!important;
+  }
+}
+
+/* RTL standalone safe-area symmetry */
+@media (display-mode:standalone) and (max-width:768px){
+  html[dir="rtl"] #appScreen .sidebar{
+    padding-top:max(10px,env(safe-area-inset-top))!important;
+    padding-bottom:max(10px,env(safe-area-inset-bottom))!important;
+  }
+}
