@@ -150,3 +150,38 @@ body{background:
 .login-logo{position:relative;z-index:1}
 @media (max-width:899px){.topbar{box-shadow:0 1px 8px rgba(16,24,40,.045)}.dashboard-hero-actions{flex-wrap:wrap}}
 @media (max-width:620px){.stat-card{min-height:136px}.dashboard-hero{border-radius:16px}.ticket-table tbody tr:hover{box-shadow:0 4px 12px rgba(16,24,40,.06)}}
+
+
+/* ONOMO visual refresh v2.1 — secondary views and UI consistency. */
+.page-header,.view-header{margin-bottom:22px}
+.page-header h1,.view-header h1{letter-spacing:-.035em;color:var(--primary)}
+.page-header p,.view-header p{color:var(--tx2);line-height:1.55}
+.btn{border-radius:10px!important;font-weight:650!important;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+.btn-outline{background:#fff!important;border-color:#d9dee7!important;color:var(--primary)!important}
+.btn-outline:hover{background:#f8f9fb!important;border-color:#c4cad4!important;box-shadow:0 4px 12px rgba(16,24,40,.055)}
+.filters,.filter-bar,.toolbar{border-radius:14px!important;background:rgba(255,255,255,.86)!important;border:1px solid #e7e9ee!important;box-shadow:0 1px 2px rgba(16,24,40,.025)}
+select.field-ctrl{cursor:pointer}
+label,.field-label{color:#475467!important;font-weight:650!important}
+.card-title{color:var(--primary)!important;font-weight:750!important}
+.card-subtitle,.card-desc{color:var(--tx2)!important;line-height:1.5}
+.avatar,.user-avatar,.profile-avatar{box-shadow:0 0 0 3px #fff,0 0 0 4px #e6e9ef}
+.dropdown,.dropdown-menu,.popover{border:1px solid #e5e8ee!important;border-radius:13px!important;box-shadow:0 16px 38px rgba(16,24,40,.13)!important}
+.dropdown-item{border-radius:8px!important}.dropdown-item:hover{background:#f6f7f9!important}
+.tabs,.tab-list{border-bottom-color:#e6e9ef!important}
+.tab,.tab-btn{font-weight:650!important}.tab.active,.tab-btn.active{color:var(--accent-strong)!important}
+.pagination button{border-radius:8px!important;border-color:#e0e4ea!important;background:#fff!important}
+.pagination button:hover{background:#f7f8fa!important;border-color:#c9ced7!important}
+table{font-variant-numeric:tabular-nums}
+.ticket-table tbody tr:last-child td{border-bottom:0!important}
+.ticket-table td:first-child,.ticket-table th:first-child{padding-left:20px!important}
+.ticket-table td:last-child,.ticket-table th:last-child{padding-right:20px!important}
+.status-dot{box-shadow:0 0 0 3px rgba(16,24,40,.035)}
+.alert{border:1px solid rgba(16,24,40,.06)!important}
+.toast{backdrop-filter:blur(10px)}
+hr,.divider{border-color:#e9ebef!important}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd0d9;border:3px solid transparent;background-clip:padding-box;border-radius:999px}
+::-webkit-scrollbar-thumb:hover{background:#adb5c2;border:3px solid transparent;background-clip:padding-box}
+@media(max-width:620px){.page-header,.view-header{margin-bottom:17px}.filters,.filter-bar,.toolbar{border-radius:12px!important}.card,.report-section,.kpi-card{border-radius:15px!important}}
