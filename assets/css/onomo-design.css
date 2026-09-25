@@ -395,3 +395,76 @@ linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:auto
 #appScreen .notif-panel{border-radius:12px!important}
 @media(max-width:1100px){#appScreen .content{padding:22px!important}}
 @media(max-width:768px){#appScreen .topbar{height:58px!important;padding:0 12px!important}#appScreen .content{padding:14px 12px 82px!important}#appScreen .stat-card{min-height:112px!important;padding:14px!important}#appScreen .sidebar{width:270px!important}#modalTicket .modal{max-height:94vh!important}}
+
+
+/* EXACT REFERENCE UI — dashboard composition */
+.dash-welcome{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin:0 0 20px}
+.dash-welcome h1{font-size:28px;line-height:1.1;letter-spacing:-.04em;color:#161f2b;margin:0 0 7px;font-weight:780}
+.dash-welcome h1 span{font-size:24px}
+.dash-welcome p{font-size:12px;color:#667085;margin:0}
+.dash-context{display:flex;gap:10px;align-items:center}
+.dash-chip{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;border:1px solid #e2e5ea;border-radius:8px;background:#fff;color:#475467;font-size:11px;white-space:nowrap}
+.stats-grid-six{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px!important}
+.stats-grid-six .stat-card{padding:16px 14px!important;min-height:138px!important}
+.stats-grid-six .stat-icon{width:34px!important;height:34px!important;margin-bottom:14px!important;background:#f3f6fb}
+.stats-grid-six .stat-lbl{font-size:10px!important;color:#475467!important;margin-bottom:5px!important}
+.stats-grid-six .stat-val{font-size:28px!important;margin:0 0 5px!important;color:#111827!important}
+.stats-grid-six .stat-d{font-size:9px!important;color:#98a2b3!important}
+.stats-grid-six .s-open .stat-icon{background:#edf4ff!important;color:#2f80ed}
+.stats-grid-six .s-progress .stat-icon{background:#fff4e8!important;color:#f59e0b}
+.stats-grid-six .s-wait .stat-icon{background:#fff8d9!important;color:#d6a700}
+.stats-grid-six .s-urgent .stat-icon{background:#feeceb!important;color:#e5484d}
+.stats-grid-six .s-resolved .stat-icon{background:#e9f8f0!important;color:#16a36f}
+.stats-grid-six .s-total .stat-icon{background:#f0ecff!important;color:#7c5ce6}
+.dash-analytics{display:grid;grid-template-columns:1.55fr 1fr .95fr;gap:12px;margin:14px 0}
+.dash-analytics>.card{min-height:310px}
+.dash-period,.dash-link{font-size:9px;color:#667085}
+.trend-chart{position:relative;height:245px;padding:28px 18px 16px}
+.trend-grid{position:absolute;inset:25px 16px 28px;background:repeating-linear-gradient(to bottom,#edf0f4 0,#edf0f4 1px,transparent 1px,transparent 38px)}
+.trend-chart svg{position:absolute;left:20px;right:20px;top:42px;width:calc(100% - 40px);height:160px;overflow:visible}
+.trend-legend{position:absolute;left:22px;top:15px;display:flex;gap:16px;font-size:9px;color:#667085}
+.trend-legend span{display:flex;align-items:center;gap:5px}
+.trend-legend i{display:block;width:12px;height:3px;border-radius:999px}
+.status-summary{display:flex;align-items:center;gap:24px;padding:28px 22px 18px}
+.status-donut{width:126px;height:126px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#2f80ed 0 24%,#f59e0b 24% 43%,#eab308 43% 55%,#10b981 55% 84%,#d7dce3 84% 100%);position:relative;flex:0 0 auto}
+.status-donut::after{content:"";position:absolute;width:72px;height:72px;background:#fff;border-radius:50%}
+.status-donut>div{position:relative;z-index:1;text-align:center}
+.status-donut strong{display:block;font-size:22px;line-height:1;color:#17212b}
+.status-donut span{font-size:9px;color:#98a2b3}
+.status-legend{flex:1;display:grid;gap:12px}
+.status-legend>div{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:10px}
+.status-legend span{display:flex;align-items:center;gap:7px;color:#475467}
+.status-legend i{display:block;width:8px;height:8px;border-radius:50%}
+.status-legend strong{color:#344054;font-size:10px}
+.dash-activity-list{padding:4px 12px 12px}
+.dash-act-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid #eef0f3}
+.dash-act-item:last-child{border-bottom:0}
+.dash-act-icon{width:28px;height:28px;border-radius:8px;background:#fff4e8;color:#f59e0b;display:grid;place-items:center;flex:0 0 auto}
+.dash-act-item strong{display:block;font-size:10px;color:#344054;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.dash-act-item small{display:block;font-size:8px;color:#98a2b3;margin-top:2px}
+.empty-state.compact{padding:32px 10px!important}
+.dash-recent{margin-top:12px}
+#appScreen .topbar{height:56px!important;padding:0 20px!important}
+#appScreen .content{padding-top:18px!important}
+#appScreen .sidebar{width:182px!important;padding:10px 8px!important}
+#appScreen .sb-brand{padding:2px 8px 14px!important}
+#appScreen .sb-logo .onomo-wordmark{height:30px!important;max-width:130px!important}
+#appScreen .sb-logo-sub{font-size:8px!important}
+#appScreen .sb-sec-lbl{font-size:8px!important;padding:11px 8px 4px!important}
+#appScreen .nav-item{min-height:34px!important;padding:7px 8px!important;font-size:10px!important}
+#appScreen .nav-item i{font-size:14px!important}
+#appScreen .sb-uname{font-size:9px!important}
+#appScreen .sb-urole{font-size:8px!important}
+#appScreen .topbar-title{font-size:0!important;flex:0!important}
+#appScreen .search-box{margin-left:0;width:min(430px,42vw)!important;height:34px}
+#appScreen #btnNewTicket{margin-left:auto}
+#appScreen .btn-gold{height:34px;padding:0 12px!important}
+#appScreen .btn-icon{width:34px;height:34px}
+.ticket-table th,.ticket-table td{font-size:10px!important}
+#modalTicket .modal{max-width:520px!important}
+#modalTicket .modal-hdr{padding:14px 16px!important}
+#modalTicket .modal>.form-g,#modalTicket .modal>.form-row,#modalTicket #aiBtnWrap,#modalTicket #aiBox{margin-left:16px!important;margin-right:16px!important}
+#modalTicket .modal>.form-g:first-of-type{margin-top:14px!important}
+#modalTicket .modal-foot{padding:12px 16px!important}
+@media(max-width:1280px){.stats-grid-six{grid-template-columns:repeat(3,1fr)!important}.dash-analytics{grid-template-columns:1fr 1fr}.dash-activity{grid-column:1/-1}}
+@media(max-width:900px){.dash-welcome{flex-direction:column}.dash-context{width:100%;overflow:auto}.stats-grid-six{grid-template-columns:repeat(2,1fr)!important}.dash-analytics{grid-template-columns:1fr}.dash-activity{grid-column:auto}#appScreen .sidebar{width:260px!important}}
