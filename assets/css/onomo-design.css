@@ -4511,3 +4511,266 @@ body.dark-mode #mainContent>div[style*="justify-content:space-between"][style*="
   background:#1d2732!important;
   border-color:#394654!important;
 }
+
+
+/* ACCESSIBILITY + COMFORT VISUAL PASS — no behavior changes */
+html{
+  -webkit-text-size-adjust:100%!important;
+  text-size-adjust:100%!important;
+}
+body{
+  overflow-wrap:break-word;
+}
+button,
+input,
+select,
+textarea{
+  font:inherit;
+}
+button,
+[role="button"],
+.nav-item,
+.ftab,
+.ticket-filter-pill,
+.vt-btn,
+.row-action-btn,
+.detail-back-btn{
+  -webkit-tap-highlight-color:transparent;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+.nav-item:focus-visible,
+.ftab:focus-visible,
+.ticket-filter-pill:focus-visible,
+.vt-btn:focus-visible{
+  outline:3px solid rgba(201,151,42,.62)!important;
+  outline-offset:2px!important;
+  box-shadow:0 0 0 2px #fff!important;
+}
+body.dark-mode button:focus-visible,
+body.dark-mode a:focus-visible,
+body.dark-mode input:focus-visible,
+body.dark-mode select:focus-visible,
+body.dark-mode textarea:focus-visible,
+body.dark-mode [role="button"]:focus-visible,
+body.dark-mode .nav-item:focus-visible,
+body.dark-mode .ftab:focus-visible,
+body.dark-mode .ticket-filter-pill:focus-visible,
+body.dark-mode .vt-btn:focus-visible{
+  box-shadow:0 0 0 2px #171f28!important;
+}
+
+#appScreen button[aria-busy="true"],
+#appScreen .btn[aria-busy="true"],
+#loginScreen button[aria-busy="true"]{
+  position:relative!important;
+  cursor:progress!important;
+  opacity:.72!important;
+  pointer-events:none!important;
+}
+#appScreen button[aria-busy="true"] i,
+#appScreen .btn[aria-busy="true"] i,
+#loginScreen button[aria-busy="true"] i{
+  animation:spin 1s linear infinite;
+}
+#appScreen button:disabled,
+#appScreen .btn:disabled,
+#appScreen [aria-disabled="true"],
+#loginScreen button:disabled,
+#loginScreen [aria-disabled="true"]{
+  opacity:.5!important;
+  cursor:not-allowed!important;
+  filter:saturate(.65)!important;
+}
+#appScreen input:disabled,
+#appScreen select:disabled,
+#appScreen textarea:disabled{
+  background:#f2f4f7!important;
+  color:#98a2b3!important;
+  cursor:not-allowed!important;
+}
+body.dark-mode #appScreen input:disabled,
+body.dark-mode #appScreen select:disabled,
+body.dark-mode #appScreen textarea:disabled{
+  background:#202a35!important;
+  color:#8792a1!important;
+}
+
+/* Protect long names, emails, hotel names and translated copy. */
+#appScreen .card-title,
+#appScreen .modal-title,
+#appScreen .user-name,
+#appScreen .user-email,
+#appScreen .hotel-name,
+#appScreen .hotel-sub,
+#appScreen .setting-lbl,
+#appScreen .setting-desc,
+#appScreen .notif-text,
+#appScreen .detail-desc-text,
+#appScreen .detail-info-list strong,
+#appScreen .ticket-table td,
+#loginScreen .login-d,
+#loginScreen .login-err{
+  overflow-wrap:anywhere!important;
+}
+#appScreen .modal-title,
+#appScreen .card-title,
+#appScreen .section-title{
+  min-width:0!important;
+}
+
+/* Coarse pointers: larger touch targets without affecting desktop density. */
+@media (hover:none) and (pointer:coarse){
+  #appScreen .btn,
+  #appScreen .btn-icon,
+  #appScreen .row-action-btn,
+  #appScreen .detail-back-btn,
+  #appScreen .vt-btn,
+  #appScreen .modal-close,
+  #appScreen .fake-pagination button,
+  #loginScreen button,
+  #loginScreen select{
+    min-width:40px!important;
+    min-height:40px!important;
+  }
+  #appScreen .nav-item{
+    min-height:44px!important;
+  }
+  #appScreen .field-ctrl,
+  #appScreen .adv-sel,
+  #appScreen .c-input,
+  #loginScreen .form-ctrl{
+    min-height:44px!important;
+  }
+  #appScreen input[type="checkbox"],
+  #appScreen input[type="radio"]{
+    min-width:17px!important;
+    min-height:17px!important;
+  }
+  #appScreen .ticket-filter-pill,
+  #appScreen .ftab{
+    min-height:36px!important;
+  }
+}
+
+/* Respect reduced motion comprehensively. */
+@media (prefers-reduced-motion:reduce){
+  html{
+    scroll-behavior:auto!important;
+  }
+  *,
+  *::before,
+  *::after{
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.001ms!important;
+    transition-delay:0s!important;
+    scroll-behavior:auto!important;
+  }
+  #appScreen .sidebar,
+  #appScreen .sidebar-overlay,
+  #mobileBottomNav,
+  .pwa-install-bar,
+  .toast,
+  .modal,
+  .overlay,
+  .stat-card,
+  .kpi-card,
+  .nav-item,
+  .k-card{
+    transform:none!important;
+  }
+  .spin{
+    animation:none!important;
+  }
+}
+
+/* Respect high-contrast preferences while retaining the ONOMO palette. */
+@media (prefers-contrast:more){
+  #appScreen .card,
+  #appScreen .report-section,
+  #appScreen .kpi-card,
+  #appScreen .stat-card,
+  #appScreen .settings-section,
+  #appScreen .ticket-table-reference tr,
+  #appScreen .user-row,
+  #appScreen .hotel-row,
+  #appScreen .modal,
+  #loginScreen .login-card,
+  #loginScreen .form-ctrl{
+    border-color:#9aa3af!important;
+  }
+  #appScreen .field-ctrl,
+  #appScreen .adv-sel,
+  #appScreen .c-input,
+  #loginScreen .form-ctrl{
+    border-width:2px!important;
+    border-color:#7b8493!important;
+  }
+  #appScreen .badge,
+  #appScreen .sla-badge,
+  #appScreen .role-tag,
+  #appScreen .ticket-filter-pill,
+  #appScreen .ftab{
+    border-width:1.5px!important;
+  }
+  #appScreen .t-sub,
+  #appScreen .time-cell,
+  #appScreen .setting-desc,
+  #appScreen .hotel-sub,
+  #appScreen .user-email,
+  #appScreen .notif-time,
+  #appScreen .kpi-sub{
+    color:#667085!important;
+  }
+  body.dark-mode #appScreen .t-sub,
+  body.dark-mode #appScreen .time-cell,
+  body.dark-mode #appScreen .setting-desc,
+  body.dark-mode #appScreen .hotel-sub,
+  body.dark-mode #appScreen .user-email,
+  body.dark-mode #appScreen .notif-time,
+  body.dark-mode #appScreen .kpi-sub{
+    color:#b8c1cc!important;
+  }
+}
+
+/* Windows forced-colors / high-contrast mode */
+@media (forced-colors:active){
+  *{
+    forced-color-adjust:auto;
+  }
+  #appScreen .nav-item.active,
+  #appScreen .btn-gold,
+  #appScreen .btn-primary,
+  #loginScreen .btn-primary{
+    border:2px solid ButtonText!important;
+  }
+  #appScreen .badge,
+  #appScreen .sla-badge,
+  #appScreen .role-tag{
+    border:1px solid CanvasText!important;
+  }
+  #appScreen .status-donut,
+  #appScreen .bar-fill,
+  #appScreen .rate-fill{
+    forced-color-adjust:none;
+  }
+}
+
+/* Browser zoom / narrow desktop safety */
+@media(max-width:900px){
+  #appScreen .content,
+  #appScreen #mainContent{
+    min-width:0!important;
+  }
+  #appScreen .card,
+  #appScreen .report-section,
+  #appScreen .settings-section,
+  #appScreen .detail-reference-card{
+    max-width:100%!important;
+  }
+}
