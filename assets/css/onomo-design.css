@@ -229,3 +229,63 @@ hr,.divider{border-color:#e9ebef!important}
 .back-row .btn,.back-row a{font-weight:650!important}
 @media(max-width:899px){.stats-grid,.kpi-grid{gap:14px!important}.stat-card,.kpi-card{padding:17px!important}}
 @media(max-width:620px){.stat-card .stat-val,.kpi-card .kpi-val{font-size:25px!important}.detail-header{padding-bottom:15px}.detail-num{margin-bottom:2px}.detail-main,.detail-sidebar{gap:14px}}
+
+
+/* ONOMO visual refresh v2.3 — final surface polish. */
+.login-card{padding:30px!important;background:rgba(255,255,255,.985)!important}
+.login-card h1,.login-card h2{letter-spacing:-.035em!important;color:var(--primary)!important}
+.login-card p{color:#737d8e!important;line-height:1.55!important}
+.login-card .field-ctrl{min-height:46px!important}
+.login-card .btn-primary{min-height:46px!important;font-weight:750!important}
+.modal{overflow:hidden!important;background:#fff!important}
+.modal-hdr{background:linear-gradient(180deg,#fff,#fdfdfd)!important}
+.modal-title{letter-spacing:-.025em!important;color:var(--primary)!important}
+.modal-body{background:#fff}
+.modal-foot{background:#fafbfc!important;border-top:1px solid #edf0f3!important}
+.overlay{background:rgba(10,17,30,.48)!important}
+.notif-panel{overflow:hidden!important;background:#fff!important}
+.notif-panel::before{content:"";display:block;height:3px;background:linear-gradient(90deg,var(--accent),#e2bd68)}
+.notif-item{transition:background .16s ease!important}
+.notif-item:hover{background:#faf9f6!important}
+.toast{min-height:46px!important;padding:12px 15px!important;background:rgba(18,27,43,.96)!important}
+.empty-state{border-radius:14px}
+.empty-state p{max-width:430px;margin-left:auto!important;margin-right:auto!important;line-height:1.6!important}
+.skeleton-hero,.skeleton-panel,.skeleton-kpis span{border-color:#e9ebef!important}
+.skeleton-line,.skeleton-row,.skeleton-kpis span{background:linear-gradient(90deg,#edf0f4 22%,#fafbfc 40%,#edf0f4 62%);background-size:400% 100%}
+input::placeholder,textarea::placeholder{color:#a1a9b6!important}
+button:disabled,.btn:disabled{opacity:.5!important;cursor:not-allowed!important;transform:none!important;box-shadow:none!important}
+::selection{background:rgba(201,151,42,.22);color:var(--primary)}
+@media(max-width:899px){.modal{max-height:92vh!important}.login-card{padding:25px!important}}
+@media(max-width:620px){.login-card{padding:22px!important;border-radius:17px!important}.modal{width:calc(100% - 20px)!important;border-radius:16px!important}.modal-hdr,.modal-body,.modal-foot{padding-left:17px!important;padding-right:17px!important}.notif-panel{max-width:calc(100vw - 20px)!important}.toast{left:12px!important;right:12px!important;bottom:12px!important;width:auto!important}}
+
+
+/* ONOMO visual refresh v2.4 — approved visual direction. */
+:root{--onomo-gold:#c4932d;--onomo-gold-dark:#a97817;--onomo-ink:#141c27;--onomo-sidebar:#151d27;--onomo-paper:#ffffff;--onomo-canvas:#f4f6f8}
+body{background:var(--onomo-canvas)!important;color:#263244}
+.sidebar{background:linear-gradient(180deg,#18212c 0%,#111922 100%)!important;box-shadow:10px 0 32px rgba(8,15,25,.08)}
+.sb-brand{min-height:74px!important}
+.sb-brand img{filter:brightness(0) invert(1)}
+.nav-section-label{color:#7f8a99!important;font-size:9px!important;letter-spacing:.1em!important}
+.nav-item{margin:2px 8px!important;border-radius:8px!important}
+.nav-item:hover{background:rgba(255,255,255,.055)!important}
+.nav-item.active{background:linear-gradient(90deg,#b98623,#d1a548)!important;color:#fff!important;box-shadow:0 6px 16px rgba(177,129,31,.22)}
+.nav-item.active i{color:#fff!important}
+.topbar{background:rgba(255,255,255,.94)!important;backdrop-filter:blur(14px)}
+.content{padding-top:22px!important}
+.dashboard-hero{background:linear-gradient(118deg,#182330,#263747)!important;border:1px solid rgba(255,255,255,.06)!important;box-shadow:0 14px 34px rgba(15,26,39,.12)!important}
+.dashboard-hero::after{content:"";position:absolute;right:5%;top:-80%;width:330px;height:330px;border:52px solid rgba(196,147,45,.1);border-radius:50%;pointer-events:none}
+.dashboard-hero .btn-primary{background:linear-gradient(135deg,#d0a142,#b77f17)!important;color:#fff!important}
+.stat-card,.kpi-card{border-radius:13px!important;box-shadow:0 3px 14px rgba(16,24,40,.045)!important}
+.stat-card:hover,.kpi-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(16,24,40,.075)!important}
+.card,.report-section{border-radius:14px!important;box-shadow:0 2px 12px rgba(16,24,40,.035)}
+.btn-primary{background:linear-gradient(135deg,#c99936,#af7916)!important;border-color:#af7916!important;color:#fff!important;box-shadow:0 5px 13px rgba(174,121,22,.18)}
+.btn-primary:hover{box-shadow:0 8px 18px rgba(174,121,22,.25)!important}
+.ticket-table thead th{background:#f8f9fb!important}
+.ticket-table tbody tr:hover{background:#fffdf8!important}
+.ticket-table .t-num{color:#2474d8!important;font-weight:700!important}
+.badge{border-radius:999px!important}
+.field-ctrl:focus{border-color:#c9a04b!important;box-shadow:0 0 0 3px rgba(196,147,45,.12)!important}
+.login-card .btn-primary{background:linear-gradient(135deg,#202b38,#111a24)!important;border-color:#111a24!important}
+.modal-foot .btn-primary{background:linear-gradient(135deg,#c99936,#af7916)!important}
+.pagination button.active,.pagination .active{background:#bd8a24!important;color:#fff!important;border-color:#bd8a24!important}
+@media(max-width:899px){.content{padding-top:16px!important}.dashboard-hero::after{right:-100px}}
