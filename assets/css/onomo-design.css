@@ -2238,3 +2238,208 @@ body.dark-mode #appScreen .report-section>.ticket-table tr{
   background:#1d2732!important;
   border-color:#2a3542!important;
 }
+
+
+/* ROLES + SETTINGS RESPONSIVE PASS — visual only */
+#appScreen .user-list .user-row .user-email{
+  line-height:1.55!important;
+  overflow-wrap:anywhere!important;
+}
+#appScreen .user-list .user-row .role-tag{
+  flex:0 0 auto!important;
+}
+
+/* Settings: consistent controls and readable technical content. */
+#appScreen .settings-section{
+  overflow:hidden!important;
+}
+#appScreen .settings-section .form-row{
+  align-items:start!important;
+}
+#appScreen .settings-section .field-ctrl{
+  width:100%!important;
+  max-width:100%!important;
+}
+#appScreen .settings-section .color-row{
+  gap:9px!important;
+}
+#appScreen .settings-section .color-swatch{
+  box-shadow:0 0 0 1px rgba(16,24,40,.06)!important;
+}
+#appScreen .settings-section .color-swatch.selected{
+  box-shadow:0 0 0 2px #fff,0 0 0 4px #c9972a!important;
+  transform:none!important;
+}
+#appScreen .settings-section .setting-row{
+  gap:16px!important;
+}
+#appScreen .settings-section .setting-info{
+  min-width:0!important;
+  flex:1!important;
+}
+#appScreen .settings-section .setting-lbl{
+  line-height:1.4!important;
+}
+#appScreen .settings-section .setting-desc{
+  line-height:1.5!important;
+}
+#appScreen .settings-section .code-box{
+  max-width:100%!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+  overflow-x:auto!important;
+  background:#17212b!important;
+  border-color:#26333f!important;
+  color:#cbd5df!important;
+}
+#appScreen .settings-section input[type="color"]{
+  flex:0 0 auto!important;
+}
+#appScreen .settings-section input[type="file"]+*{
+  min-width:0!important;
+}
+
+/* Make role/permission rows feel like administrative cards on all compact layouts. */
+@media(max-width:900px){
+  #appScreen .user-list{
+    display:grid!important;
+    gap:8px!important;
+    padding:10px!important;
+  }
+  #appScreen .user-list .user-row{
+    margin:0!important;
+    border:1px solid #e4e7ec!important;
+    border-radius:10px!important;
+    background:#fff!important;
+  }
+  #appScreen .user-list .user-row .user-info{
+    min-width:0!important;
+  }
+  #appScreen .user-list .user-row .user-name{
+    font-size:10px!important;
+    margin-bottom:4px!important;
+  }
+  #appScreen .user-list .user-row .user-email{
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important;
+    font-size:8px!important;
+    color:#667085!important;
+    line-height:1.65!important;
+  }
+}
+
+@media(max-width:720px){
+  /* Roles screen header */
+  #appScreen .user-list{
+    padding:8px!important;
+  }
+  #appScreen .user-list .user-row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:10px!important;
+    padding:12px!important;
+  }
+  #appScreen .user-list .user-row .user-info{
+    grid-column:1!important;
+    grid-row:1!important;
+  }
+  #appScreen .user-list .user-row>.role-tag,
+  #appScreen .user-list .user-row>.btn{
+    grid-column:2!important;
+    grid-row:1!important;
+    align-self:start!important;
+  }
+  #appScreen .user-list .user-row>.btn{
+    width:32px!important;
+    height:32px!important;
+    min-width:32px!important;
+    padding:0!important;
+  }
+
+  /* Settings uses full available phone width but keeps comfortable spacing. */
+  #appScreen .settings-section{
+    margin-bottom:10px!important;
+    padding:13px!important;
+    border-radius:11px!important;
+  }
+  #appScreen .settings-title{
+    margin-bottom:13px!important;
+    font-size:10px!important;
+    line-height:1.4!important;
+  }
+  #appScreen .settings-title i{
+    font-size:14px!important;
+  }
+  #appScreen .settings-section .form-row{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:0!important;
+  }
+  #appScreen .settings-section .form-g{
+    width:100%!important;
+    min-width:0!important;
+  }
+  #appScreen .settings-section .field-ctrl{
+    height:40px!important;
+    min-height:40px!important;
+    font-size:11px!important;
+  }
+  #appScreen .settings-section .setting-row{
+    align-items:flex-start!important;
+    padding:11px 0!important;
+  }
+  #appScreen .settings-section .toggle{
+    margin-top:1px!important;
+  }
+  #appScreen .settings-section .color-row{
+    display:grid!important;
+    grid-template-columns:repeat(6,28px)!important;
+    gap:10px!important;
+    align-items:center!important;
+  }
+  #appScreen .settings-section .color-swatch{
+    width:28px!important;
+    height:28px!important;
+  }
+  #appScreen .settings-section [style*="display:flex"][style*="gap:8px"]{
+    width:100%!important;
+    max-width:100%!important;
+    flex-wrap:wrap!important;
+  }
+  #appScreen .settings-section label.btn{
+    max-width:100%!important;
+  }
+  #appScreen .settings-section .code-box{
+    margin-left:-2px!important;
+    margin-right:-2px!important;
+    padding:11px!important;
+    font-size:8px!important;
+    line-height:1.65!important;
+    border-radius:8px!important;
+  }
+  #appScreen .settings-section>.btn{
+    width:100%!important;
+    justify-content:center!important;
+  }
+
+  /* Protect final settings controls from mobile bottom navigation. */
+  #appScreen #mainContent{
+    padding-bottom:12px!important;
+  }
+}
+
+@media(max-width:390px){
+  #appScreen .settings-section .color-row{
+    grid-template-columns:repeat(5,28px)!important;
+  }
+}
+
+body.dark-mode #appScreen .user-list .user-row{
+  background:#171f28!important;
+  border-color:#2a3542!important;
+}
+body.dark-mode #appScreen .user-list .user-row .user-email{
+  color:#8792a1!important;
+}
+body.dark-mode #appScreen .settings-section .color-swatch.selected{
+  box-shadow:0 0 0 2px #171f28,0 0 0 4px #c9972a!important;
+}
