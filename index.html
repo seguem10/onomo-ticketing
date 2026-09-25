@@ -1307,9 +1307,10 @@ function formatAppDate(value,options){
   const date=value instanceof Date?value:new Date(value);
   return Number.isNaN(date.getTime())?'':new Intl.DateTimeFormat(appLocale(),options).format(date);
 }
-function appText(key,fallback){
+function appText(key,fallback,values={}){
   const translated=window.OnomoI18n?.t(key);
-  return translated&&translated!==key?translated:fallback;
+  const text=translated&&translated!==key?translated:fallback;
+  return String(text).replace(/\{(\w+)\}/g,(_match,name)=>values[name]??`{${name}}`);
 }
 function localizedStatus(value){
   const keys={nouveau:'new',en_cours:'in_progress',en_attente:'pending',résolu:'resolved',fermé:'closed'};
@@ -1734,6 +1735,7 @@ function renderView(){
    DASHBOARD
 ══════════════════════════════════════════════ */
 function renderDashboard(){
+  const tr=(key,fallback,values={})=>appText(key,fallback,values);
   const vt=visibleTickets();
   const open=vt.filter(t=>t.statut==="nouveau").length;
   const inProgress=vt.filter(t=>t.statut==="en_cours").length;
@@ -1741,47 +1743,52 @@ function renderDashboard(){
   const resolved=vt.filter(t=>t.statut==="résolu"||t.statut==="fermé").length;
   const urg=getUrgents().length;
   const total=vt.length;
-  const hotelLabel=currentUser?.hotel||currentUser?.hotel_nom||"Tous les hôtels";
+  const allHotels=tr("all_hotels","Tous les hôtels");
+  const hotelLabel=currentUser?.hotel||currentUser?.hotel_nom||allHotels;
+  const userName=esc(currentUser?.prenom||currentUser?.nom||"")||"!";
+  const overview=hotelLabel&&hotelLabel!==allHotels
+    ?tr("dashboard_overview_hotel","Voici un aperçu de la situation des tickets pour {hotel}.",{hotel:esc(hotelLabel)})
+    :tr("dashboard_overview","Voici un aperçu de la situation des tickets.");
   const recent=getFiltered().slice(0,6);
   const maxStatus=Math.max(open,inProgress,waiting,resolved,1);
   const statusRows=[
-    ["Nouveau",open,"#3b82f6"],
-    ["En cours",inProgress,"#f59e0b"],
-    ["En attente",waiting,"#eab308"],
-    ["Résolu",resolved,"#10b981"]
+    [tr("status_new","Nouveau"),open,"#3b82f6"],
+    [tr("status_in_progress","En cours"),inProgress,"#f59e0b"],
+    [tr("status_pending","En attente"),waiting,"#eab308"],
+    [tr("status_resolved","Résolu"),resolved,"#10b981"]
   ];
   let html=`<div class="dash-welcome">
-    <div><h1>Bonjour ${esc(currentUser?.prenom||currentUser?.nom||"") || "!"} <span>👋</span></h1><p>Voici un aperçu de la situation des tickets${hotelLabel&&hotelLabel!=="Tous les hôtels"?" pour "+esc(hotelLabel):""}.</p></div>
-    <div class="dash-context"><span class="dash-chip"><i class="ti ti-building"></i>${esc(hotelLabel)}</span><span class="dash-chip"><i class="ti ti-calendar"></i>Aujourd'hui</span></div>
+    <div><h1>${tr("dashboard_greeting","Bonjour {name}",{name:userName})} <span>👋</span></h1><p>${overview}</p></div>
+    <div class="dash-context"><span class="dash-chip"><i class="ti ti-building"></i>${esc(hotelLabel)}</span><span class="dash-chip"><i class="ti ti-calendar"></i>${tr("today","Aujourd'hui")}</span></div>
   </div>
   <div class="stats-grid stats-grid-six">
-    <div class="stat-card s-open"><div class="stat-icon"><i class="ti ti-ticket"></i></div><div class="stat-lbl">Tickets ouverts</div><div class="stat-val">${open}</div><div class="stat-d">Nouveaux tickets</div></div>
-    <div class="stat-card s-progress"><div class="stat-icon"><i class="ti ti-loader-2"></i></div><div class="stat-lbl">En cours</div><div class="stat-val">${inProgress}</div><div class="stat-d">Traitement actif</div></div>
-    <div class="stat-card s-wait"><div class="stat-icon"><i class="ti ti-clock-hour-4"></i></div><div class="stat-lbl">En attente</div><div class="stat-val">${waiting}</div><div class="stat-d">En attente d'action</div></div>
-    <div class="stat-card s-urgent"><div class="stat-icon"><i class="ti ti-alert-triangle"></i></div><div class="stat-lbl">Critiques</div><div class="stat-val">${urg}</div><div class="stat-d">${urg?"Attention requise":"Aucun critique"}</div></div>
-    <div class="stat-card s-resolved"><div class="stat-icon"><i class="ti ti-circle-check"></i></div><div class="stat-lbl">Résolus</div><div class="stat-val">${resolved}</div><div class="stat-d">Tickets clôturés</div></div>
-    <div class="stat-card s-total"><div class="stat-icon"><i class="ti ti-chart-dots-3"></i></div><div class="stat-lbl">Total tickets</div><div class="stat-val">${total}</div><div class="stat-d">Périmètre visible</div></div>
+    <div class="stat-card s-open"><div class="stat-icon"><i class="ti ti-ticket"></i></div><div class="stat-lbl">${tr("tickets_open","Tickets ouverts")}</div><div class="stat-val">${open}</div><div class="stat-d">${tr("new_tickets","Nouveaux tickets")}</div></div>
+    <div class="stat-card s-progress"><div class="stat-icon"><i class="ti ti-loader-2"></i></div><div class="stat-lbl">${tr("status_in_progress","En cours")}</div><div class="stat-val">${inProgress}</div><div class="stat-d">${tr("processing_active","Traitement actif")}</div></div>
+    <div class="stat-card s-wait"><div class="stat-icon"><i class="ti ti-clock-hour-4"></i></div><div class="stat-lbl">${tr("status_pending","En attente")}</div><div class="stat-val">${waiting}</div><div class="stat-d">${tr("waiting_action","En attente d'action")}</div></div>
+    <div class="stat-card s-urgent"><div class="stat-icon"><i class="ti ti-alert-triangle"></i></div><div class="stat-lbl">${tr("critical_tickets","Critiques")}</div><div class="stat-val">${urg}</div><div class="stat-d">${urg?tr("attention_required","Attention requise"):tr("no_critical","Aucun critique")}</div></div>
+    <div class="stat-card s-resolved"><div class="stat-icon"><i class="ti ti-circle-check"></i></div><div class="stat-lbl">${tr("status_resolved","Résolus")}</div><div class="stat-val">${resolved}</div><div class="stat-d">${tr("closed_tickets","Tickets clôturés")}</div></div>
+    <div class="stat-card s-total"><div class="stat-icon"><i class="ti ti-chart-dots-3"></i></div><div class="stat-lbl">${tr("total_tickets","Total tickets")}</div><div class="stat-val">${total}</div><div class="stat-d">${tr("visible_scope","Périmètre visible")}</div></div>
   </div>
   <div class="dash-analytics">
     <div class="card dash-trend">
-      <div class="card-hdr"><div class="card-title">Évolution des tickets</div><span class="dash-period">30 derniers jours <i class="ti ti-chevron-down"></i></span></div>
-      <div class="trend-chart" aria-label="Évolution visuelle des tickets">
+      <div class="card-hdr"><div class="card-title">${tr("ticket_trend","Évolution des tickets")}</div><span class="dash-period">${tr("last_30_days","30 derniers jours")} <i class="ti ti-chevron-down"></i></span></div>
+      <div class="trend-chart" aria-label="${esc(tr("ticket_trend_aria","Évolution visuelle des tickets"))}">
         <div class="trend-grid"></div>
         <svg viewBox="0 0 560 180" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,145 45,130 90,135 135,105 180,120 225,82 270,98 315,72 360,82 405,52 450,59 505,34 560,22" fill="none" stroke="#2f80ed" stroke-width="3"/><polyline points="0,160 45,154 90,148 135,150 180,132 225,140 270,118 315,126 360,104 405,115 450,92 505,84 560,67" fill="none" stroke="#27ae60" stroke-width="3"/></svg>
-        <div class="trend-legend"><span><i style="background:#2f80ed"></i>Créés</span><span><i style="background:#27ae60"></i>Résolus</span></div>
+        <div class="trend-legend"><span><i style="background:#2f80ed"></i>${tr("tickets_created","Créés")}</span><span><i style="background:#27ae60"></i>${tr("status_resolved","Résolus")}</span></div>
       </div>
     </div>
     <div class="card dash-status">
-      <div class="card-hdr"><div class="card-title">Tickets par statut</div></div>
-      <div class="status-summary"><div class="status-donut" style="--p:${total?Math.round(resolved/total*100):0}%"><div><strong>${total}</strong><span>Tickets</span></div></div><div class="status-legend">${statusRows.map(r=>`<div><span><i style="background:${r[2]}"></i>${r[0]}</span><strong>${r[1]}</strong></div>`).join("")}</div></div>
+      <div class="card-hdr"><div class="card-title">${tr("tickets_by_status","Tickets par statut")}</div></div>
+      <div class="status-summary"><div class="status-donut" style="--p:${total?Math.round(resolved/total*100):0}%"><div><strong>${total}</strong><span>${tr("tickets_label","Tickets")}</span></div></div><div class="status-legend">${statusRows.map(r=>`<div><span><i style="background:${r[2]}"></i>${r[0]}</span><strong>${r[1]}</strong></div>`).join("")}</div></div>
     </div>
     <div class="card dash-activity">
-      <div class="card-hdr"><div class="card-title">Activité récente</div><span class="dash-link">Voir tout</span></div>
-      <div class="dash-activity-list">${recent.length?recent.slice(0,4).map(t=>`<div class="dash-act-item"><span class="dash-act-icon"><i class="ti ti-ticket"></i></span><div><strong>${esc(t.titre)}</strong><small>${esc(t.numero)} · ${timeAgo(t.created_at)}</small></div></div>`).join(""):`<div class="empty-state compact"><i class="ti ti-activity"></i><p>Aucune activité récente</p></div>`}</div>
+      <div class="card-hdr"><div class="card-title">${tr("recent_activity","Activité récente")}</div><span class="dash-link">${tr("see_all","Voir tout")}</span></div>
+      <div class="dash-activity-list">${recent.length?recent.slice(0,4).map(t=>`<div class="dash-act-item"><span class="dash-act-icon"><i class="ti ti-ticket"></i></span><div><strong>${esc(t.titre)}</strong><small>${esc(t.numero)} · ${timeAgo(t.created_at)}</small></div></div>`).join(""):`<div class="empty-state compact"><i class="ti ti-activity"></i><p>${tr("no_recent_activity","Aucune activité récente")}</p></div>`}</div>
     </div>
   </div>
   <div class="card dash-recent">
-    <div class="card-hdr"><div class="card-title">Tickets récents</div><div class="filter-tabs">${["tous","nouveau","en_cours","en_attente","résolu"].map(s=>`<div class="ftab${filterStat===s?" active":""}" onclick="setFilter('${s}')">${s==="tous"?"Tous":STAT_L[s]}</div>`).join("")}</div></div>
+    <div class="card-hdr"><div class="card-title">${tr("recent_tickets","Tickets récents")}</div><div class="filter-tabs">${["tous","nouveau","en_cours","en_attente","résolu"].map(s=>`<div class="ftab${filterStat===s?" active":""}" onclick="setFilter('${s}')">${s==="tous"?tr("all","Tous"):localizedStatus(s)}</div>`).join("")}</div></div>
     <div style="overflow-x:auto">${ticketTableHTML(recent)}</div>
   </div>`;
   document.getElementById("mainContent").innerHTML=html;
@@ -4429,7 +4436,7 @@ document.addEventListener('keydown', e => {
  </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/locales-data.js"></script>
-<script src="assets/js/i18n.js?v=20260925-5"></script>
+<script src="assets/js/i18n.js?v=20260925-6"></script>
 <script src="assets/js/modern-features.js?v=20260925-4"></script>
 <script src="assets/js/runtime-sync.js?v=20260924-3"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
