@@ -730,24 +730,34 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 <!-- NEW TICKET -->
 <div class="overlay" id="modalTicket">
   <div class="modal">
-    <div class="modal-hdr"><div class="modal-title"><i class="ti ti-ticket" style="margin-right:6px;color:var(--tx3)"></i>Nouveau ticket</div><button class="modal-close" onclick="closeModal('modalTicket')"><i class="ti ti-x"></i></button></div>
-    <div class="form-g"><label class="field-lbl">Sujet *</label><input id="ntTitre" class="field-ctrl" placeholder="Ex : WiFi salle de conférence hors service" oninput="onTitreInput(this.value)"></div>
-    <div class="form-g"><label class="field-lbl">Description</label><textarea id="ntDesc" class="field-ctrl" rows="3" placeholder="Contexte, numéro de chambre, gravité observée…"></textarea></div>
-    <div class="form-g"><label id="attachmentFieldLabel" class="field-lbl">Pièces jointes <span id="attachmentFieldHelp" style="font-weight:400;color:var(--tx3)">(PDF, image, TXT, DOCX ou XLSX — 10 Mo maximum par fichier)</span></label><input id="ntAttachments" class="field-ctrl" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.docx,.xlsx" onchange="window.queueTicketAttachments?.(this.files)"><div id="ntAttachmentStatus" style="font-size:11px;color:var(--tx3);margin-top:6px" aria-live="polite"></div></div>
-    <div id="aiBtnWrap" style="margin-bottom:12px;display:none"><button class="btn btn-outline btn-sm" onclick="runAI()" id="aiBtnEl"><i class="ti ti-brain"></i>Analyser avec l'IA</button></div>
-    <div id="aiBox" class="ai-panel" style="display:none">
-      <div class="ai-hdr"><i class="ti ti-sparkles"></i><span>Suggestion IA</span></div>
-      <div class="ai-summary" id="aiSummary"></div>
-      <div class="ai-chips" id="aiChips"></div>
-      <div class="ai-note">Champs pré-remplis automatiquement — vous pouvez modifier.</div>
-    </div>
-    <div class="form-row">
+    <div class="modal-hdr"><div class="modal-title">Nouveau ticket</div><button class="modal-close" onclick="closeModal('modalTicket')" aria-label="Fermer"><i class="ti ti-x"></i></button></div>
+    <div class="ticket-form-body">
+      <div class="form-g"><label class="field-lbl">Sujet *</label><input id="ntTitre" class="field-ctrl" placeholder="Résumé du problème..." oninput="onTitreInput(this.value)"></div>
+      <div class="form-g"><label class="field-lbl">Description *</label><textarea id="ntDesc" class="field-ctrl" rows="5" placeholder="Décrivez le problème en détail..."></textarea></div>
+      <div id="aiBtnWrap" style="margin-bottom:12px;display:none"><button class="btn btn-outline btn-sm" onclick="runAI()" id="aiBtnEl"><i class="ti ti-brain"></i>Analyser avec l'IA</button></div>
+      <div id="aiBox" class="ai-panel" style="display:none">
+        <div class="ai-hdr"><i class="ti ti-sparkles"></i><span>Suggestion IA</span></div>
+        <div class="ai-summary" id="aiSummary"></div>
+        <div class="ai-chips" id="aiChips"></div>
+        <div class="ai-note">Champs pré-remplis automatiquement — vous pouvez modifier.</div>
+      </div>
+      <div class="form-row">
+        <div class="form-g"><label class="field-lbl">Catégorie *</label><select id="ntCat" class="field-ctrl"></select></div>
+        <div class="form-g"><label class="field-lbl">Priorité *</label><select id="ntPrio" class="field-ctrl"></select></div>
+      </div>
       <div class="form-g"><label class="field-lbl">Hôtel *</label><select id="ntHotel" class="field-ctrl"></select></div>
-      <div class="form-g"><label class="field-lbl">Catégorie</label><select id="ntCat" class="field-ctrl"></select></div>
-    </div>
-    <div class="form-row">
-      <div class="form-g"><label class="field-lbl">Priorité</label><select id="ntPrio" class="field-ctrl"></select></div>
-      <div class="form-g"><label class="field-lbl">Assigner à</label><select id="ntAgent" class="field-ctrl"><option value="">— Non assigné —</option></select></div>
+      <div class="form-g"><label class="field-lbl">Assigné à</label><select id="ntAgent" class="field-ctrl"><option value="">— Non assigné —</option></select></div>
+      <div class="form-g attachment-field">
+        <label id="attachmentFieldLabel" class="field-lbl">Pièces jointes</label>
+        <label class="attachment-dropzone" for="ntAttachments">
+          <input id="ntAttachments" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.docx,.xlsx" onchange="window.queueTicketAttachments?.(this.files)">
+          <i class="ti ti-cloud-upload"></i>
+          <strong>Glissez vos fichiers ici</strong>
+          <span>ou cliquez pour parcourir</span>
+        </label>
+        <div id="attachmentFieldHelp" class="attachment-help">Formats acceptés : JPG, PNG, PDF, TXT, DOCX, XLSX — 10 Mo maximum par fichier</div>
+        <div id="ntAttachmentStatus" class="attachment-status" aria-live="polite"></div>
+      </div>
     </div>
     <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal('modalTicket')">Annuler</button><button class="btn btn-gold" onclick="submitNewTicket()"><i class="ti ti-check"></i>Créer le ticket</button></div>
   </div>
