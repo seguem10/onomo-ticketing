@@ -3487,3 +3487,267 @@ body.dark-mode #appScreen .topbar{
 body.dark-mode #appScreen .topbar-title{
   color:#f2f4f7!important;
 }
+
+
+/* SYSTEM STATES + PASSWORD RECOVERY — final visual pass */
+#passwordRecoveryModal.overlay.open{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:18px!important;
+  overflow-y:auto!important;
+  background:rgba(15,23,32,.46)!important;
+  backdrop-filter:blur(4px)!important;
+}
+#passwordRecoveryModal .modal{
+  width:min(430px,100%)!important;
+  max-width:430px!important;
+  margin:auto!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:1px solid #e4e7ec!important;
+  border-radius:13px!important;
+  background:#fff!important;
+  box-shadow:0 24px 64px rgba(16,24,40,.22)!important;
+}
+#passwordRecoveryModal .modal-hdr{
+  margin:0!important;
+  padding:15px 17px!important;
+  background:#fbfbfc!important;
+  border-bottom:1px solid #edf0f3!important;
+}
+#passwordRecoveryModal .modal-title{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  color:#344054!important;
+  font-size:11px!important;
+  font-weight:700!important;
+}
+#passwordRecoveryModal .modal-title i{
+  width:28px!important;
+  height:28px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:8px!important;
+  background:#f7f1e2!important;
+  color:#9a6b12!important;
+  font-size:14px!important;
+}
+#passwordRecoveryModal .modal-body{
+  padding:16px 17px 4px!important;
+}
+#passwordRecoveryModal .form-g{
+  margin-bottom:13px!important;
+}
+#passwordRecoveryModal .field-lbl{
+  margin-bottom:6px!important;
+  color:#667085!important;
+  font-size:9px!important;
+  font-weight:650!important;
+}
+#passwordRecoveryModal .field-ctrl{
+  width:100%!important;
+  height:42px!important;
+  border:1px solid #d0d5dd!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#18212b!important;
+  font-size:11px!important;
+}
+#passwordRecoveryModal .field-ctrl:focus{
+  border-color:#c9972a!important;
+  box-shadow:0 0 0 3px rgba(201,151,42,.10)!important;
+}
+#passwordRecoveryModal .modal-foot{
+  margin:0!important;
+  padding:12px 17px 16px!important;
+  background:#fff!important;
+  border-top:0!important;
+}
+#passwordRecoveryModal .modal-foot .btn{
+  width:100%!important;
+  min-height:41px!important;
+  justify-content:center!important;
+  border-radius:8px!important;
+  background:#18232e!important;
+  color:#fff!important;
+  border-color:#18232e!important;
+}
+
+/* Login/session error: long messages must remain readable. */
+#loginScreen .login-err{
+  align-items:flex-start!important;
+  gap:8px!important;
+  padding:9px 10px!important;
+  border:1px solid #fecdca!important;
+  border-radius:8px!important;
+  background:#fff5f4!important;
+  color:#912018!important;
+  font-size:9px!important;
+  line-height:1.5!important;
+}
+#loginScreen .login-err i{
+  flex:0 0 auto!important;
+  margin-top:1px!important;
+  color:#b42318!important;
+  font-size:14px!important;
+}
+#loginScreen .login-err span{
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+}
+
+/* Global toasts: network/session messages can be long. */
+.toast{
+  width:auto!important;
+  max-width:min(420px,calc(100vw - 32px))!important;
+  min-width:220px!important;
+  align-items:flex-start!important;
+  gap:9px!important;
+  line-height:1.45!important;
+  white-space:normal!important;
+}
+.toast #toastMsg,
+.toast span{
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+}
+.toast i{
+  flex:0 0 auto!important;
+  margin-top:1px!important;
+}
+.toast.ok{
+  background:#18232e!important;
+  border-left:3px solid #34d399!important;
+}
+.toast.err{
+  background:#2a1e20!important;
+  border-left:3px solid #f87171!important;
+}
+
+/* Loading and skeleton states */
+#appScreen .loading-state{
+  min-height:230px!important;
+  padding:34px 18px!important;
+  flex-direction:column!important;
+  gap:10px!important;
+  text-align:center!important;
+  color:#98a2b3!important;
+  font-size:9px!important;
+}
+#appScreen .loading-state .spin,
+#appScreen .loading-state i{
+  font-size:20px!important;
+  color:#9a6b12!important;
+}
+#appScreen .skeleton-page{
+  gap:12px!important;
+}
+#appScreen .skeleton-hero,
+#appScreen .skeleton-panel{
+  border:1px solid #e7e9ed!important;
+  border-radius:11px!important;
+  box-shadow:0 1px 3px rgba(16,24,40,.03)!important;
+}
+#appScreen .skeleton-loading{
+  margin-top:2px!important;
+  color:#98a2b3!important;
+  font-size:9px!important;
+}
+
+/* Generic success/confirmation blocks */
+#appScreen .success-wrap{
+  min-height:280px!important;
+  justify-content:center!important;
+  gap:10px!important;
+  padding:38px 20px!important;
+}
+#appScreen .success-wrap>i{
+  width:48px!important;
+  height:48px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:13px!important;
+  background:#ecfdf3!important;
+  color:#067647!important;
+  font-size:23px!important;
+}
+#appScreen .success-wrap h2,
+#appScreen .success-wrap h3{
+  color:#344054!important;
+  font-size:17px!important;
+}
+#appScreen .success-wrap p{
+  max-width:460px!important;
+  color:#667085!important;
+  font-size:10px!important;
+  line-height:1.6!important;
+}
+
+/* Dark mode */
+body.dark-mode #passwordRecoveryModal .modal,
+body.dark-mode #passwordRecoveryModal .modal-foot{
+  background:#171f28!important;
+  border-color:#2a3542!important;
+}
+body.dark-mode #passwordRecoveryModal .modal-hdr{
+  background:#1d2732!important;
+  border-color:#2a3542!important;
+}
+body.dark-mode #passwordRecoveryModal .modal-title{
+  color:#f2f4f7!important;
+}
+body.dark-mode #passwordRecoveryModal .field-ctrl{
+  background:#1d2732!important;
+  border-color:#394654!important;
+  color:#f2f4f7!important;
+}
+body.dark-mode #appScreen .skeleton-hero,
+body.dark-mode #appScreen .skeleton-panel{
+  background:#171f28!important;
+  border-color:#2a3542!important;
+}
+body.dark-mode #appScreen .success-wrap h2,
+body.dark-mode #appScreen .success-wrap h3{
+  color:#f2f4f7!important;
+}
+
+/* Mobile */
+@media(max-width:620px){
+  #passwordRecoveryModal.overlay.open{
+    padding:0!important;
+    align-items:stretch!important;
+  }
+  #passwordRecoveryModal .modal{
+    width:100%!important;
+    max-width:none!important;
+    min-height:100dvh!important;
+    margin:0!important;
+    border-radius:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+  }
+  #passwordRecoveryModal .modal-hdr{
+    padding-top:max(15px,env(safe-area-inset-top))!important;
+  }
+  #passwordRecoveryModal .modal-foot{
+    padding-bottom:max(16px,env(safe-area-inset-bottom))!important;
+  }
+  .toast{
+    left:10px!important;
+    right:10px!important;
+    bottom:78px!important;
+    max-width:none!important;
+    min-width:0!important;
+  }
+  #appScreen .skeleton-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  #appScreen .skeleton-kpis span{
+    min-height:92px!important;
+    border-radius:10px!important;
+  }
+}
