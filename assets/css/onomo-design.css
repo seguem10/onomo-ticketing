@@ -107,3 +107,125 @@ button,.nav-item,.ftab,.ticket-table tbody tr{transition:background-color .18s e
   .detail-layout{display:block}.detail-sidebar{position:static;margin-top:14px}.detail-title{font-size:19px!important}.detail-header{align-items:flex-start!important}.meta-grid{grid-template-columns:1fr!important}.meta-item,.meta-item:nth-last-child(-n+2){border-right:0;border-bottom:1px solid var(--line)}.meta-item:last-child{border-bottom:0}.detail-main>.card:first-child,.detail-main>.card:nth-child(2),.detail-main>.card:nth-child(3){padding:18px!important}.c-input-wrap{margin:18px -18px -18px!important;padding:13px 18px!important}
 }
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+
+/* ONOMO visual refresh v2 — presentation only. No workflow or data behavior. */
+body{background:
+  radial-gradient(circle at 88% 8%,rgba(201,151,42,.055),transparent 24rem),
+  var(--canvas)}
+.sidebar{border-right:1px solid rgba(255,255,255,.06)}
+.sb-brand::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:1px;background:linear-gradient(90deg,rgba(201,151,42,.7),rgba(255,255,255,.06),transparent)}
+.nav-item i{opacity:.88}.nav-item:hover i,.nav-item.active i{opacity:1}
+.sb-user{padding:8px;border-radius:12px}.sb-user:hover{background:rgba(255,255,255,.055)}
+.topbar{border-bottom:1px solid rgba(16,24,40,.055)!important}
+.search-box{border:1px solid transparent!important;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.search-box:focus-within{background:#fff!important;border-color:#d7dce5!important;box-shadow:0 0 0 3px rgba(23,32,51,.045)}
+.btn-icon:hover{background:#f3f5f8!important;color:var(--primary)!important}
+.content{background:transparent}
+.card,.kpi-card,.report-section{border-color:#e7e9ee!important}
+.card-hdr{background:linear-gradient(180deg,#fff,#fdfdfd)}
+.stat-card{position:relative;overflow:hidden;border-color:#e8eaf0!important;background:linear-gradient(145deg,#fff 0%,#fdfdfd 100%)!important}
+.stat-card::after{content:"";position:absolute;right:-32px;top:-38px;width:105px;height:105px;border:18px solid rgba(201,151,42,.045);border-radius:50%;pointer-events:none}
+.stat-card .stat-icon{box-shadow:inset 0 0 0 1px rgba(16,24,40,.035)}
+.dashboard-hero{isolation:isolate}
+.dashboard-hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent 0 58%,rgba(255,255,255,.035));pointer-events:none}
+.dashboard-hero h1{text-wrap:balance}.dashboard-hero p{line-height:1.6}
+.ticket-table{border-collapse:separate!important;border-spacing:0}
+.ticket-table th{background:#fafbfc!important;color:#7c8595!important}
+.ticket-table tbody tr{position:relative}.ticket-table tbody tr:hover{box-shadow:inset 3px 0 0 var(--accent)}
+.badge{font-weight:700!important;letter-spacing:.01em}
+.field-ctrl{background:#fff!important;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+.field-ctrl:hover{border-color:#bfc6d1!important}
+.modal{border:1px solid rgba(16,24,40,.07)!important}
+.modal-hdr{border-bottom-color:#edf0f3!important}
+.empty-state{background:radial-gradient(circle at 50% 28%,rgba(201,151,42,.055),transparent 9rem)}
+.notif-panel{border:1px solid rgba(16,24,40,.07)!important}
+.detail-main>.card,.detail-sidebar>.card{border-color:#e7e9ee!important}
+.desc-box,.c-text,#ticketHistoryList>div{border:1px solid #edf0f3}
+#loginScreen{position:relative;overflow:hidden}
+#loginScreen::before,#loginScreen::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+#loginScreen::before{width:460px;height:460px;right:-180px;top:-190px;border:54px solid rgba(201,151,42,.075)}
+#loginScreen::after{width:340px;height:340px;left:-190px;bottom:-210px;border:42px solid rgba(255,255,255,.035)}
+.login-card{position:relative;z-index:1;border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 30px 70px rgba(4,10,22,.24)!important}
+.login-logo{position:relative;z-index:1}
+@media (max-width:899px){.topbar{box-shadow:0 1px 8px rgba(16,24,40,.045)}.dashboard-hero-actions{flex-wrap:wrap}}
+@media (max-width:620px){.stat-card{min-height:136px}.dashboard-hero{border-radius:16px}.ticket-table tbody tr:hover{box-shadow:0 4px 12px rgba(16,24,40,.06)}}
+
+
+/* ONOMO visual refresh v2.1 — secondary views and UI consistency. */
+.page-header,.view-header{margin-bottom:22px}
+.page-header h1,.view-header h1{letter-spacing:-.035em;color:var(--primary)}
+.page-header p,.view-header p{color:var(--tx2);line-height:1.55}
+.btn{border-radius:10px!important;font-weight:650!important;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+.btn-outline{background:#fff!important;border-color:#d9dee7!important;color:var(--primary)!important}
+.btn-outline:hover{background:#f8f9fb!important;border-color:#c4cad4!important;box-shadow:0 4px 12px rgba(16,24,40,.055)}
+.filters,.filter-bar,.toolbar{border-radius:14px!important;background:rgba(255,255,255,.86)!important;border:1px solid #e7e9ee!important;box-shadow:0 1px 2px rgba(16,24,40,.025)}
+select.field-ctrl{cursor:pointer}
+label,.field-label{color:#475467!important;font-weight:650!important}
+.card-title{color:var(--primary)!important;font-weight:750!important}
+.card-subtitle,.card-desc{color:var(--tx2)!important;line-height:1.5}
+.avatar,.user-avatar,.profile-avatar{box-shadow:0 0 0 3px #fff,0 0 0 4px #e6e9ef}
+.dropdown,.dropdown-menu,.popover{border:1px solid #e5e8ee!important;border-radius:13px!important;box-shadow:0 16px 38px rgba(16,24,40,.13)!important}
+.dropdown-item{border-radius:8px!important}.dropdown-item:hover{background:#f6f7f9!important}
+.tabs,.tab-list{border-bottom-color:#e6e9ef!important}
+.tab,.tab-btn{font-weight:650!important}.tab.active,.tab-btn.active{color:var(--accent-strong)!important}
+.pagination button{border-radius:8px!important;border-color:#e0e4ea!important;background:#fff!important}
+.pagination button:hover{background:#f7f8fa!important;border-color:#c9ced7!important}
+table{font-variant-numeric:tabular-nums}
+.ticket-table tbody tr:last-child td{border-bottom:0!important}
+.ticket-table td:first-child,.ticket-table th:first-child{padding-left:20px!important}
+.ticket-table td:last-child,.ticket-table th:last-child{padding-right:20px!important}
+.status-dot{box-shadow:0 0 0 3px rgba(16,24,40,.035)}
+.alert{border:1px solid rgba(16,24,40,.06)!important}
+.toast{backdrop-filter:blur(10px)}
+hr,.divider{border-color:#e9ebef!important}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd0d9;border:3px solid transparent;background-clip:padding-box;border-radius:999px}
+::-webkit-scrollbar-thumb:hover{background:#adb5c2;border:3px solid transparent;background-clip:padding-box}
+@media(max-width:620px){.page-header,.view-header{margin-bottom:17px}.filters,.filter-bar,.toolbar{border-radius:12px!important}.card,.report-section,.kpi-card{border-radius:15px!important}}
+
+
+/* ONOMO visual refresh v2.2 — dashboard and ticket focus. */
+.stats-grid,.kpi-grid{gap:18px!important}
+.stat-card,.kpi-card{padding:20px!important}
+.stat-card .stat-val,.kpi-card .kpi-val{font-size:30px!important;font-weight:780!important;line-height:1.05!important;color:var(--primary)!important}
+.stat-card .stat-lbl,.kpi-card .kpi-lbl{margin-top:7px!important;color:#687386!important;font-size:12px!important;font-weight:650!important}
+.stat-card .stat-icon,.kpi-card .kpi-icon{width:44px!important;height:44px!important;display:grid!important;place-items:center!important}
+.panel-row>.card,.dashboard-grid>.card{min-width:0}
+.card-hdr{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.card-hdr .card-title{margin:0}
+.ticket-table{background:#fff}
+.ticket-table th{position:relative;padding-top:13px!important;padding-bottom:13px!important}
+.ticket-table td{padding-top:13px!important;padding-bottom:13px!important}
+.ticket-table .t-title{font-weight:680!important;color:#283347!important}
+.ticket-table .t-num{font-size:11px!important;letter-spacing:.025em}
+.ticket-table .time-cell{color:#8a93a3!important}
+.ticket-table .assignee-cell{font-weight:600!important;color:#475467!important}
+.ticket-table .cat-label{color:#667085!important}
+.detail-layout{align-items:start}
+.detail-main{display:grid;gap:18px}
+.detail-main>.card{margin-bottom:0!important}
+.detail-sidebar{display:grid;gap:18px}
+.detail-sidebar>.card{margin-bottom:0!important}
+.detail-header{padding-bottom:18px;border-bottom:1px solid #edf0f3}
+.detail-num{display:inline-flex;align-items:center;min-height:25px;padding:4px 9px;border-radius:999px;background:var(--accent-soft);font-size:10px!important}
+.detail-title{margin-top:10px!important;color:var(--primary)!important}
+.meta-lbl{font-size:10px!important;letter-spacing:.055em!important;text-transform:uppercase}
+.meta-val{color:#344054!important;font-weight:620!important}
+.desc-box{color:#344054!important}
+.progress-steps{background:linear-gradient(180deg,#fff,#fcfcfd)}
+.step-label{font-weight:650!important}
+.step-time{color:#98a2b3!important}
+.c-item:hover .c-text{border-color:#dde2e9;background:#fff!important}
+.c-name{font-weight:700!important;color:#344054!important}
+.c-time{color:#98a2b3!important}
+.c-input-wrap{border-top:1px solid #edf0f3}
+.c-input{background:#fff!important}
+#ticketHistoryList{position:relative}
+#ticketHistoryList>div{transition:border-color .16s ease,background .16s ease,transform .16s ease}
+#ticketHistoryList>div:hover{border-color:#dfe3e9!important;background:#fff;transform:translateX(2px)}
+.back-row .btn,.back-row a{font-weight:650!important}
+@media(max-width:899px){.stats-grid,.kpi-grid{gap:14px!important}.stat-card,.kpi-card{padding:17px!important}}
+@media(max-width:620px){.stat-card .stat-val,.kpi-card .kpi-val{font-size:25px!important}.detail-header{padding-bottom:15px}.detail-num{margin-bottom:2px}.detail-main,.detail-sidebar{gap:14px}}
