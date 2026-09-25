@@ -4774,3 +4774,356 @@ body.dark-mode #appScreen textarea:disabled{
     max-width:100%!important;
   }
 }
+
+
+/* RTL / ARABIC VISUAL POLISH — presentation only, no i18n behavior changes */
+html[dir="rtl"] body{
+  direction:rtl!important;
+}
+html[dir="rtl"] #appScreen,
+html[dir="rtl"] #loginScreen,
+html[dir="rtl"] .modal,
+html[dir="rtl"] .notif-panel{
+  text-align:right;
+}
+
+/* Desktop shell */
+@media(min-width:769px){
+  html[dir="rtl"] #appScreen .sidebar{
+    order:2!important;
+    border-right:0!important;
+    border-left:1px solid rgba(255,255,255,.08)!important;
+    box-shadow:-12px 0 32px rgba(15,23,42,.05)!important;
+  }
+  html[dir="rtl"] #appScreen .main-area{
+    order:1!important;
+  }
+  html[dir="rtl"] #appScreen .sidebar-collapse-btn{
+    right:auto!important;
+    left:8px!important;
+  }
+  html[dir="rtl"] body.sidebar-compact #appScreen .sidebar-collapse-btn{
+    right:auto!important;
+    left:-11px!important;
+  }
+}
+html[dir="rtl"] #appScreen .nav-item{
+  text-align:right!important;
+}
+html[dir="rtl"] #appScreen .nav-item i{
+  margin-right:0!important;
+  margin-left:8px!important;
+}
+html[dir="rtl"] #appScreen .nav-badge{
+  margin-left:0!important;
+  margin-right:auto!important;
+}
+html[dir="rtl"] #appScreen .sb-sec-lbl,
+html[dir="rtl"] #appScreen .sb-logo-sub{
+  text-align:right!important;
+}
+html[dir="rtl"] #appScreen .sb-brand::after{
+  background:linear-gradient(270deg,rgba(201,151,42,.7),rgba(255,255,255,.06),transparent)!important;
+}
+html[dir="rtl"] #appScreen .logout-btn{
+  flex-direction:row-reverse!important;
+}
+
+/* Topbar and search */
+html[dir="rtl"] #appScreen .topbar{
+  direction:rtl!important;
+}
+html[dir="rtl"] #appScreen .topbar-title{
+  text-align:right!important;
+}
+html[dir="rtl"] #appScreen .search-box{
+  direction:rtl!important;
+}
+html[dir="rtl"] #appScreen .search-box i{
+  margin-left:7px!important;
+  margin-right:0!important;
+}
+html[dir="rtl"] #appScreen .search-box input{
+  text-align:right!important;
+}
+html[dir="rtl"] #appScreen .search-box button{
+  margin-left:0!important;
+  margin-right:4px!important;
+}
+
+/* Dashboard */
+html[dir="rtl"] .dash-welcome,
+html[dir="rtl"] .dash-context,
+html[dir="rtl"] .card-hdr,
+html[dir="rtl"] .status-summary,
+html[dir="rtl"] .dash-act-item,
+html[dir="rtl"] .tickets-card-foot{
+  direction:rtl!important;
+}
+html[dir="rtl"] .dash-welcome h1,
+html[dir="rtl"] .dash-welcome p,
+html[dir="rtl"] .card-title,
+html[dir="rtl"] .status-legend,
+html[dir="rtl"] .dash-act-item{
+  text-align:right!important;
+}
+html[dir="rtl"] .dash-link i,
+html[dir="rtl"] .section-title i{
+  margin-right:0!important;
+  margin-left:5px!important;
+}
+
+/* Tickets */
+html[dir="rtl"] .tickets-page-head,
+html[dir="rtl"] .tickets-page-actions,
+html[dir="rtl"] .ticket-filter-strip,
+html[dir="rtl"] .adv-filters{
+  direction:rtl!important;
+}
+html[dir="rtl"] .tickets-page-head h1,
+html[dir="rtl"] .tickets-page-head p{
+  text-align:right!important;
+}
+html[dir="rtl"] .tickets-search{
+  direction:rtl!important;
+}
+html[dir="rtl"] .tickets-search i{
+  margin-right:0!important;
+  margin-left:7px!important;
+}
+html[dir="rtl"] .tickets-search input{
+  text-align:right!important;
+}
+html[dir="rtl"] .ticket-table-reference th,
+html[dir="rtl"] .ticket-table-reference td,
+html[dir="rtl"] .ticket-table th,
+html[dir="rtl"] .ticket-table td{
+  text-align:right!important;
+}
+html[dir="rtl"] .ticket-table-reference .assignee-cell,
+html[dir="rtl"] .ticket-table-reference .cat-label,
+html[dir="rtl"] .ticket-table .assignee-cell,
+html[dir="rtl"] .ticket-table .cat-label{
+  justify-content:flex-start!important;
+}
+html[dir="rtl"] .row-action-btn i{
+  transform:none!important;
+}
+
+/* Ticket detail */
+html[dir="rtl"] .detail-toolbar-reference,
+html[dir="rtl"] .detail-reference-head,
+html[dir="rtl"] .detail-badges,
+html[dir="rtl"] .detail-reference-columns,
+html[dir="rtl"] .detail-info-list,
+html[dir="rtl"] .detail-controls,
+html[dir="rtl"] .detail-tabbar,
+html[dir="rtl"] .detail-comments-wrap,
+html[dir="rtl"] .detail-history-reference{
+  direction:rtl!important;
+}
+html[dir="rtl"] .detail-info-section{
+  border-right:0!important;
+  border-left:1px solid #edf0f3!important;
+}
+html[dir="rtl"] .detail-info-list>div{
+  grid-template-columns:92px minmax(0,1fr)!important;
+}
+html[dir="rtl"] .detail-info-list span,
+html[dir="rtl"] .detail-info-list strong,
+html[dir="rtl"] .detail-desc-section,
+html[dir="rtl"] .detail-history-reference,
+html[dir="rtl"] .detail-comments-wrap{
+  text-align:right!important;
+}
+html[dir="rtl"] .detail-tabbar span.active::after{
+  left:0!important;
+  right:0!important;
+}
+html[dir="rtl"] .detail-comment-input{
+  flex-direction:row-reverse!important;
+}
+html[dir="rtl"] #ticketHistoryList::before{
+  left:auto!important;
+  right:12px!important;
+}
+html[dir="rtl"] #ticketHistoryList>div[style*="display:flex"]{
+  grid-template-columns:26px minmax(0,1fr)!important;
+}
+html[dir="rtl"] #ticketAttachmentList>div[style*="display:flex"]{
+  grid-template-columns:30px minmax(0,1fr) auto auto!important;
+}
+
+/* Forms and modals */
+html[dir="rtl"] .modal-hdr,
+html[dir="rtl"] .modal-foot,
+html[dir="rtl"] .form-row,
+html[dir="rtl"] .form-g,
+html[dir="rtl"] .field-lbl,
+html[dir="rtl"] .settings-section,
+html[dir="rtl"] .setting-row{
+  direction:rtl!important;
+}
+html[dir="rtl"] .modal-title,
+html[dir="rtl"] .field-lbl,
+html[dir="rtl"] .setting-lbl,
+html[dir="rtl"] .setting-desc{
+  text-align:right!important;
+}
+html[dir="rtl"] .modal-close{
+  margin-left:0!important;
+  margin-right:auto!important;
+}
+html[dir="rtl"] .field-ctrl,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select,
+html[dir="rtl"] input{
+  text-align:right!important;
+}
+html[dir="rtl"] #modalUser button[onclick*="togglePwd"]{
+  right:auto!important;
+  left:10px!important;
+}
+html[dir="rtl"] #modalUser #uRoleChoices label,
+html[dir="rtl"] #modalUser #uHotelsCheckbox label{
+  flex-direction:row!important;
+  text-align:right!important;
+}
+html[dir="rtl"] #modalTicket .modal{
+  margin-right:auto!important;
+  margin-left:0!important;
+  border-left:0!important;
+  border-right:1px solid #e4e7ec!important;
+  box-shadow:18px 0 48px rgba(16,24,40,.16)!important;
+}
+html[dir="rtl"] #modalTicket .modal-foot{
+  justify-content:flex-start!important;
+}
+html[dir="rtl"] #modalTicket .attachment-dropzone{
+  text-align:center!important;
+}
+
+/* Notifications */
+html[dir="rtl"] #appScreen .notif-panel{
+  right:auto!important;
+  left:0!important;
+  direction:rtl!important;
+}
+html[dir="rtl"] #appScreen .notif-hdr,
+html[dir="rtl"] #appScreen .notif-item{
+  direction:rtl!important;
+  text-align:right!important;
+}
+html[dir="rtl"] #appScreen .notif-time{
+  text-align:right!important;
+}
+
+/* Admin + reports */
+html[dir="rtl"] #appScreen .user-row,
+html[dir="rtl"] #appScreen .hotel-row,
+html[dir="rtl"] #appScreen .report-section,
+html[dir="rtl"] #appScreen .kpi-card,
+html[dir="rtl"] #appScreen .bar-row{
+  direction:rtl!important;
+  text-align:right!important;
+}
+html[dir="rtl"] #appScreen .user-row>div:last-child,
+html[dir="rtl"] #appScreen .hotel-row>div:last-child{
+  justify-content:flex-start!important;
+}
+html[dir="rtl"] #appScreen .bar-lbl{
+  text-align:right!important;
+}
+html[dir="rtl"] #appScreen .section-title{
+  justify-content:flex-start!important;
+}
+
+/* Login */
+html[dir="rtl"] #loginScreen .login-form-side,
+html[dir="rtl"] #loginScreen .login-wrap,
+html[dir="rtl"] #loginScreen .login-card{
+  direction:rtl!important;
+  text-align:right!important;
+}
+html[dir="rtl"] #loginScreen .login-form-top{
+  right:auto!important;
+  left:17px!important;
+}
+html[dir="rtl"] #loginScreen .login-brand{
+  text-align:right!important;
+}
+html[dir="rtl"] #loginScreen .login-logo{
+  justify-content:flex-start!important;
+}
+html[dir="rtl"] #loginScreen .login-tagline{
+  text-align:right!important;
+}
+html[dir="rtl"] #loginScreen .pwd-wrap button{
+  right:auto!important;
+  left:10px!important;
+}
+html[dir="rtl"] #loginScreen .form-ctrl{
+  padding-right:12px!important;
+  padding-left:40px!important;
+}
+
+/* Mobile-specific RTL */
+@media(max-width:768px){
+  html[dir="rtl"] #appScreen .sidebar{
+    left:auto!important;
+    right:0!important;
+    transform:translateX(102%)!important;
+    border-right:0!important;
+    border-left:1px solid rgba(255,255,255,.08)!important;
+    box-shadow:-18px 0 48px rgba(8,15,25,.24)!important;
+  }
+  html[dir="rtl"] #appScreen .sidebar.open{
+    transform:translateX(0)!important;
+  }
+  html[dir="rtl"] #appScreen .topbar{
+    flex-direction:row!important;
+  }
+  html[dir="rtl"] #appScreen #menuToggleBtn{
+    margin-right:0!important;
+    margin-left:1px!important;
+  }
+  html[dir="rtl"] #appScreen .notif-panel{
+    left:10px!important;
+    right:10px!important;
+  }
+  html[dir="rtl"] .ticket-table-reference tr{
+    padding:13px 13px 13px 42px!important;
+  }
+  html[dir="rtl"] .ticket-table-reference td:nth-child(8){
+    justify-self:start!important;
+  }
+  html[dir="rtl"] .ticket-table-reference td:nth-child(9){
+    right:auto!important;
+    left:9px!important;
+  }
+  html[dir="rtl"] .detail-info-section{
+    border-left:0!important;
+    border-bottom:1px solid #edf0f3!important;
+  }
+  html[dir="rtl"] #ticketHistoryList::before{
+    right:11px!important;
+  }
+  html[dir="rtl"] #modalTicket .modal{
+    border-right:0!important;
+  }
+  html[dir="rtl"] #loginScreen .login-brand{
+    padding:4px 0 0 58px!important;
+  }
+  html[dir="rtl"] #loginScreen .login-brand .language-selector{
+    right:auto!important;
+    left:0!important;
+  }
+}
+
+/* Dark mode border direction fixes */
+html[dir="rtl"] body.dark-mode .detail-info-section{
+  border-left-color:#2a3542!important;
+}
+html[dir="rtl"] body.dark-mode #modalTicket .modal{
+  border-right-color:#2a3542!important;
+}
