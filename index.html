@@ -1781,29 +1781,53 @@ function renderDashboard(){
    TICKET TABLE
 ══════════════════════════════════════════════ */
 function ticketTableHTML(list){
-  if(!list.length)return`<div class="empty-state"><i class="ti ti-ticket-off"></i><p>Aucun ticket trouvé</p><span>Modifiez vos filtres ou créez un nouveau ticket.</span></div>`;
-  return`<table class="ticket-table">
-    <thead><tr><th>Numéro</th><th>Sujet</th><th>Catégorie</th><th>Priorité</th><th>Statut</th><th>Assigné à</th><th>Créé</th></tr></thead>
-    <tbody>${list.map(t=>`<tr onclick="openDetail('${t.id}')">
-      <td><span class="t-num">${esc(t.numero)}</span></td>
-      <td><div class="t-title">${esc(t.titre)}</div><div class="t-sub">${esc(t.hotel)}</div></td>
-      <td><span class="cat-label"><span class="t-cat-dot" style="background:${CAT_COLORS[t.categorie]||"#64748B"}"></span>${esc(t.categorie)}</span></td>
-      <td>${pBadge(t.priorite)}</td>
-      <td>${sBadge(t.statut)}</td>
-      <td><div class="assignee-cell"><div class="mini-av">${initials(t.assigne_a||"?")}</div><span class="assignee-name">${esc(t.assigne_a||"—")}</span></div></td>
-      <td><span class="time-cell">${timeAgo(t.created_at)}</span></td>
-    </tr>`).join("")}</tbody>
+  if(!list.length)return`<div class="empty-state ticket-empty"><i class="ti ti-folder-open"></i><p>Aucun ticket pour le moment</p><span>Vous n'avez pas encore de ticket dans cette vue.</span>${!isReadOnly()?'<button class="btn btn-gold btn-sm" onclick="openNewTicket()" style="margin-top:12px"><i class="ti ti-plus"></i>Créer un ticket</button>':''}</div>`;
+  return`<table class="ticket-table ticket-table-reference">
+    <thead><tr><th>#</th><th>Sujet</th><th>Demandeur</th><th>Hôtel</th><th>Catégorie</th><th>Priorité</th><th>Statut</th><th>Création</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(t=>{
+      const requester=t.created_by_name||t.demandeur||t.created_by_email||"—";
+      return `<tr onclick="openDetail('${t.id}')">
+        <td><span class="t-num">${esc(t.numero)}</span></td>
+        <td><div class="t-title">${esc(t.titre)}</div></td>
+        <td><span class="requester-cell">${esc(requester)}</span></td>
+        <td><span class="hotel-cell">${esc((t.hotel||"").replace("Onomo ",""))}</span></td>
+        <td><span class="cat-label"><span class="t-cat-dot" style="background:${CAT_COLORS[t.categorie]||"#64748B"}"></span>${esc(t.categorie)}</span></td>
+        <td>${pBadge(t.priorite)}</td>
+        <td>${sBadge(t.statut)}</td>
+        <td><span class="time-cell">${timeAgo(t.created_at)}</span></td>
+        <td><button class="row-action-btn" onclick="event.stopPropagation();openDetail('${t.id}')" aria-label="Ouvrir le ticket"><i class="ti ti-dots"></i></button></td>
+      </tr>`;
+    }).join("")}</tbody>
   </table>`;
 }
 function renderTicketList(list,title){
   const urg=getUrgents().length;
-  let html=urg>0&&currentView!=="urgents"?`<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i>${urg} ticket(s) urgent(s) actif(s) — <strong style="cursor:pointer;text-decoration:underline" onclick="switchView('urgents',null)">voir</strong></div>`:"";
-  html+=`<div class="card">
-    <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-list-details"></i>${esc(title)} <span style="font-weight:400;color:var(--tx3)">(${list.length})</span></div>
-      <div class="filter-tabs">${["tous",...STATUTS].map(s=>`<div class="ftab${filterStat===s?" active":""}" onclick="setFilter('${s}')">${s==="tous"?"Tous":STAT_L[s]}</div>`).join("")}</div>
+  const counts={
+    tous:list.length,
+    nouveau:list.filter(t=>t.statut==="nouveau").length,
+    en_cours:list.filter(t=>t.statut==="en_cours").length,
+    en_attente:list.filter(t=>t.statut==="en_attente").length,
+    résolu:list.filter(t=>t.statut==="résolu").length,
+    fermé:list.filter(t=>t.statut==="fermé").length
+  };
+  let html=`<div class="tickets-page">
+    <div class="tickets-page-head">
+      <div><h1>Tickets</h1><p>Gérez et suivez tous les tickets de votre périmètre.</p></div>
+      <div class="tickets-page-actions">
+        <div class="tickets-search"><i class="ti ti-search"></i><input placeholder="Rechercher un ticket..." value="${esc(searchQ)}" oninput="onSearch(this.value)"></div>
+        <button class="btn btn-outline tickets-filter-btn" onclick="toggleAdvFilters()"><i class="ti ti-filter"></i>Filtres</button>
+        ${!isReadOnly()?'<button class="btn btn-gold" onclick="openNewTicket()"><i class="ti ti-plus"></i>Nouveau ticket</button>':''}
+      </div>
     </div>
-    <div style="overflow-x:auto">${ticketTableHTML(list)}</div>
+    ${urg>0&&currentView!=="urgents"?`<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i><span>${urg} ticket(s) urgent(s) actif(s)</span><strong onclick="switchView('urgents',null)">Voir</strong></div>`:""}
+    ${advFiltersBarHTML()}
+    <div class="ticket-filter-strip">
+      ${["tous",...STATUTS].map(st=>`<button class="ticket-filter-pill${filterStat===st?" active":""}" onclick="setFilter('${st}')"><span>${st==="tous"?"Tous":STAT_L[st]}</span><b>${counts[st]??0}</b></button>`).join("")}
+    </div>
+    <div class="card tickets-card">
+      <div style="overflow-x:auto">${ticketTableHTML(list)}</div>
+      <div class="tickets-card-foot"><span>Affichage de ${list.length?1:0} à ${list.length} sur ${list.length} résultat(s)</span><div class="fake-pagination"><button disabled><i class="ti ti-chevron-left"></i></button><button class="active">1</button><button disabled><i class="ti ti-chevron-right"></i></button></div></div>
+    </div>
   </div>`;
   document.getElementById("mainContent").innerHTML=html;
 }
@@ -1836,76 +1860,59 @@ async function openDetail(id){
 function renderDetail(){
   if(!currentTicket)return;
   const t=currentTicket;
-  const si=STATUTS.indexOf(t.statut);
   const canEdit=canManageTickets(currentUser);
   const identity=[currentUser?.auth_user_id,currentUser?.id,currentUser?.email].filter(Boolean).map(v=>String(v).toLowerCase());
   const canComment=canEdit||identity.includes(String(t.created_by||"").toLowerCase())||identity.includes(String(t.created_by_email||"").toLowerCase());
   const tcoms=commentaires.filter(c=>c.ticket_id===t.id);
-  const controls=canEdit?`
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-      <button class="btn btn-outline btn-sm" onclick="openStatusModal()"><i class="ti ti-edit"></i>Modifier statut / assignation</button>
-      ${t.statut==="fermé"?`<button class="btn btn-outline btn-sm" onclick="reopenCurrentTicket()"><i class="ti ti-refresh"></i>Rouvrir le ticket</button>`:""}
-      ${settings.aiEnabled?`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple-t);border:1px solid rgba(124,58,237,.2)" onclick="analyzeDetail()"><i class="ti ti-sparkles"></i>Analyse IA</button>`:""}
-    </div>
-    <div id="detailAIBox" style="margin-top:12px"></div>`:""
-  const comHTML=tcoms.length?tcoms.map(c=>`<div class="c-item"><div class="c-av">${initials(c.auteur)}</div><div class="c-body"><div class="c-meta"><span class="c-author">${esc(c.auteur)}</span><span class="c-time">${timeAgo(c.created_at)}</span></div><div class="c-text">${esc(c.message)}</div></div></div>`).join(""):`<div style="font-size:11px;color:var(--tx3);font-style:italic">Aucun commentaire pour le moment.</div>`;
+  const requester=t.created_by_name||t.demandeur||t.created_by_email||"—";
+  const comHTML=tcoms.length?tcoms.map(c=>`<div class="c-item"><div class="c-av">${initials(c.auteur)}</div><div class="c-body"><div class="c-meta"><span class="c-author">${esc(c.auteur)}</span><span class="c-time">${timeAgo(c.created_at)}</span></div><div class="c-text">${esc(c.message)}</div></div></div>`).join(""):`<div class="detail-empty-line">Aucun commentaire pour le moment.</div>`;
+  const controls=canEdit?`<div class="detail-controls"><button class="btn btn-outline btn-sm" onclick="openStatusModal()"><i class="ti ti-edit"></i>Modifier statut / assignation</button>${t.statut==="fermé"?`<button class="btn btn-outline btn-sm" onclick="reopenCurrentTicket()"><i class="ti ti-refresh"></i>Rouvrir</button>`:""}${settings.aiEnabled?`<button class="btn btn-outline btn-sm" onclick="analyzeDetail()"><i class="ti ti-sparkles"></i>Analyse IA</button>`:""}</div><div id="detailAIBox"></div>`:"";
 
   document.getElementById("mainContent").innerHTML=`
-    <div class="back-row">
-      <button class="btn btn-outline btn-sm" onclick="switchView('tickets',null)"><i class="ti ti-arrow-left"></i>Retour</button>
-      <div class="breadcrumb"><span>Tickets</span><i class="ti ti-chevron-right" style="font-size:12px"></i>${esc(t.numero)}</div>
-    </div>
-    <div class="detail-layout">
-      <div class="detail-main">
-        <div class="card" style="padding:20px;margin-bottom:14px">
-          <div class="detail-num">${esc(t.numero)}</div>
-          <div class="detail-header"><div class="detail-title">${esc(t.titre)}</div>${pBadge(t.priorite)}</div>
-          <div class="meta-grid">
-            <div class="meta-item"><div class="meta-lbl">Hôtel</div><div class="meta-val">${esc(t.hotel)}</div></div>
-            <div class="meta-item"><div class="meta-lbl">Catégorie</div><div class="meta-val"><span class="cat-label"><span class="t-cat-dot" style="background:${CAT_COLORS[t.categorie]||"#64748B"}"></span>${esc(t.categorie)}</span></div></div>
-            <div class="meta-item"><div class="meta-lbl">Assigné à</div><div class="meta-val">${esc(t.assigne_a)||"<span style='color:var(--tx3)'>Non assigné</span>"}</div></div>
-            <div class="meta-item"><div class="meta-lbl">Créé</div><div class="meta-val">${timeAgo(t.created_at)}</div></div>
-          </div>
-          <div class="meta-lbl" style="margin-bottom:6px">Description</div>
-          <div class="desc-box"${t.description?' data-user-content="true"':''}>${esc(t.description)||"<span style='color:var(--tx3);font-style:italic'>Aucune description fournie.</span>"}</div>
-          ${controls}
-        </div>
-        <!-- Comments -->
-        <div class="card" style="padding:20px">
-          <div class="comment-title"><i class="ti ti-messages"></i>Commentaires (${tcoms.length})</div>
-          <div id="commentList">${comHTML}</div>
-          ${canComment?`<div class="c-input-wrap"><input id="commentInput" class="c-input" placeholder="Ajouter un commentaire…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){submitComment();event.preventDefault();}"><button class="btn btn-gold btn-sm" onclick="submitComment()"><i class="ti ti-send"></i></button></div>`:""}
-        </div>
-        <div class="card" style="padding:20px;margin-top:14px">
-          <div class="comment-title"><i class="ti ti-history"></i>Historique</div>
-          <div id="ticketHistoryList" style="font-size:12px;color:var(--tx2)">Chargement de l’historique…</div>
-        </div>
-        <div class="card" style="padding:20px;margin-top:14px"><div id="attachmentPanelTitle" class="comment-title"><i class="ti ti-paperclip"></i>Pièces jointes</div><div id="ticketAttachmentList" style="font-size:12px;color:var(--tx2)">Chargement des pièces jointes…</div></div>
+    <div class="detail-page-reference">
+      <div class="detail-toolbar-reference">
+        <div class="detail-toolbar-left"><button class="detail-back-btn" onclick="switchView('tickets',null)"><i class="ti ti-arrow-left"></i></button><strong>${esc(t.numero)}</strong></div>
+        <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="ti ti-printer"></i>Imprimer</button>
       </div>
-      <div class="detail-sidebar">
-        <div class="card" style="padding:14px;margin-bottom:12px">
-          <div style="font-size:11px;font-weight:700;color:var(--tx);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Statut actuel</div>
-          ${sBadge(t.statut)}
+      <div class="card detail-reference-card">
+        <div class="detail-reference-head">
+          <div><h1>${esc(t.titre)}</h1><div class="detail-badges">${sBadge(t.statut)}${pBadge(t.priorite)}</div></div>
         </div>
-        <div class="card">
-          <div style="font-size:11px;font-weight:700;color:var(--tx);padding:14px 16px 8px;text-transform:uppercase;letter-spacing:.5px">Progression</div>
-          <div class="progress-steps">
-            ${STATUTS.map((s,i)=>{
-              const done=i<si;const curr=i===si;
-              return`<div class="step">
-                <div class="step-dot${done?" done":curr?" current":""}">
-                  ${done?`<i class="ti ti-check"></i>`:curr?`<i class="ti ti-point" style="font-size:8px"></i>`:""}
-                </div>
-                <span class="step-lbl${done?" done":curr?" current":""}">${STAT_L[s]}</span>
-              </div>`;
-            }).join("")}
-          </div>
+        <div class="detail-reference-columns">
+          <section class="detail-info-section">
+            <h3>Informations</h3>
+            <div class="detail-info-list">
+              <div><span>Demandeur</span><strong>${esc(requester)}</strong></div>
+              <div><span>Hôtel</span><strong>${esc(t.hotel)}</strong></div>
+              <div><span>Catégorie</span><strong>${esc(t.categorie)}</strong></div>
+              <div><span>Créé le</span><strong>${new Date(t.created_at).toLocaleString()}</strong></div>
+              <div><span>Assigné à</span><strong>${esc(t.assigne_a||"Non assigné")}</strong></div>
+              <div><span>SLA</span><strong class="sla-inline">${slaHTML(t)||"—"}</strong></div>
+            </div>
+          </section>
+          <section class="detail-desc-section">
+            <h3>Description</h3>
+            <div class="detail-desc-text"${t.description?' data-user-content="true"':''}>${esc(t.description)||"<span class='muted'>Aucune description fournie.</span>"}</div>
+            <h3>Pièces jointes</h3>
+            <div id="ticketAttachmentList" class="detail-attachments">Chargement des pièces jointes…</div>
+          </section>
+        </div>
+        ${controls}
+        <div class="detail-tabbar"><span class="active">Commentaires (${tcoms.length})</span><span>Historique</span></div>
+        <div class="detail-comments-wrap">
+          <div id="commentList">${comHTML}</div>
+          ${canComment?`<div class="c-input-wrap detail-comment-input"><input id="commentInput" class="c-input" placeholder="Ajouter un commentaire..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){submitComment();event.preventDefault();}"><button class="btn btn-gold btn-sm" onclick="submitComment()"><i class="ti ti-send"></i></button></div>`:""}
+        </div>
+        <div class="detail-history-reference">
+          <div class="comment-title"><i class="ti ti-history"></i>Historique</div>
+          <div id="ticketHistoryList">Chargement de l’historique…</div>
         </div>
       </div>
     </div>`;
   renderTicketEvents();
   window.loadTicketAttachments?.(t.id);
 }
+
 let commentSubmissionPending=false;
 async function submitComment(){
   if(commentSubmissionPending)return;
