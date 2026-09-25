@@ -615,7 +615,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 #loginScreen{background:linear-gradient(145deg,#101828 0%,#172554 55%,#155eef 145%)!important;color:#fff!important}#loginScreen::before{display:block!important;background:radial-gradient(ellipse 75% 55% at 50% 0%,rgba(132,173,255,.32),transparent 68%)!important}.login-card{background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:0 24px 60px rgba(0,0,0,.28)!important}.login-logo{color:#fff!important}.login-logo i{color:#84adff!important}.login-tagline{color:#cbd5e1!important}.login-h{color:#fff!important}.login-d{color:#d0d5dd!important}.form-lbl{color:#e2e8f0!important}.login-card .form-ctrl{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.28)!important;color:#fff!important}.login-card .form-ctrl::placeholder{color:#cbd5e1!important}.login-card .form-ctrl:focus{background:rgba(255,255,255,.18)!important;border-color:#84adff!important}.input-wrap .eye-btn{color:#e2e8f0!important}.login-err{background:rgba(254,226,226,.95)!important;color:#b42318!important;border-color:#f97066!important}.login-card .btn-primary{width:100%!important;padding:12px!important;background:#2970ff!important}.login-card .btn-primary:hover{background:#155eef!important}
 .language-selector{margin-left:auto;border:1px solid #d0d5dd;border-radius:7px;background:#fff;color:#344054;padding:6px 9px;font:600 11px inherit;cursor:pointer}.login-brand .language-selector{position:fixed;z-index:10;top:30px;right:32px;margin:0;min-width:92px;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(8px)}.login-brand{position:relative}html[dir="rtl"] .sidebar{right:0;left:auto!important}html[dir="rtl"] .main-area{margin-right:260px;margin-left:0}html[dir="rtl"] .topbar,html[dir="rtl"] .content{text-align:right}html[dir="rtl"] .ticket-table th,html[dir="rtl"] .ticket-table td{text-align:right}html[dir="rtl"] .sidebar-overlay{right:260px;left:0}@media(max-width:768px){.login-brand .language-selector{top:16px;right:16px;min-width:82px}html[dir="rtl"] .main-area{margin-right:0}.language-selector{margin-left:0;margin-right:auto}}
 </style>
-<link rel="stylesheet" href="assets/css/onomo-design.css?v=20260925-36">
+<link rel="stylesheet" href="assets/css/onomo-design.css?v=20260925-37">
 </head>
 <body>
 
@@ -4215,25 +4215,67 @@ document.addEventListener('click', e => {
 const _origRenderTicketList = renderTicketList;
 renderTicketList = function(list, title){
   const urg = getUrgents().length;
-  const filtered = getFilteredAdv();
   const vt = document.getElementById('viewToggle');
   if(vt) vt.style.display = 'flex';
-  let html = urg > 0 && currentView !== 'urgents'
-    ? `<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i>${urg} ticket(s) urgent(s) actif(s) — <strong style="cursor:pointer;text-decoration:underline" onclick="switchView('urgents',null)">voir</strong></div>`
-    : '';
-  html += advFiltersBarHTML();
-  html += `<div class="card">
-    <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-list-details"></i>${esc(title)} <span style="font-weight:400;color:var(--tx3)">(${filtered.length})</span></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <div class="filter-tabs">${['tous',...STATUTS].map(s=>`<div class="ftab${filterStat===s?' active':''}" onclick="setFilter('${s}')">${s==='tous'?'Tous':STAT_L[s]}</div>`).join('')}</div>
-        <button class="btn btn-outline btn-sm" onclick="exportCSV(getFilteredAdv())"><i class="ti ti-download"></i>CSV</button>
+
+  const scoped = currentView === 'urgents'
+    ? getUrgents()
+    : currentView === 'my-tickets'
+      ? getMyTickets()
+      : currentView === 'tickets'
+        ? visibleTickets()
+        : (Array.isArray(list) ? list : []);
+
+  const q = String(searchQ || '').toLowerCase().trim();
+  const commonFiltered = scoped.filter(t => {
+    const requester = t.created_by_name || t.demandeur || t.created_by_email || '';
+    const mq = !q || [t.titre,t.numero,t.hotel,t.categorie,t.assigne_a,requester]
+      .some(v => String(v || '').toLowerCase().includes(q));
+    const ma = (!advFilters.hotel || t.hotel === advFilters.hotel)
+      && (!advFilters.priorite || t.priorite === advFilters.priorite)
+      && (!advFilters.categorie || t.categorie === advFilters.categorie)
+      && (!advFilters.assigne || t.assigne_a === advFilters.assigne);
+    return mq && ma;
+  });
+  const filtered = commonFiltered.filter(t => filterStat === 'tous' || t.statut === filterStat);
+  const counts = {
+    tous: commonFiltered.length,
+    nouveau: commonFiltered.filter(t=>t.statut==='nouveau').length,
+    en_cours: commonFiltered.filter(t=>t.statut==='en_cours').length,
+    en_attente: commonFiltered.filter(t=>t.statut==='en_attente').length,
+    résolu: commonFiltered.filter(t=>t.statut==='résolu').length,
+    fermé: commonFiltered.filter(t=>t.statut==='fermé').length
+  };
+  const subtitle = currentView === 'urgents'
+    ? 'Priorisez les tickets urgents nécessitant une attention immédiate.'
+    : currentView === 'my-tickets'
+      ? 'Suivez les tickets qui vous sont assignés.'
+      : 'Gérez et suivez tous les tickets de votre périmètre.';
+
+  let html = `<div class="tickets-page">
+    <div class="tickets-page-head">
+      <div><h1>${esc(title||'Tickets')}</h1><p>${subtitle}</p></div>
+      <div class="tickets-page-actions">
+        <div class="tickets-search"><i class="ti ti-search"></i><input placeholder="Rechercher un ticket..." value="${esc(searchQ)}" oninput="onSearch(this.value)"></div>
+        <button class="btn btn-outline tickets-filter-btn" onclick="toggleAdvFilters()"><i class="ti ti-filter"></i>Filtres</button>
+        <button class="btn btn-outline tickets-export-btn" onclick="exportCSV(${currentView==='urgents'?'getUrgents()':currentView==='my-tickets'?'getMyTickets()':'getFilteredAdv()'})"><i class="ti ti-download"></i>CSV</button>
+        ${!isReadOnly()?'<button class="btn btn-gold" onclick="openNewTicket()"><i class="ti ti-plus"></i>Nouveau ticket</button>':''}
       </div>
     </div>
-    ${viewMode === 'kanban' ? renderKanban(filtered) : '<div style="overflow-x:auto">'+ticketTableHTML(filtered)+'</div>'}
+    ${urg>0&&currentView!=='urgents'?`<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i><span>${urg} ticket(s) urgent(s) actif(s)</span><strong onclick="switchView('urgents',null)">Voir</strong></div>`:''}
+    ${advFiltersBarHTML()}
+    <div class="ticket-filter-strip">
+      ${['tous',...STATUTS].map(st=>`<button class="ticket-filter-pill${filterStat===st?' active':''}" onclick="setFilter('${st}')"><span>${st==='tous'?'Tous':STAT_L[st]}</span><b>${counts[st]??0}</b></button>`).join('')}
+    </div>
+    ${viewMode === 'kanban'
+      ? renderKanban(filtered)
+      : `<div class="card tickets-card">
+          <div style="overflow-x:auto">${ticketTableHTML(filtered)}</div>
+          <div class="tickets-card-foot"><span>Affichage de ${filtered.length?1:0} à ${filtered.length} sur ${filtered.length} résultat(s)</span><div class="fake-pagination"><button disabled><i class="ti ti-chevron-left"></i></button><button class="active">1</button><button disabled><i class="ti ti-chevron-right"></i></button></div></div>
+        </div>`}
   </div>`;
+
   document.getElementById('mainContent').innerHTML = html;
-  // re-attach adv filters open state
   const af = document.getElementById('advFiltersBar');
   if(af && advOpen) af.classList.add('open');
 };

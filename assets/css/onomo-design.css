@@ -5630,3 +5630,39 @@ html[dir="rtl"] body.dark-mode #modalTicket .modal{
 #mainContent:has(.dash-welcome)>.dashboard-hero{
   display:none!important;
 }
+
+
+/* MODERN TICKET LIST OVERRIDE — CSV action + scoped views */
+.tickets-page-actions .tickets-export-btn{
+  height:36px!important;
+  padding:0 11px!important;
+  justify-content:center!important;
+}
+@media(max-width:720px){
+  .tickets-page-actions{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .tickets-page-actions .tickets-search{
+    grid-column:1/-1!important;
+  }
+  .tickets-page-actions .tickets-filter-btn,
+  .tickets-page-actions .tickets-export-btn{
+    grid-column:auto!important;
+    width:100%!important;
+  }
+  .tickets-page-actions .btn-gold{
+    grid-column:1/-1!important;
+    width:100%!important;
+  }
+}
+@media(max-width:390px){
+  .tickets-page-actions{
+    grid-template-columns:1fr!important;
+  }
+  .tickets-page-actions .tickets-search,
+  .tickets-page-actions .tickets-filter-btn,
+  .tickets-page-actions .tickets-export-btn,
+  .tickets-page-actions .btn-gold{
+    grid-column:1!important;
+  }
+}
