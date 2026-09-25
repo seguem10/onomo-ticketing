@@ -5624,3 +5624,9 @@ html[dir="rtl"] body.dark-mode #modalTicket .modal{
     left:9px!important;
   }
 }
+
+
+/* LEGACY DASHBOARD HERO GUARD — prevent duplicate greeting from stale script cache */
+#mainContent:has(.dash-welcome)>.dashboard-hero{
+  display:none!important;
+}
