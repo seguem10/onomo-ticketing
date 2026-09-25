@@ -701,3 +701,52 @@ url("https://www.onomohotels.com/app/uploads/2023/04/omomo-hotel-casablanca-city
 @media(max-width:720px){
   #loginScreen .login-form-side{transform:none!important;min-height:0!important}
 }
+
+
+/* REFERENCE SECONDARY PAGES — visual only */
+#appScreen .settings-section{background:#fff!important;border:1px solid #e7e9ed!important;border-radius:12px!important;box-shadow:0 1px 3px rgba(16,24,40,.04)!important;padding:18px!important}
+#appScreen .settings-title{font-size:11px!important;color:#1f2937!important;margin-bottom:16px!important}
+#appScreen .settings-title i{color:#9a6b12!important}
+#appScreen .setting-row{padding:12px 0!important;border-bottom-color:#edf0f3!important}
+#appScreen .setting-lbl{font-size:10px!important;color:#344054!important;font-weight:650!important}
+#appScreen .setting-desc{font-size:9px!important;color:#98a2b3!important}
+#appScreen .toggle{width:34px!important;height:20px!important}
+#appScreen .toggle::after{width:14px!important;height:14px!important}
+#appScreen .toggle.on::after{left:17px!important}
+#appScreen .color-swatch{width:26px!important;height:26px!important}
+#appScreen .user-row{padding:13px 16px!important;background:#fff!important;border-bottom:1px solid #edf0f3!important}
+#appScreen .user-row:hover{background:#fffaf5!important}
+#appScreen .user-av{width:32px!important;height:32px!important;font-size:10px!important}
+#appScreen .user-name{font-size:10px!important;color:#344054!important}
+#appScreen .user-email{font-size:9px!important;color:#98a2b3!important}
+#appScreen .hotel-row{padding:13px 16px!important;background:#fff!important;border-bottom:1px solid #edf0f3!important}
+#appScreen .hotel-row:hover{background:#fffaf5!important}
+#appScreen .hotel-name{font-size:10px!important;color:#344054!important}
+#appScreen .hotel-sub{font-size:9px!important;color:#98a2b3!important}
+#appScreen .role-tag{font-size:8px!important;padding:3px 7px!important}
+#appScreen .modal:not(#modalTicket .modal){border-radius:12px!important;box-shadow:0 22px 56px rgba(16,24,40,.18)!important}
+#appScreen .modal-hdr{padding-bottom:12px!important;border-bottom:1px solid #edf0f3}
+#appScreen .modal-title{font-size:12px!important;color:#1f2937!important}
+#appScreen .modal-foot{margin-top:16px!important;padding-top:14px!important}
+#appScreen .field-lbl{font-size:9px!important;color:#667085!important}
+#appScreen .field-ctrl{min-height:36px!important;border-radius:7px!important;font-size:10px!important}
+#appScreen .field-ctrl:focus{border-color:#c9972a!important;box-shadow:0 0 0 3px rgba(201,151,42,.11)!important}
+#appScreen .empty-state{padding:50px 22px!important}
+#appScreen .empty-state i{font-size:38px!important;color:#d4d9e0!important}
+#appScreen .empty-state p{font-size:11px!important;color:#475467!important}
+#appScreen .empty-state span{font-size:9px!important;color:#98a2b3!important}
+#appScreen .loading-state{min-height:220px!important;color:#98a2b3!important;font-size:10px!important}
+#appScreen .skeleton-hero,#appScreen .skeleton-panel,#appScreen .skeleton-kpis span{border-radius:10px!important}
+#appScreen .alert{border-radius:8px!important;font-size:10px!important;padding:9px 11px!important}
+#appScreen .toast{border-radius:9px!important;font-size:10px!important}
+#appScreen .dropdown,#appScreen .dropdown-menu,#appScreen .popover{border-radius:10px!important}
+#appScreen .profile-avatar,#appScreen .avatar{width:42px;height:42px}
+#appScreen .btn{min-height:32px}
+#appScreen .btn-sm{min-height:28px}
+#appScreen .btn-danger{background:#fff5f4!important;color:#b42318!important;border-color:#fecdca!important}
+#appScreen .btn-danger:hover{background:#feeceb!important}
+@media(max-width:620px){
+  #appScreen .settings-section{padding:14px!important}
+  #appScreen .user-row,#appScreen .hotel-row{align-items:flex-start!important;gap:10px!important}
+  #appScreen .modal:not(#modalTicket .modal){width:calc(100% - 20px)!important;margin:10px!important}
+}
