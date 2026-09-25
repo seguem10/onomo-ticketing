@@ -2772,3 +2772,253 @@ body.dark-mode #mainContent:has(#pOld) .card:nth-of-type(n+2) .settings-title{
     width:100%!important;
   }
 }
+
+
+/* NEW TICKET DRAWER — final responsive layout, presentation only */
+#modalTicket.overlay.open{
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:flex-end!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:rgba(15,23,32,.34)!important;
+}
+#modalTicket .modal{
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr) auto!important;
+  width:min(450px,100vw)!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:100dvh!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-left:1px solid #e4e7ec!important;
+  border-radius:0!important;
+  background:#fff!important;
+  box-shadow:-18px 0 48px rgba(16,24,40,.16)!important;
+}
+#modalTicket .modal-hdr{
+  position:relative!important;
+  z-index:4!important;
+  min-height:54px!important;
+  margin:0!important;
+  padding:12px 16px!important;
+  background:#fff!important;
+  border-bottom:1px solid #e7e9ed!important;
+}
+#modalTicket .modal-title{
+  font-size:12px!important;
+  color:#26313d!important;
+  font-weight:700!important;
+}
+#modalTicket .modal-close{
+  width:30px!important;
+  height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:7px!important;
+  color:#98a2b3!important;
+}
+#modalTicket .modal-close:hover{
+  background:#f2f4f7!important;
+  color:#475467!important;
+}
+#modalTicket .ticket-form-body{
+  min-height:0!important;
+  padding:15px 16px 18px!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+}
+#modalTicket .ticket-form-body .form-g{
+  margin-bottom:13px!important;
+}
+#modalTicket .ticket-form-body .form-row{
+  gap:10px!important;
+  margin-bottom:0!important;
+}
+#modalTicket .field-lbl{
+  margin-bottom:6px!important;
+  color:#667085!important;
+  font-size:9px!important;
+  font-weight:650!important;
+}
+#modalTicket .field-ctrl{
+  width:100%!important;
+  min-height:38px!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+  border:1px solid #dfe3e8!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#344054!important;
+  font-size:10px!important;
+}
+#modalTicket textarea.field-ctrl{
+  min-height:108px!important;
+  padding-top:9px!important;
+  line-height:1.55!important;
+  resize:vertical!important;
+}
+#modalTicket .field-ctrl:focus{
+  border-color:#c9972a!important;
+  box-shadow:0 0 0 3px rgba(201,151,42,.10)!important;
+}
+#modalTicket .attachment-dropzone{
+  min-height:110px!important;
+  padding:16px 12px!important;
+  border:1px dashed #cfd5dd!important;
+  border-radius:9px!important;
+  background:#fbfcfd!important;
+}
+#modalTicket .attachment-dropzone i{
+  font-size:23px!important;
+  color:#667085!important;
+}
+#modalTicket .attachment-dropzone strong{
+  color:#344054!important;
+  font-size:10px!important;
+}
+#modalTicket .attachment-dropzone span{
+  color:#9a6b12!important;
+  font-size:9px!important;
+}
+#modalTicket .attachment-help{
+  line-height:1.5!important;
+}
+#modalTicket .ai-panel{
+  margin-bottom:13px!important;
+}
+#modalTicket .modal-foot{
+  position:relative!important;
+  z-index:4!important;
+  display:flex!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+  margin:0!important;
+  padding:11px 16px max(11px,env(safe-area-inset-bottom))!important;
+  background:#fff!important;
+  border-top:1px solid #e7e9ed!important;
+  box-shadow:0 -8px 18px rgba(16,24,40,.035)!important;
+}
+#modalTicket .modal-foot .btn{
+  min-width:110px!important;
+  height:36px!important;
+  justify-content:center!important;
+}
+#modalTicket .modal-foot .btn-gold{
+  background:#c9972a!important;
+  color:#17212b!important;
+  border-color:#c9972a!important;
+}
+#modalTicket .modal-foot .btn-gold:disabled{
+  opacity:.62!important;
+}
+
+/* Compact laptops: drawer remains narrow enough to preserve the application context. */
+@media(min-width:721px) and (max-width:1100px){
+  #modalTicket .modal{
+    width:min(430px,58vw)!important;
+  }
+}
+
+/* Phone: full-screen form with touch-friendly fields and keyboard-safe scrolling. */
+@media(max-width:720px){
+  #modalTicket .modal{
+    width:100vw!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    border-left:0!important;
+  }
+  #modalTicket .modal-hdr{
+    min-height:52px!important;
+    padding:10px 13px!important;
+    padding-top:max(10px,env(safe-area-inset-top))!important;
+  }
+  #modalTicket .ticket-form-body{
+    padding:13px 13px 22px!important;
+    scroll-padding-bottom:110px!important;
+  }
+  #modalTicket .ticket-form-body .form-row{
+    grid-template-columns:1fr!important;
+    gap:0!important;
+  }
+  #modalTicket .field-lbl{
+    font-size:10px!important;
+  }
+  #modalTicket .field-ctrl{
+    min-height:43px!important;
+    font-size:12px!important;
+    border-radius:8px!important;
+  }
+  #modalTicket textarea.field-ctrl{
+    min-height:118px!important;
+    font-size:12px!important;
+  }
+  #modalTicket .attachment-dropzone{
+    min-height:118px!important;
+  }
+  #modalTicket .attachment-dropzone i{
+    font-size:26px!important;
+  }
+  #modalTicket .attachment-dropzone strong{
+    font-size:11px!important;
+  }
+  #modalTicket .attachment-help,
+  #modalTicket .attachment-status{
+    font-size:8px!important;
+  }
+  #modalTicket .modal-foot{
+    display:grid!important;
+    grid-template-columns:1fr 1.35fr!important;
+    gap:7px!important;
+    padding:10px 13px max(10px,env(safe-area-inset-bottom))!important;
+  }
+  #modalTicket .modal-foot .btn{
+    width:100%!important;
+    min-width:0!important;
+    height:42px!important;
+    padding:0 9px!important;
+    font-size:10px!important;
+  }
+}
+
+/* Very narrow phones */
+@media(max-width:360px){
+  #modalTicket .modal-foot{
+    grid-template-columns:1fr!important;
+  }
+  #modalTicket .modal-foot .btn{
+    height:40px!important;
+  }
+}
+
+/* Dark mode */
+body.dark-mode #modalTicket .modal,
+body.dark-mode #modalTicket .modal-hdr,
+body.dark-mode #modalTicket .modal-foot{
+  background:#171f28!important;
+  border-color:#2a3542!important;
+}
+body.dark-mode #modalTicket .ticket-form-body{
+  background:#171f28!important;
+}
+body.dark-mode #modalTicket .modal-title{
+  color:#f2f4f7!important;
+}
+body.dark-mode #modalTicket .field-ctrl{
+  background:#1d2732!important;
+  border-color:#394654!important;
+  color:#f2f4f7!important;
+}
+body.dark-mode #modalTicket .attachment-dropzone{
+  background:#1d2732!important;
+  border-color:#4a5664!important;
+}
+body.dark-mode #modalTicket .attachment-dropzone strong{
+  color:#e4e7ec!important;
+}
