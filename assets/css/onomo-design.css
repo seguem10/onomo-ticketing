@@ -1418,6 +1418,11 @@ html,body{max-width:100%;overflow-x:hidden}
 }
 
 /* PWA prompt stays readable without covering the whole login footer. */
+/* The mobile app navigation belongs to an authenticated workspace only. A
+   fixed bar could otherwise remain visible over the sign-in form on reload. */
+body:not(.is-authenticated) #mobileBottomNav,
+body:not(.is-authenticated) #fabBtn,
+body:not(.is-authenticated) #menuToggleBtn{display:none!important}
 @media(max-width:720px){
   .pwa-install-bar{
     left:10px!important;

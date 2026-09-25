@@ -84,6 +84,14 @@
     try{window.eval('sbLoadTickets=window.__onomoAuthenticatedSbLoadTickets; sbCreateTicket=window.__onomoAuthenticatedSbCreateTicket;');}
     catch(error){console.warn('Binding Supabase ticket CRUD non remplacé',error);}
   }
+  async function waitForAuthClient(){
+    let client=getAuthClient();
+    for(let attempt=0;!client&&attempt<8;attempt++){
+      await new Promise(resolve=>setTimeout(resolve,150));
+      client=getAuthClient();
+    }
+    return client;
+  }
 
   /* The original shell predates Supabase Auth and falls back to browser data
      whenever a read fails. That is useful for an offline demo, but unsafe in
@@ -376,7 +384,7 @@
   if(typeof previousLogin==='function'){
     window.doLogin=async function(){
       const email=document.getElementById('loginEmail')?.value.trim().toLowerCase(),pwd=document.getElementById('loginPwd')?.value||'';
-      const client=getAuthClient();
+      const client=await waitForAuthClient();
       if(client&&email&&pwd){
         try{
           const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
@@ -403,10 +411,9 @@
           return false;
         }
       }
-      installAuthenticatedSbFetch();
-      const result=await previousLogin();
-      if(currentUser){writeSession();touch();startSync();}
-      return result;
+      const err=document.getElementById('loginErr'),msg=document.getElementById('loginErrMsg');
+      if(err&&msg){msg.textContent=t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.');err.classList.add('show');}
+      return false;
     };
   }
 
@@ -548,6 +555,9 @@
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
+    /* A browser back/forward cache can retain a prior login error. Never show
+       one on a freshly opened sign-in screen before the user submits it. */
+    if(!window.currentUser)document.getElementById('loginErr')?.classList.remove('show');
     try{['touchstart','pointerdown','pointermove','keydown','click','input','change'].forEach(evt=>document.addEventListener(evt,recordUserActivity,{passive:true}));}catch(_){}
     startInactivityWatcher();
     initMobileAndPwaUi();
