@@ -611,3 +611,57 @@ url("https://www.onomohotels.com/app/uploads/2023/04/omomo-hotel-casablanca-city
   .detail-info-section,.detail-desc-section,.detail-comments-wrap,.detail-history-reference{padding-left:14px;padding-right:14px}
   #modalTicket .modal{width:100vw!important}
 }
+
+
+/* FINAL REFERENCE POLISH — presentation only */
+#modalTicket .ticket-form-body{padding:14px 16px 0}
+#modalTicket .ticket-form-body .form-g{margin-bottom:13px!important}
+#modalTicket .attachment-field{margin-top:2px}
+#modalTicket .attachment-dropzone{display:flex;min-height:112px;border:1px dashed #ccd2da;border-radius:9px;background:#fbfcfd;align-items:center;justify-content:center;flex-direction:column;gap:5px;cursor:pointer;text-align:center;transition:border-color .16s,background .16s}
+#modalTicket .attachment-dropzone:hover{border-color:#c9972a;background:#fffcf5}
+#modalTicket .attachment-dropzone input{position:absolute;opacity:0;pointer-events:none}
+#modalTicket .attachment-dropzone i{font-size:25px;color:#667085}
+#modalTicket .attachment-dropzone strong{font-size:10px;color:#344054}
+#modalTicket .attachment-dropzone span{font-size:9px;color:#9a6b12;text-decoration:underline}
+#modalTicket .attachment-help{margin-top:7px;font-size:8px;color:#98a2b3}
+#modalTicket .attachment-status{margin-top:6px;font-size:9px;color:#667085}
+#modalTicket .modal-foot .btn{min-width:112px;justify-content:center}
+#modalTicket .modal-foot .btn-gold{background:#c9972a!important;color:#17212b!important}
+#modalTicket .modal-foot .btn-outline{background:#fff!important}
+#appScreen .sidebar{background:#171f27!important}
+#appScreen .nav-item.active{background:#bd8a24!important;color:#fff!important;box-shadow:none!important}
+#appScreen .nav-item.active i{color:#fff!important}
+#appScreen .sb-sec-lbl{color:#8d98a5!important}
+#appScreen .sb-foot{background:rgba(0,0,0,.07);margin:0 -8px -10px;padding-left:16px!important;padding-right:16px!important}
+#appScreen .topbar{box-shadow:0 1px 0 #edf0f2!important}
+#appScreen .search-box{border-radius:7px!important}
+#appScreen .btn-icon{border-color:#e5e8ec!important;background:#fff!important}
+#appScreen #btnNewTicket{background:#171f2c!important;color:#fff!important}
+#appScreen #btnNewTicket:hover{background:#0e141c!important}
+.dash-welcome{padding-top:2px}
+.dash-context .dash-chip{min-width:138px;justify-content:space-between}
+.stats-grid-six .stat-card{transition:none!important}
+.stats-grid-six .stat-card:hover{transform:none!important}
+.dash-analytics>.card,.dash-recent{box-shadow:0 1px 3px rgba(16,24,40,.04)!important}
+.dash-status .card-hdr,.dash-activity .card-hdr,.dash-trend .card-hdr{min-height:44px!important;padding:12px 14px!important}
+.dash-recent .card-hdr{min-height:48px!important;padding:12px 14px!important}
+.ticket-filter-strip{margin-top:1px}
+.ticket-table-reference tbody tr{background:#fff}
+.ticket-table-reference tbody tr:hover{background:#fffaf4!important}
+.detail-reference-card{box-shadow:0 1px 4px rgba(16,24,40,.05)!important}
+.detail-toolbar-reference .btn-outline{height:30px!important}
+.notif-panel{top:calc(100% + 10px)!important}
+@media(max-width:620px){
+  #appScreen .topbar{position:sticky;top:0;z-index:40}
+  #appScreen .search-box{display:none!important}
+  #appScreen #btnNewTicket{display:none!important}
+  .dash-welcome h1{font-size:21px}
+  .dash-context{display:none}
+  .stats-grid-six{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .stats-grid-six .stat-card{min-height:104px!important}
+  .stats-grid-six .stat-val{font-size:22px!important}
+  .dash-analytics>.card{min-height:250px}
+  .status-summary{padding:20px 14px}
+  .status-donut{width:102px;height:102px}
+  .tickets-card-foot{flex-direction:column;gap:9px;align-items:flex-start}
+}
