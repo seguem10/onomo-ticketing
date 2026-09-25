@@ -901,3 +901,135 @@ url("https://www.kayak.com.au/rimg/himg/08/c4/c7/leonardo-236437654-ONOMO_Casabl
   #mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div:last-child{border-bottom:0!important}
   #mainContent:has(#pOld) .btn-primary{width:100%!important}
 }
+
+
+/* KANBAN + DARK MODE REFERENCE POLISH — visual only */
+.kanban-board{gap:10px!important;align-items:start!important}
+.kanban-col{min-height:260px!important;background:#f7f8fa!important;border:1px solid #e4e7ec!important;border-radius:10px!important;overflow:hidden!important}
+.kanban-col-hdr{min-height:40px!important;padding:10px 11px!important;background:#fff!important;border-bottom:1px solid #e8ebef!important}
+.kanban-col-title{font-size:9px!important;font-weight:700!important;letter-spacing:.03em!important;text-transform:none!important}
+.kanban-cnt{min-width:20px!important;height:20px!important;padding:0 6px!important;display:inline-grid!important;place-items:center!important;border-radius:999px!important;font-size:8px!important;background:#eef0f3!important}
+.kanban-cards{padding:8px!important;gap:7px!important}
+.k-card{padding:11px!important;border:1px solid #e4e7ec!important;border-radius:9px!important;background:#fff!important;box-shadow:0 1px 2px rgba(16,24,40,.035)!important;transition:border-color .15s,box-shadow .15s!important}
+.k-card:hover{transform:none!important;border-color:#d6bb78!important;box-shadow:0 4px 12px rgba(16,24,40,.06)!important}
+.k-card-num{font-family:Inter,system-ui,sans-serif!important;font-size:8px!important;color:#98a2b3!important;margin-bottom:5px!important}
+.k-card-title{font-size:10px!important;line-height:1.45!important;font-weight:620!important;color:#344054!important;margin-bottom:9px!important}
+.k-card-foot{padding-top:7px!important;border-top:1px solid #f0f2f4!important}
+.k-hotel{font-size:8px!important;color:#667085!important;max-width:110px!important}
+.view-toggle{height:34px!important;border:1px solid #e2e6eb!important;border-radius:7px!important;background:#fff!important}
+.vt-btn{width:34px!important;padding:0!important;display:grid!important;place-items:center!important;color:#98a2b3!important;font-size:14px!important}
+.vt-btn.active{background:#f7f1e2!important;color:#9a6b12!important}
+.vt-btn:hover:not(.active){background:#f8f9fa!important;color:#475467!important}
+
+/* Dark mode now follows the same ONOMO navy/gold visual language. */
+body.dark-mode{
+  --bg:#0f151c!important;
+  --surface:#171f28!important;
+  --surface2:#1d2732!important;
+  --surface3:#26323f!important;
+  --border:#2a3542!important;
+  --border2:#394654!important;
+  --tx:#f2f4f7!important;
+  --tx2:#c2c8d0!important;
+  --tx3:#8792a1!important;
+  background:#0f151c!important;
+  color:#f2f4f7!important;
+}
+body.dark-mode #appScreen .main-area{background:#0f151c!important}
+body.dark-mode #appScreen .topbar{background:rgba(23,31,40,.96)!important;border-color:#2a3542!important;box-shadow:none!important}
+body.dark-mode #appScreen .search-box,
+body.dark-mode #appScreen .btn-icon,
+body.dark-mode .dash-chip,
+body.dark-mode .tickets-search,
+body.dark-mode .ticket-filter-pill,
+body.dark-mode .view-toggle{background:#1d2732!important;border-color:#35414e!important;color:#c2c8d0!important}
+body.dark-mode #appScreen .search-box input,
+body.dark-mode .tickets-search input{color:#f2f4f7!important}
+body.dark-mode .dash-welcome h1,
+body.dark-mode .tickets-page-head h1,
+body.dark-mode .detail-reference-head h1,
+body.dark-mode #mainContent:has(#pOld) .page-head h2{color:#f7f8fa!important}
+body.dark-mode .dash-welcome p,
+body.dark-mode .tickets-page-head p,
+body.dark-mode #mainContent:has(#pOld) .page-head p{color:#8792a1!important}
+body.dark-mode .card,
+body.dark-mode .stat-card,
+body.dark-mode .kpi-card,
+body.dark-mode .report-section,
+body.dark-mode .settings-section,
+body.dark-mode .tickets-card,
+body.dark-mode .detail-reference-card,
+body.dark-mode #mainContent:has(#pOld) .card{background:#171f28!important;border-color:#2a3542!important;box-shadow:none!important}
+body.dark-mode .card-hdr,
+body.dark-mode .modal-hdr,
+body.dark-mode .modal-foot{background:#171f28!important;border-color:#2a3542!important}
+body.dark-mode .stats-grid-six .stat-card{background:#171f28!important}
+body.dark-mode .stats-grid-six .stat-val,
+body.dark-mode #appScreen .kpi-val{color:#f2f4f7!important}
+body.dark-mode .stats-grid-six .stat-lbl,
+body.dark-mode #appScreen .kpi-lbl{color:#c2c8d0!important}
+body.dark-mode .stats-grid-six .stat-d,
+body.dark-mode #appScreen .kpi-sub{color:#8792a1!important}
+body.dark-mode .trend-grid{background:repeating-linear-gradient(to bottom,#2a3542 0,#2a3542 1px,transparent 1px,transparent 38px)!important}
+body.dark-mode .status-donut::after{background:#171f28!important}
+body.dark-mode .status-donut strong{color:#f2f4f7!important}
+body.dark-mode .status-legend span,
+body.dark-mode .dash-act-item strong,
+body.dark-mode .detail-info-list strong,
+body.dark-mode .detail-info-section h3,
+body.dark-mode .detail-desc-section h3{color:#d0d5dc!important}
+body.dark-mode .dash-act-item{border-color:#2a3542!important}
+body.dark-mode .dash-act-icon{background:#2b261b!important}
+body.dark-mode .ticket-table-reference thead th,
+body.dark-mode .ticket-table thead th{background:#1d2732!important;color:#8792a1!important}
+body.dark-mode .ticket-table-reference tbody tr,
+body.dark-mode .ticket-table tbody tr{background:#171f28!important}
+body.dark-mode .ticket-table-reference tbody tr:hover,
+body.dark-mode .ticket-table tbody tr:hover{background:#1c2630!important}
+body.dark-mode .ticket-table td,
+body.dark-mode .ticket-table th{border-color:#2a3542!important;color:#c2c8d0!important}
+body.dark-mode .ticket-table .t-title,
+body.dark-mode .ticket-table-reference .t-title{color:#f2f4f7!important}
+body.dark-mode .row-action-btn,
+body.dark-mode .fake-pagination button{background:#1d2732!important;border-color:#35414e!important;color:#c2c8d0!important}
+body.dark-mode .ticket-filter-pill.active{background:#302a1d!important;border-color:#80682f!important;color:#e7c46c!important}
+body.dark-mode .ticket-filter-pill b{background:#26323f!important;color:#c2c8d0!important}
+body.dark-mode .ticket-filter-pill.active b,
+body.dark-mode .fake-pagination button.active{background:#b98623!important;color:#fff!important;border-color:#b98623!important}
+body.dark-mode .adv-filters{background:#171f28!important;border-color:#2a3542!important}
+body.dark-mode .adv-sel,
+body.dark-mode .field-ctrl,
+body.dark-mode .c-input,
+body.dark-mode #mainContent:has(#pOld) #pOld,
+body.dark-mode #mainContent:has(#pOld) #pNew,
+body.dark-mode #mainContent:has(#pOld) #pConfirm{background:#1d2732!important;border-color:#394654!important;color:#f2f4f7!important}
+body.dark-mode .detail-reference-head,
+body.dark-mode .detail-info-section,
+body.dark-mode .detail-tabbar,
+body.dark-mode .detail-history-reference,
+body.dark-mode .detail-comments-wrap{border-color:#2a3542!important}
+body.dark-mode .detail-info-section{border-right-color:#2a3542!important}
+body.dark-mode .detail-desc-text,
+body.dark-mode .detail-info-list span{color:#aeb6c1!important}
+body.dark-mode .detail-comments-wrap .c-text{background:#1d2732!important;border-color:#2a3542!important;color:#e4e7ec!important}
+body.dark-mode #mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div{background:#1d2732!important;border-color:#2a3542!important}
+body.dark-mode #mainContent:has(#pOld) .card:first-of-type>div:nth-child(2)>div>div:last-child{color:#e4e7ec!important}
+body.dark-mode .kanban-col{background:#131b23!important;border-color:#2a3542!important}
+body.dark-mode .kanban-col-hdr,
+body.dark-mode .k-card{background:#171f28!important;border-color:#2a3542!important}
+body.dark-mode .k-card-title{color:#f2f4f7!important}
+body.dark-mode .k-card-foot{border-color:#2a3542!important}
+body.dark-mode .k-card:hover{border-color:#9a762d!important;box-shadow:none!important}
+body.dark-mode .kanban-cnt{background:#26323f!important}
+body.dark-mode .notif-panel{background:#171f28!important;border-color:#2a3542!important}
+body.dark-mode .notif-item{border-color:#2a3542!important}
+body.dark-mode .notif-item:hover{background:#1d2732!important}
+body.dark-mode .notif-item.unread{background:#2b261b!important}
+body.dark-mode .notif-text{color:#e4e7ec!important}
+body.dark-mode #mobileBottomNav{background:#171f28!important;border-color:#2a3542!important}
+body.dark-mode #mobileBottomNav .mbnav-item{color:#8792a1!important}
+body.dark-mode #mobileBottomNav .mbnav-item.active{color:#d7b45f!important}
+@media(max-width:720px){
+  .kanban-board{grid-template-columns:1fr!important}
+  .kanban-col{min-height:0!important}
+}
