@@ -5840,3 +5840,28 @@ html[dir="rtl"] .kanban-col-hdr{
     scroll-padding-right:13px!important;
   }
 }
+
+
+/* LOGIN BRAND LABEL TEST — visual only
+   Move HOTELS directly below ONOMO and render it white. */
+#loginScreen .login-visual-brand{
+  position:absolute!important;
+}
+#loginScreen .login-visual-brand::after{
+  position:absolute!important;
+  top:58px!important;
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  width:max-content!important;
+  margin:0!important;
+  display:block!important;
+  color:#fff!important;
+  font-size:11px!important;
+  line-height:1!important;
+  letter-spacing:.50em!important;
+  text-shadow:0 2px 12px rgba(0,0,0,.28)!important;
+  pointer-events:none!important;
+}
+#loginScreen .login-visual-brand::before{
+  margin-bottom:26px!important;
+}
