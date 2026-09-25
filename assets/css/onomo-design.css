@@ -1673,3 +1673,311 @@ body.dark-mode #modalUser #uHotelsCheckbox label{
     grid-template-columns:1fr!important;
   }
 }
+
+
+/* MOBILE TICKETS + DETAIL PASS — visual only */
+@media(max-width:720px){
+  .tickets-page{gap:11px!important}
+  .tickets-page-head{gap:12px!important}
+  .tickets-page-head p{font-size:9px!important}
+  .tickets-page-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+    width:100%!important;
+  }
+  .tickets-search{
+    grid-column:1/-1!important;
+    width:100%!important;
+    height:38px!important;
+    min-width:0!important;
+  }
+  .tickets-filter-btn{
+    width:100%!important;
+    justify-content:center!important;
+    height:36px!important;
+  }
+  .tickets-page-actions .btn-gold{
+    grid-column:auto!important;
+    width:100%!important;
+    justify-content:center!important;
+    height:36px!important;
+  }
+
+  .ticket-filter-strip{
+    margin:0 -2px!important;
+    padding:0 2px 5px!important;
+    overflow-x:auto!important;
+    flex-wrap:nowrap!important;
+    scroll-snap-type:x proximity;
+    scrollbar-width:none;
+  }
+  .ticket-filter-strip::-webkit-scrollbar{display:none}
+  .ticket-filter-pill{
+    flex:0 0 auto!important;
+    height:30px!important;
+    padding:0 9px!important;
+    font-size:9px!important;
+    scroll-snap-align:start;
+  }
+
+  .adv-filters.open{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+    padding:10px!important;
+  }
+  .adv-sel{width:100%!important}
+
+  /* Transform the desktop ticket table into stacked ticket cards. */
+  .tickets-card{
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+    overflow:visible!important;
+  }
+  .tickets-card>div[style*="overflow-x"]{
+    overflow:visible!important;
+  }
+  .ticket-table-reference{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    background:transparent!important;
+  }
+  .ticket-table-reference thead{display:none!important}
+  .ticket-table-reference tbody{
+    display:grid!important;
+    gap:9px!important;
+  }
+  .ticket-table-reference tr{
+    position:relative!important;
+    display:grid!important;
+    grid-template-columns:1fr auto!important;
+    gap:7px 12px!important;
+    padding:13px 42px 13px 13px!important;
+    border:1px solid #e4e7ec!important;
+    border-radius:11px!important;
+    background:#fff!important;
+    box-shadow:0 1px 3px rgba(16,24,40,.035)!important;
+  }
+  .ticket-table-reference tr:hover{
+    background:#fffaf4!important;
+    box-shadow:0 2px 8px rgba(16,24,40,.06)!important;
+  }
+  .ticket-table-reference td{
+    display:block!important;
+    width:auto!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:0!important;
+    border:0!important;
+    font-size:9px!important;
+  }
+  .ticket-table-reference td:nth-child(1){
+    grid-column:1/2;
+    grid-row:1;
+  }
+  .ticket-table-reference td:nth-child(2){
+    grid-column:1/-1;
+    grid-row:2;
+  }
+  .ticket-table-reference td:nth-child(3),
+  .ticket-table-reference td:nth-child(5){
+    display:none!important;
+  }
+  .ticket-table-reference td:nth-child(4){
+    grid-column:1/2;
+    grid-row:3;
+    color:#667085!important;
+  }
+  .ticket-table-reference td:nth-child(6){
+    grid-column:1/2;
+    grid-row:4;
+  }
+  .ticket-table-reference td:nth-child(7){
+    grid-column:2/3;
+    grid-row:4;
+    justify-self:end;
+  }
+  .ticket-table-reference td:nth-child(8){
+    grid-column:2/3;
+    grid-row:1;
+    justify-self:end;
+  }
+  .ticket-table-reference td:nth-child(9){
+    position:absolute!important;
+    top:50%!important;
+    right:9px!important;
+    transform:translateY(-50%)!important;
+  }
+  .ticket-table-reference .t-num{
+    font-size:8px!important;
+    color:#9a711d!important;
+  }
+  .ticket-table-reference .t-title{
+    max-width:none!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    font-size:11px!important;
+    line-height:1.4!important;
+    color:#26313d!important;
+  }
+  .ticket-table-reference .hotel-cell{
+    display:inline-flex!important;
+    align-items:center!important;
+    gap:5px!important;
+    font-size:9px!important;
+  }
+  .ticket-table-reference .hotel-cell::before{
+    content:"";
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:#c9972a;
+  }
+  .ticket-table-reference .time-cell{
+    font-size:8px!important;
+  }
+  .ticket-table-reference .row-action-btn{
+    width:28px!important;
+    height:28px!important;
+    border-radius:50%!important;
+  }
+  .tickets-card-foot{
+    margin-top:9px!important;
+    padding:10px 2px!important;
+    border:0!important;
+    background:transparent!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:8px!important;
+  }
+  .tickets-card-foot>span{font-size:8px!important}
+  .fake-pagination button{width:26px!important;height:26px!important}
+
+  /* Ticket detail becomes a clean single-column mobile sheet. */
+  .detail-page-reference{width:100%!important;max-width:none!important}
+  .detail-toolbar-reference{
+    gap:8px!important;
+    margin-bottom:8px!important;
+  }
+  .detail-toolbar-left{
+    min-width:0!important;
+    font-size:9px!important;
+  }
+  .detail-toolbar-left>span{
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  .detail-toolbar-reference .btn-outline{
+    min-width:32px!important;
+    padding:0 9px!important;
+    font-size:0!important;
+  }
+  .detail-toolbar-reference .btn-outline i{
+    font-size:14px!important;
+    margin:0!important;
+  }
+  .detail-reference-card{
+    border-radius:11px!important;
+  }
+  .detail-reference-head{
+    padding:14px 14px 11px!important;
+  }
+  .detail-reference-head h1{
+    font-size:17px!important;
+    line-height:1.3!important;
+    margin-bottom:9px!important;
+  }
+  .detail-badges{
+    flex-wrap:wrap!important;
+  }
+  .detail-reference-columns{
+    display:block!important;
+  }
+  .detail-info-section,
+  .detail-desc-section{
+    padding:13px 14px!important;
+    border-right:0!important;
+  }
+  .detail-info-section{
+    border-bottom:1px solid #edf0f3!important;
+  }
+  .detail-info-list{
+    gap:8px!important;
+  }
+  .detail-info-list>div{
+    grid-template-columns:88px minmax(0,1fr)!important;
+    gap:8px!important;
+    font-size:9px!important;
+  }
+  .detail-info-list strong{
+    overflow-wrap:anywhere!important;
+  }
+  .detail-desc-text{
+    min-height:0!important;
+    font-size:10px!important;
+  }
+  .detail-controls{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+    padding:0 14px 13px!important;
+  }
+  .detail-controls .btn{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+  }
+  .detail-tabbar{
+    gap:18px!important;
+    padding:0 14px!important;
+    overflow-x:auto!important;
+  }
+  .detail-comments-wrap,
+  .detail-history-reference{
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+  .detail-comments-wrap .c-item{
+    gap:8px!important;
+  }
+  .detail-comments-wrap .c-av{
+    width:28px!important;
+    height:28px!important;
+    font-size:8px!important;
+  }
+  .detail-comment-input{
+    display:flex!important;
+    gap:7px!important;
+  }
+  .detail-comment-input .c-input{
+    min-width:0!important;
+    flex:1!important;
+  }
+
+  /* Notification popover fills the useful phone width instead of overflowing. */
+  #appScreen .notif-panel{
+    position:fixed!important;
+    top:62px!important;
+    left:10px!important;
+    right:10px!important;
+    width:auto!important;
+    max-height:calc(100dvh - 145px)!important;
+    overflow-y:auto!important;
+    border-radius:11px!important;
+  }
+}
+
+body.dark-mode .ticket-table-reference tr{
+  background:#171f28!important;
+  border-color:#2a3542!important;
+}
+body.dark-mode .ticket-table-reference tr:hover{
+  background:#1c2630!important;
+}
+body.dark-mode .ticket-table-reference .t-title{
+  color:#f2f4f7!important;
+}
