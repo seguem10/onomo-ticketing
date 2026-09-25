@@ -615,7 +615,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 #loginScreen{background:linear-gradient(145deg,#101828 0%,#172554 55%,#155eef 145%)!important;color:#fff!important}#loginScreen::before{display:block!important;background:radial-gradient(ellipse 75% 55% at 50% 0%,rgba(132,173,255,.32),transparent 68%)!important}.login-card{background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:0 24px 60px rgba(0,0,0,.28)!important}.login-logo{color:#fff!important}.login-logo i{color:#84adff!important}.login-tagline{color:#cbd5e1!important}.login-h{color:#fff!important}.login-d{color:#d0d5dd!important}.form-lbl{color:#e2e8f0!important}.login-card .form-ctrl{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.28)!important;color:#fff!important}.login-card .form-ctrl::placeholder{color:#cbd5e1!important}.login-card .form-ctrl:focus{background:rgba(255,255,255,.18)!important;border-color:#84adff!important}.input-wrap .eye-btn{color:#e2e8f0!important}.login-err{background:rgba(254,226,226,.95)!important;color:#b42318!important;border-color:#f97066!important}.login-card .btn-primary{width:100%!important;padding:12px!important;background:#2970ff!important}.login-card .btn-primary:hover{background:#155eef!important}
 .language-selector{margin-left:auto;border:1px solid #d0d5dd;border-radius:7px;background:#fff;color:#344054;padding:6px 9px;font:600 11px inherit;cursor:pointer}.login-brand .language-selector{position:fixed;z-index:10;top:30px;right:32px;margin:0;min-width:92px;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(8px)}.login-brand{position:relative}html[dir="rtl"] .sidebar{right:0;left:auto!important}html[dir="rtl"] .main-area{margin-right:260px;margin-left:0}html[dir="rtl"] .topbar,html[dir="rtl"] .content{text-align:right}html[dir="rtl"] .ticket-table th,html[dir="rtl"] .ticket-table td{text-align:right}html[dir="rtl"] .sidebar-overlay{right:260px;left:0}@media(max-width:768px){.login-brand .language-selector{top:16px;right:16px;min-width:82px}html[dir="rtl"] .main-area{margin-right:0}.language-selector{margin-left:0;margin-right:auto}}
 </style>
-<link rel="stylesheet" href="assets/css/onomo-design.css?v=20260925-34">
+<link rel="stylesheet" href="assets/css/onomo-design.css?v=20260925-35">
 </head>
 <body>
 
@@ -1821,7 +1821,7 @@ function renderTicketList(list,title){
   };
   let html=`<div class="tickets-page">
     <div class="tickets-page-head">
-      <div><h1>Tickets</h1><p>Gérez et suivez tous les tickets de votre périmètre.</p></div>
+      <div><h1>${esc(title||"Tickets")}</h1><p>${currentView==="urgents"?"Priorisez les tickets urgents nécessitant une attention immédiate.":currentView==="my-tickets"?"Suivez les tickets qui vous sont assignés.":"Gérez et suivez tous les tickets de votre périmètre."}</p></div>
       <div class="tickets-page-actions">
         <div class="tickets-search"><i class="ti ti-search"></i><input placeholder="Rechercher un ticket..." value="${esc(searchQ)}" oninput="onSearch(this.value)"></div>
         <button class="btn btn-outline tickets-filter-btn" onclick="toggleAdvFilters()"><i class="ti ti-filter"></i>Filtres</button>
@@ -4339,18 +4339,24 @@ renderView = function(){
 const _origTicketTableHTML = ticketTableHTML;
 ticketTableHTML = function(list){
   if(!list.length) return `<div class="empty-state"><i class="ti ti-ticket-off"></i><p>Aucun ticket trouvé</p><span>Modifiez vos filtres ou créez un nouveau ticket.</span></div>`;
-  return `<table class="ticket-table">
-    <thead><tr><th>Numéro</th><th>Sujet</th><th>Catégorie</th><th>Priorité</th><th>Statut</th><th>SLA</th><th>Assigné à</th><th>Créé</th></tr></thead>
-    <tbody>${list.map(t=>`<tr onclick="openDetail('${t.id}')">
-      <td><span class="t-num">${esc(t.numero)}</span></td>
-      <td><div class="t-title">${esc(t.titre)}</div><div class="t-sub">${esc(t.hotel)}</div></td>
-      <td><span class="cat-label"><span class="t-cat-dot" style="background:${CAT_COLORS[t.categorie]||'#64748B'}"></span>${esc(t.categorie)}</span></td>
-      <td>${pBadge(t.priorite)}</td>
-      <td>${sBadge(t.statut)}</td>
-      <td>${slaHTML(t)}</td>
-      <td><div class="assignee-cell"><div class="mini-av">${initials(t.assigne_a||'?')}</div><span class="assignee-name">${esc(t.assigne_a||'—')}</span></div></td>
-      <td><span class="time-cell">${timeAgo(t.created_at)}</span></td>
-    </tr>`).join('')}</tbody>
+  return `<table class="ticket-table ticket-table-reference">
+    <thead><tr><th>#</th><th>Sujet</th><th>Demandeur</th><th>Hôtel</th><th>Catégorie</th><th>Priorité</th><th>Statut</th><th>SLA</th><th>Création</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(t=>{
+      const requester=t.created_by_name||t.demandeur||t.created_by_email||"—";
+      const assignee=t.assigne_a||t.assignee_name||"";
+      return `<tr onclick="openDetail('${t.id}')">
+        <td><span class="t-num">${esc(t.numero)}</span></td>
+        <td><div class="t-title">${esc(t.titre)}</div>${assignee?`<div class="t-sub">Assigné à : ${esc(assignee)}</div>`:""}</td>
+        <td><span class="requester-cell">${esc(requester)}</span></td>
+        <td><span class="hotel-cell">${esc((t.hotel||"").replace("Onomo ",""))}</span></td>
+        <td><span class="cat-label"><span class="t-cat-dot" style="background:${CAT_COLORS[t.categorie]||"#64748B"}"></span>${esc(t.categorie)}</span></td>
+        <td>${pBadge(t.priorite)}</td>
+        <td>${sBadge(t.statut)}</td>
+        <td>${slaHTML(t)}</td>
+        <td><span class="time-cell">${timeAgo(t.created_at)}</span></td>
+        <td><button class="row-action-btn" onclick="event.stopPropagation();openDetail('${t.id}')" aria-label="Ouvrir le ticket"><i class="ti ti-dots"></i></button></td>
+      </tr>`;
+    }).join("")}</tbody>
   </table>`;
 };
 
