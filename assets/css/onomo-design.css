@@ -1160,3 +1160,163 @@ body.dark-mode .ai-chip{background:#1d2732!important}
   #modalUser .form-row,
   #modalHotel .form-row{grid-template-columns:1fr!important}
 }
+
+
+/* GLOBAL CONSISTENCY PASS — visual only */
+#appScreen .badge{
+  min-height:22px!important;
+  padding:3px 8px!important;
+  border-radius:999px!important;
+  font-size:8px!important;
+  font-weight:700!important;
+  letter-spacing:0!important;
+  line-height:1!important;
+  border:1px solid transparent!important;
+}
+#appScreen .b-urgente{background:#fff1f0!important;color:#b42318!important;border-color:#fecdca!important}
+#appScreen .b-haute{background:#fff7ed!important;color:#b54708!important;border-color:#fed7aa!important}
+#appScreen .b-normale{background:#eff8ff!important;color:#175cd3!important;border-color:#b2ddff!important}
+#appScreen .b-basse{background:#ecfdf3!important;color:#067647!important;border-color:#abefc6!important}
+#appScreen .b-nouveau{background:#fff9eb!important;color:#8a6315!important;border-color:#ead6a7!important}
+#appScreen .b-en_cours{background:#fff7ed!important;color:#b54708!important;border-color:#fed7aa!important}
+#appScreen .b-en_attente{background:#eff8ff!important;color:#175cd3!important;border-color:#b2ddff!important}
+#appScreen .b-résolu{background:#ecfdf3!important;color:#067647!important;border-color:#abefc6!important}
+#appScreen .b-fermé{background:#f2f4f7!important;color:#475467!important;border-color:#e4e7ec!important}
+
+#appScreen .sla-badge{
+  min-height:21px!important;
+  padding:3px 7px!important;
+  border-radius:999px!important;
+  font-size:8px!important;
+  line-height:1!important;
+  border:1px solid transparent!important;
+}
+#appScreen .sla-ok{background:#ecfdf3!important;color:#067647!important;border-color:#abefc6!important}
+#appScreen .sla-warn{background:#fffaeb!important;color:#b54708!important;border-color:#fedf89!important}
+#appScreen .sla-breach{background:#fff1f0!important;color:#b42318!important;border-color:#fecdca!important;animation:none!important}
+
+#appScreen .filter-tabs{gap:6px!important}
+#appScreen .ftab{
+  min-height:30px!important;
+  padding:0 10px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  border:1px solid #e4e7ec!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#667085!important;
+  font-size:9px!important;
+  font-weight:600!important;
+}
+#appScreen .ftab:hover{background:#f8f9fa!important;color:#475467!important}
+#appScreen .ftab.active{
+  background:#fff9eb!important;
+  color:#8a6315!important;
+  border-color:#ead6a7!important;
+  box-shadow:inset 0 0 0 1px rgba(201,151,42,.06)!important;
+}
+
+#appScreen .page-head,
+#appScreen .page-header,
+#appScreen .view-header{margin-bottom:16px!important}
+#appScreen .page-head h1,
+#appScreen .page-head h2,
+#appScreen .page-header h1,
+#appScreen .view-header h1{
+  margin:0 0 5px!important;
+  color:#18212b!important;
+  font-size:23px!important;
+  line-height:1.1!important;
+  letter-spacing:-.035em!important;
+  font-weight:760!important;
+}
+#appScreen .page-head p,
+#appScreen .page-header p,
+#appScreen .view-header p{
+  margin:0!important;
+  color:#98a2b3!important;
+  font-size:10px!important;
+  line-height:1.5!important;
+}
+
+#appScreen button:focus-visible,
+#appScreen a:focus-visible,
+#appScreen input:focus-visible,
+#appScreen select:focus-visible,
+#appScreen textarea:focus-visible,
+#loginScreen button:focus-visible,
+#loginScreen input:focus-visible,
+#loginScreen select:focus-visible{
+  outline:2px solid #c9972a!important;
+  outline-offset:2px!important;
+}
+#appScreen .btn,
+#appScreen .btn-icon,
+#appScreen .row-action-btn,
+#appScreen .detail-back-btn,
+#appScreen .fake-pagination button{
+  transition:background .14s,border-color .14s,color .14s,box-shadow .14s!important;
+}
+#appScreen .btn:hover{transform:none!important}
+#appScreen .btn-icon:hover,
+#appScreen .row-action-btn:hover,
+#appScreen .detail-back-btn:hover,
+#appScreen .fake-pagination button:hover{
+  background:#f8f9fa!important;
+  border-color:#d0d5dd!important;
+  color:#344054!important;
+}
+#appScreen .btn:disabled,
+#appScreen button:disabled{
+  opacity:.48!important;
+  cursor:not-allowed!important;
+  box-shadow:none!important;
+}
+
+#appScreen .mini-av{
+  width:24px!important;
+  height:24px!important;
+  font-size:8px!important;
+  border:1px solid rgba(16,24,40,.04)!important;
+}
+#appScreen .cat-label{gap:6px!important}
+#appScreen .t-cat-dot{width:6px!important;height:6px!important;margin-right:0!important}
+#appScreen .time-cell{font-size:9px!important;color:#98a2b3!important}
+#appScreen .assignee-name{font-size:9px!important;color:#667085!important}
+#appScreen .t-num{font-family:Inter,system-ui,sans-serif!important;font-size:9px!important;font-weight:650!important}
+#appScreen .t-title{font-size:10px!important}
+#appScreen .t-sub{font-size:8px!important}
+
+#appScreen .empty-state{
+  border-radius:10px!important;
+  background:linear-gradient(180deg,#fff,#fcfcfd)!important;
+}
+#appScreen .empty-state i{
+  width:46px!important;
+  height:46px!important;
+  border-radius:12px!important;
+  background:#f7f1e2!important;
+  color:#9a6b12!important;
+  font-size:22px!important;
+}
+#appScreen .empty-state p{font-size:11px!important;color:#344054!important}
+#appScreen .empty-state span{font-size:9px!important;color:#98a2b3!important}
+
+body.dark-mode #appScreen .page-head h1,
+body.dark-mode #appScreen .page-head h2,
+body.dark-mode #appScreen .page-header h1,
+body.dark-mode #appScreen .view-header h1{color:#f7f8fa!important}
+body.dark-mode #appScreen .ftab{background:#1d2732!important;border-color:#35414e!important;color:#aeb6c1!important}
+body.dark-mode #appScreen .ftab.active{background:#302a1d!important;border-color:#80682f!important;color:#e7c46c!important}
+body.dark-mode #appScreen .b-fermé{background:#26323f!important;color:#c2c8d0!important;border-color:#394654!important}
+body.dark-mode #appScreen .empty-state{background:#171f28!important}
+body.dark-mode #appScreen .empty-state p{color:#e4e7ec!important}
+
+@media(max-width:620px){
+  #appScreen .page-head h1,
+  #appScreen .page-head h2,
+  #appScreen .page-header h1,
+  #appScreen .view-header h1{font-size:20px!important}
+  #appScreen .badge,
+  #appScreen .sla-badge{font-size:8px!important}
+}
