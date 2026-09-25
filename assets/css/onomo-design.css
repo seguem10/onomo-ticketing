@@ -107,3 +107,46 @@ button,.nav-item,.ftab,.ticket-table tbody tr{transition:background-color .18s e
   .detail-layout{display:block}.detail-sidebar{position:static;margin-top:14px}.detail-title{font-size:19px!important}.detail-header{align-items:flex-start!important}.meta-grid{grid-template-columns:1fr!important}.meta-item,.meta-item:nth-last-child(-n+2){border-right:0;border-bottom:1px solid var(--line)}.meta-item:last-child{border-bottom:0}.detail-main>.card:first-child,.detail-main>.card:nth-child(2),.detail-main>.card:nth-child(3){padding:18px!important}.c-input-wrap{margin:18px -18px -18px!important;padding:13px 18px!important}
 }
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+
+/* ONOMO visual refresh v2 — presentation only. No workflow or data behavior. */
+body{background:
+  radial-gradient(circle at 88% 8%,rgba(201,151,42,.055),transparent 24rem),
+  var(--canvas)}
+.sidebar{border-right:1px solid rgba(255,255,255,.06)}
+.sb-brand::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:1px;background:linear-gradient(90deg,rgba(201,151,42,.7),rgba(255,255,255,.06),transparent)}
+.nav-item i{opacity:.88}.nav-item:hover i,.nav-item.active i{opacity:1}
+.sb-user{padding:8px;border-radius:12px}.sb-user:hover{background:rgba(255,255,255,.055)}
+.topbar{border-bottom:1px solid rgba(16,24,40,.055)!important}
+.search-box{border:1px solid transparent!important;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.search-box:focus-within{background:#fff!important;border-color:#d7dce5!important;box-shadow:0 0 0 3px rgba(23,32,51,.045)}
+.btn-icon:hover{background:#f3f5f8!important;color:var(--primary)!important}
+.content{background:transparent}
+.card,.kpi-card,.report-section{border-color:#e7e9ee!important}
+.card-hdr{background:linear-gradient(180deg,#fff,#fdfdfd)}
+.stat-card{position:relative;overflow:hidden;border-color:#e8eaf0!important;background:linear-gradient(145deg,#fff 0%,#fdfdfd 100%)!important}
+.stat-card::after{content:"";position:absolute;right:-32px;top:-38px;width:105px;height:105px;border:18px solid rgba(201,151,42,.045);border-radius:50%;pointer-events:none}
+.stat-card .stat-icon{box-shadow:inset 0 0 0 1px rgba(16,24,40,.035)}
+.dashboard-hero{isolation:isolate}
+.dashboard-hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent 0 58%,rgba(255,255,255,.035));pointer-events:none}
+.dashboard-hero h1{text-wrap:balance}.dashboard-hero p{line-height:1.6}
+.ticket-table{border-collapse:separate!important;border-spacing:0}
+.ticket-table th{background:#fafbfc!important;color:#7c8595!important}
+.ticket-table tbody tr{position:relative}.ticket-table tbody tr:hover{box-shadow:inset 3px 0 0 var(--accent)}
+.badge{font-weight:700!important;letter-spacing:.01em}
+.field-ctrl{background:#fff!important;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+.field-ctrl:hover{border-color:#bfc6d1!important}
+.modal{border:1px solid rgba(16,24,40,.07)!important}
+.modal-hdr{border-bottom-color:#edf0f3!important}
+.empty-state{background:radial-gradient(circle at 50% 28%,rgba(201,151,42,.055),transparent 9rem)}
+.notif-panel{border:1px solid rgba(16,24,40,.07)!important}
+.detail-main>.card,.detail-sidebar>.card{border-color:#e7e9ee!important}
+.desc-box,.c-text,#ticketHistoryList>div{border:1px solid #edf0f3}
+#loginScreen{position:relative;overflow:hidden}
+#loginScreen::before,#loginScreen::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+#loginScreen::before{width:460px;height:460px;right:-180px;top:-190px;border:54px solid rgba(201,151,42,.075)}
+#loginScreen::after{width:340px;height:340px;left:-190px;bottom:-210px;border:42px solid rgba(255,255,255,.035)}
+.login-card{position:relative;z-index:1;border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 30px 70px rgba(4,10,22,.24)!important}
+.login-logo{position:relative;z-index:1}
+@media (max-width:899px){.topbar{box-shadow:0 1px 8px rgba(16,24,40,.045)}.dashboard-hero-actions{flex-wrap:wrap}}
+@media (max-width:620px){.stat-card{min-height:136px}.dashboard-hero{border-radius:16px}.ticket-table tbody tr:hover{box-shadow:0 4px 12px rgba(16,24,40,.06)}}
