@@ -665,3 +665,39 @@ url("https://www.onomohotels.com/app/uploads/2023/04/omomo-hotel-casablanca-city
   .status-donut{width:102px;height:102px}
   .tickets-card-foot{flex-direction:column;gap:9px;align-items:flex-start}
 }
+
+
+/* LOGIN REFERENCE PHOTO + FLOATING CARD — visual only */
+#loginScreen .login-visual{
+  background:
+    linear-gradient(90deg,rgba(7,9,12,.22) 0%,rgba(7,9,12,.12) 55%,rgba(7,9,12,.30) 100%),
+    url("https://www.kayak.com.au/rimg/himg/08/c4/c7/leonardo-236437654-ONOMO_Casablanca_-21_O-619939.jpg?crop=true&height=1215&width=2160") center center/cover no-repeat!important;
+}
+#loginScreen .login-form-side{
+  top:50%!important;
+  bottom:auto!important;
+  right:4.5vw!important;
+  width:min(420px,39vw)!important;
+  min-height:570px!important;
+  height:auto!important;
+  transform:translateY(-50%)!important;
+  border-radius:12px!important;
+}
+#loginScreen .login-wrap{padding:62px 34px 38px!important}
+#loginScreen .login-form-top{top:17px!important;right:17px!important}
+#loginScreen .login-visual-brand{left:25.5%!important;top:51%!important}
+#loginScreen .login-visual-brand::before{font-size:58px!important;letter-spacing:.07em!important}
+#loginScreen .login-visual-brand::after{font-size:10px!important;letter-spacing:.58em!important;margin-bottom:22px!important}
+#loginScreen .login-visual-brand h1{font-size:22px!important}
+#loginScreen .login-visual-values{left:3.5%!important;bottom:3.5%!important}
+@media(max-height:720px) and (min-width:721px){
+  #loginScreen .login-form-side{min-height:0!important;max-height:92vh!important}
+  #loginScreen .login-wrap{padding-top:52px!important;padding-bottom:28px!important}
+}
+@media(max-width:900px) and (min-width:721px){
+  #loginScreen .login-form-side{right:3vw!important;width:min(410px,46vw)!important}
+  #loginScreen .login-visual-brand{left:26%!important}
+}
+@media(max-width:720px){
+  #loginScreen .login-form-side{transform:none!important;min-height:0!important}
+}
