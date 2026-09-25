@@ -289,3 +289,14 @@ body{background:var(--onomo-canvas)!important;color:#263244}
 .modal-foot .btn-primary{background:linear-gradient(135deg,#c99936,#af7916)!important}
 .pagination button.active,.pagination .active{background:#bd8a24!important;color:#fff!important;border-color:#bd8a24!important}
 @media(max-width:899px){.content{padding-top:16px!important}.dashboard-hero::after{right:-100px}}
+
+
+/* Login contrast hotfix — visual only */
+#loginScreen .login-card{color:#172033!important}
+#loginScreen .login-card h1,#loginScreen .login-card h2,#loginScreen .login-card h3{color:#172033!important}
+#loginScreen .login-card p{color:#667085!important}
+#loginScreen .login-card label,#loginScreen .login-card .field-label{color:#475467!important}
+#loginScreen .login-card input,#loginScreen .login-card .field-ctrl{color:#172033!important;background:#fff!important;border-color:#d8dde6!important}
+#loginScreen .login-card input::placeholder{color:#98a2b3!important;opacity:1}
+#loginScreen .login-card .btn-primary,#loginScreen .login-card .btn-primary *{color:#fff!important}
+#loginScreen .login-card a{color:#b77f17!important}
