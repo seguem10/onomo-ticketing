@@ -300,3 +300,44 @@ body{background:var(--onomo-canvas)!important;color:#263244}
 #loginScreen .login-card input::placeholder{color:#98a2b3!important;opacity:1}
 #loginScreen .login-card .btn-primary,#loginScreen .login-card .btn-primary *{color:#fff!important}
 #loginScreen .login-card a{color:#b77f17!important}
+
+
+/* TRUE UI REFACTOR — approved split-screen login, presentation only */
+#loginScreen{padding:0!important;background:#fff!important}
+#loginScreen::before,#loginScreen::after{display:none!important}
+.login-shell{display:grid;width:100%;min-height:100vh;grid-template-columns:minmax(430px,1.03fr) minmax(520px,.97fr);background:#fff}
+.login-visual{position:relative;overflow:hidden;min-height:100vh;background:
+linear-gradient(180deg,rgba(11,17,25,.16),rgba(9,14,21,.54)),
+linear-gradient(135deg,#3f382d 0%,#151b21 48%,#7c5c30 100%);color:#fff}
+.login-visual::before{content:"";position:absolute;inset:0;background:
+radial-gradient(circle at 25% 32%,rgba(226,183,102,.28),transparent 17%),
+linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px),
+linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:auto,72px 72px,72px 72px;opacity:.65}
+.login-visual::after{content:"";position:absolute;left:7%;right:7%;bottom:8%;height:32%;border-radius:18px 18px 0 0;background:linear-gradient(155deg,rgba(192,143,68,.32),rgba(21,27,34,.15));box-shadow:0 -70px 110px rgba(211,164,86,.13)}
+.login-visual-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,8,12,.35),transparent 52%,rgba(4,8,12,.12))}
+.login-visual-brand{position:absolute;z-index:2;left:50%;top:48%;width:min(72%,520px);transform:translate(-50%,-50%);text-align:center}
+.login-visual-brand .onomo-wordmark{height:78px!important;max-width:320px!important;margin:0 auto 22px;padding:8px 13px!important;border-radius:10px!important}
+.login-visual-rule{width:52px;height:2px;margin:0 auto 20px;background:var(--onomo-gold)}
+.login-visual-brand h1{font-size:23px;letter-spacing:-.025em;margin:0 0 9px;font-weight:650}
+.login-visual-brand p{font-size:13px;color:rgba(255,255,255,.78)}
+.login-visual-values{position:absolute;z-index:2;left:7%;bottom:4%;display:flex;gap:10px;align-items:center;font-size:10px;color:rgba(255,255,255,.72);letter-spacing:.02em}
+.login-form-side{position:relative;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}
+.login-form-top{position:absolute;right:38px;top:30px}
+#loginScreen .login-form-top .language-selector{position:static!important;min-width:74px!important;background:#fff!important;color:#344054!important;border:1px solid #d0d5dd!important;backdrop-filter:none!important}
+#loginScreen .login-wrap{width:min(100%,480px)!important;max-width:none!important;padding:34px!important}
+#loginScreen .login-brand{display:none!important}
+#loginScreen .login-card{padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;color:#172033!important}
+#loginScreen .login-h{font-size:28px!important;font-weight:760!important;letter-spacing:-.04em!important;color:#172033!important;margin-bottom:7px!important}
+#loginScreen .login-d{font-size:13px!important;color:#667085!important;margin-bottom:30px!important}
+#loginScreen .form-g{margin-bottom:18px!important}
+#loginScreen .form-lbl{font-size:11px!important;font-weight:650!important;color:#475467!important;margin-bottom:7px!important}
+#loginScreen .form-ctrl{height:46px!important;padding:0 14px!important;background:#fff!important;border:1px solid #d0d5dd!important;border-radius:8px!important;color:#172033!important;box-shadow:0 1px 2px rgba(16,24,40,.03)!important}
+#loginScreen .form-ctrl::placeholder{color:#98a2b3!important}
+#loginScreen .form-ctrl:focus{border-color:#b88a2e!important;box-shadow:0 0 0 3px rgba(196,147,45,.11)!important}
+#loginScreen .eye-btn{right:13px!important;color:#98a2b3!important}
+#loginScreen #loginBtn{height:48px!important;margin-top:8px!important;border-radius:8px!important;background:linear-gradient(135deg,#202b36,#111922)!important;color:#fff!important;box-shadow:0 6px 15px rgba(17,25,34,.14)!important;font-size:13px!important}
+#loginScreen #loginBtn:hover{background:#0e1620!important;transform:translateY(-1px)}
+.login-forgot{display:block;margin:15px auto 0;border:0;background:none;color:#a97817!important;cursor:pointer;font-size:11px;font-weight:650}
+#loginScreen .login-err{background:#fff4f2!important;color:#b42318!important;border:1px solid #fecdca!important}
+@media(max-width:900px){.login-shell{grid-template-columns:1fr}.login-visual{display:none}.login-form-side{background:linear-gradient(180deg,#f8f6f1,#fff)}#loginScreen .login-brand{display:block!important;margin-bottom:26px!important}#loginScreen .login-logo .onomo-wordmark{height:58px!important;margin:auto!important}#loginScreen .login-tagline{color:#667085!important}.login-form-top{right:20px;top:18px}}
+@media(max-width:560px){#loginScreen .login-wrap{padding:24px!important}#loginScreen .login-h{font-size:24px!important}.login-form-top{right:14px;top:12px}}
