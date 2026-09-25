@@ -3022,3 +3022,163 @@ body.dark-mode #modalTicket .attachment-dropzone{
 body.dark-mode #modalTicket .attachment-dropzone strong{
   color:#e4e7ec!important;
 }
+
+
+/* ACTIVITY LOG + VOICE UTILITIES — final visual pass */
+#mainContent #activityList{
+  padding:4px 16px 16px!important;
+}
+#mainContent #activityList>div{
+  min-width:0!important;
+}
+#mainContent #activityList>div[style*="display:flex"]{
+  display:grid!important;
+  grid-template-columns:36px minmax(0,1fr) auto!important;
+  gap:10px!important;
+  align-items:start!important;
+  padding:12px 0!important;
+  border-bottom:1px solid #edf0f3!important;
+}
+#mainContent #activityList>div[style*="display:flex"]>div:first-child{
+  width:34px!important;
+  height:34px!important;
+  border-radius:9px!important;
+  background:#f7f1e2!important;
+  border:1px solid #ead6a7!important;
+}
+#mainContent #activityList>div[style*="display:flex"]>div:first-child i{
+  color:#9a6b12!important;
+  font-size:15px!important;
+}
+#mainContent #activityList>div[style*="display:flex"]>div:nth-child(2){
+  min-width:0!important;
+}
+#mainContent #activityList>div[style*="display:flex"]>div:nth-child(2)>div:first-child{
+  color:#344054!important;
+  font-size:10px!important;
+  line-height:1.4!important;
+  font-weight:650!important;
+}
+#mainContent #activityList>div[style*="display:flex"]>div:nth-child(2)>div:nth-child(2){
+  margin-top:3px!important;
+  color:#667085!important;
+  font-size:9px!important;
+  line-height:1.5!important;
+  overflow-wrap:anywhere!important;
+}
+#mainContent #activityList>div[style*="display:flex"]>div:last-child{
+  color:#98a2b3!important;
+  font-size:8px!important;
+  white-space:nowrap!important;
+}
+#mainContent #activityList>div:last-child{
+  border-bottom:0!important;
+}
+
+/* Voice ticket actions */
+#onomoVoiceTicketBtn,
+#voiceDictationBtn{
+  min-height:32px!important;
+  padding:0 10px!important;
+  border:1px solid #dfe3e8!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:#475467!important;
+  font-size:9px!important;
+  font-weight:650!important;
+  box-shadow:none!important;
+}
+#onomoVoiceTicketBtn:hover,
+#voiceDictationBtn:hover{
+  background:#fffaf4!important;
+  border-color:#d8bd7a!important;
+  color:#8a6315!important;
+}
+#onomoVoiceTicketBtn i,
+#voiceDictationBtn i{
+  color:#9a6b12!important;
+  font-size:13px!important;
+}
+#onomoVoiceTicketBtn.btn-danger{
+  background:#fff5f4!important;
+  color:#b42318!important;
+  border-color:#fecdca!important;
+}
+#onomoVoiceTicketBtn.btn-danger i{
+  color:#b42318!important;
+}
+#voiceStatus{
+  margin-top:6px!important;
+  color:#98a2b3!important;
+  font-size:8px!important;
+  line-height:1.45!important;
+}
+
+/* Utility loading / refresh states */
+#mainContent .card-hdr .btn.btn-outline.btn-sm{
+  min-height:30px!important;
+  border-radius:7px!important;
+  font-size:9px!important;
+}
+#mainContent .card-hdr .btn.btn-outline.btn-sm i{
+  font-size:13px!important;
+}
+#mainContent #activityList>div[style*="text-align:center"]{
+  padding:34px 16px!important;
+  color:#98a2b3!important;
+  font-size:9px!important;
+}
+
+/* Dark mode */
+body.dark-mode #mainContent #activityList>div[style*="display:flex"]{
+  border-color:#2a3542!important;
+}
+body.dark-mode #mainContent #activityList>div[style*="display:flex"]>div:first-child{
+  background:#2b261b!important;
+  border-color:#5a4926!important;
+}
+body.dark-mode #mainContent #activityList>div[style*="display:flex"]>div:nth-child(2)>div:first-child{
+  color:#e4e7ec!important;
+}
+body.dark-mode #mainContent #activityList>div[style*="display:flex"]>div:nth-child(2)>div:nth-child(2){
+  color:#aeb6c1!important;
+}
+body.dark-mode #onomoVoiceTicketBtn,
+body.dark-mode #voiceDictationBtn{
+  background:#1d2732!important;
+  border-color:#394654!important;
+  color:#c2c8d0!important;
+}
+body.dark-mode #onomoVoiceTicketBtn:hover,
+body.dark-mode #voiceDictationBtn:hover{
+  background:#2b261b!important;
+  border-color:#80682f!important;
+  color:#e7c46c!important;
+}
+
+/* Mobile */
+@media(max-width:720px){
+  #mainContent #activityList{
+    padding:4px 12px 12px!important;
+  }
+  #mainContent #activityList>div[style*="display:flex"]{
+    grid-template-columns:34px minmax(0,1fr)!important;
+    gap:9px!important;
+    padding:11px 0!important;
+  }
+  #mainContent #activityList>div[style*="display:flex"]>div:last-child{
+    grid-column:2!important;
+    margin-top:-4px!important;
+    white-space:normal!important;
+  }
+  #modalTicket #onomoVoiceTicketBtn,
+  #modalTicket #voiceDictationBtn{
+    width:100%!important;
+    min-height:38px!important;
+    justify-content:center!important;
+    font-size:10px!important;
+  }
+  #modalTicket .ticket-form-body div[style*="justify-content:flex-end"]{
+    width:100%!important;
+  }
+}
