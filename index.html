@@ -1726,36 +1726,57 @@ function renderView(){
 ══════════════════════════════════════════════ */
 function renderDashboard(){
   const vt=visibleTickets();
-  const open=vt.filter(t=>t.statut==="nouveau"||t.statut==="en_cours").length;
+  const open=vt.filter(t=>t.statut==="nouveau").length;
+  const inProgress=vt.filter(t=>t.statut==="en_cours").length;
+  const waiting=vt.filter(t=>t.statut==="en_attente").length;
   const resolved=vt.filter(t=>t.statut==="résolu"||t.statut==="fermé").length;
   const urg=getUrgents().length;
-  const waiting=vt.filter(t=>t.statut==="en_attente").length;
-  const rate=vt.length?Math.round(resolved/vt.length*100):0;
-  const recent=getFiltered().slice(0,10);
-  let html="";
-  if(urg>0)html+=`<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i><div><strong>${urg} ticket(s) urgent(s) actif(s)</strong><div style="font-size:11px;margin-top:1px">${getUrgents().map(t=>t.numero).join(" · ")}</div></div></div>`;
-  html+=`<div class="stats-grid">
-    <div class="stat-card s-open"><div class="stat-icon" style="background:var(--blue-l)"><i class="ti ti-inbox" style="color:var(--blue)"></i></div><div class="stat-val" style="color:var(--blue)">${open}</div><div class="stat-lbl">Ouverts</div><div class="stat-d">nouveau + en cours</div></div>
-    <div class="stat-card s-urgent"><div class="stat-icon" style="background:var(--red-l)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i></div><div class="stat-val" style="color:${urg>0?"var(--red)":"var(--tx)"}">${urg}</div><div class="stat-lbl">Urgents actifs</div><div class="stat-d">${urg>0?"action requise":"aucun actuellement"}</div></div>
-    <div class="stat-card s-resolved"><div class="stat-icon" style="background:var(--green-l)"><i class="ti ti-circle-check" style="color:var(--green)"></i></div><div class="stat-val" style="color:var(--green)">${resolved}</div><div class="stat-lbl">Résolus</div><div class="stat-d">taux : ${rate}%</div></div>
-    <div class="stat-card s-total"><div class="stat-icon" style="background:var(--brand-l)"><i class="ti ti-tickets" style="color:var(--brand)"></i></div><div class="stat-val">${vt.length}</div><div class="stat-lbl">Total tickets</div><div class="stat-d">dont ${waiting} en attente</div></div>
+  const total=vt.length;
+  const hotelLabel=currentUser?.hotel||currentUser?.hotel_nom||"Tous les hôtels";
+  const recent=getFiltered().slice(0,6);
+  const maxStatus=Math.max(open,inProgress,waiting,resolved,1);
+  const statusRows=[
+    ["Nouveau",open,"#3b82f6"],
+    ["En cours",inProgress,"#f59e0b"],
+    ["En attente",waiting,"#eab308"],
+    ["Résolu",resolved,"#10b981"]
+  ];
+  let html=`<div class="dash-welcome">
+    <div><h1>Bonjour ${esc(currentUser?.prenom||currentUser?.nom||"") || "!"} <span>👋</span></h1><p>Voici un aperçu de la situation des tickets${hotelLabel&&hotelLabel!=="Tous les hôtels"?" pour "+esc(hotelLabel):""}.</p></div>
+    <div class="dash-context"><span class="dash-chip"><i class="ti ti-building"></i>${esc(hotelLabel)}</span><span class="dash-chip"><i class="ti ti-calendar"></i>Aujourd'hui</span></div>
   </div>
-  <div class="panel-row">
-    <div class="card">
-      <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-list"></i>Tickets récents</div>
-        <div class="filter-tabs">${["tous","nouveau","en_cours","en_attente","résolu"].map(s=>`<div class="ftab${filterStat===s?" active":""}" onclick="setFilter('${s}')">${s==="tous"?"Tous":STAT_L[s]}</div>`).join("")}</div>
+  <div class="stats-grid stats-grid-six">
+    <div class="stat-card s-open"><div class="stat-icon"><i class="ti ti-ticket"></i></div><div class="stat-lbl">Tickets ouverts</div><div class="stat-val">${open}</div><div class="stat-d">Nouveaux tickets</div></div>
+    <div class="stat-card s-progress"><div class="stat-icon"><i class="ti ti-loader-2"></i></div><div class="stat-lbl">En cours</div><div class="stat-val">${inProgress}</div><div class="stat-d">Traitement actif</div></div>
+    <div class="stat-card s-wait"><div class="stat-icon"><i class="ti ti-clock-hour-4"></i></div><div class="stat-lbl">En attente</div><div class="stat-val">${waiting}</div><div class="stat-d">En attente d'action</div></div>
+    <div class="stat-card s-urgent"><div class="stat-icon"><i class="ti ti-alert-triangle"></i></div><div class="stat-lbl">Critiques</div><div class="stat-val">${urg}</div><div class="stat-d">${urg?"Attention requise":"Aucun critique"}</div></div>
+    <div class="stat-card s-resolved"><div class="stat-icon"><i class="ti ti-circle-check"></i></div><div class="stat-lbl">Résolus</div><div class="stat-val">${resolved}</div><div class="stat-d">Tickets clôturés</div></div>
+    <div class="stat-card s-total"><div class="stat-icon"><i class="ti ti-chart-dots-3"></i></div><div class="stat-lbl">Total tickets</div><div class="stat-val">${total}</div><div class="stat-d">Périmètre visible</div></div>
+  </div>
+  <div class="dash-analytics">
+    <div class="card dash-trend">
+      <div class="card-hdr"><div class="card-title">Évolution des tickets</div><span class="dash-period">30 derniers jours <i class="ti ti-chevron-down"></i></span></div>
+      <div class="trend-chart" aria-label="Évolution visuelle des tickets">
+        <div class="trend-grid"></div>
+        <svg viewBox="0 0 560 180" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,145 45,130 90,135 135,105 180,120 225,82 270,98 315,72 360,82 405,52 450,59 505,34 560,22" fill="none" stroke="#2f80ed" stroke-width="3"/><polyline points="0,160 45,154 90,148 135,150 180,132 225,140 270,118 315,126 360,104 405,115 450,92 505,84 560,67" fill="none" stroke="#27ae60" stroke-width="3"/></svg>
+        <div class="trend-legend"><span><i style="background:#2f80ed"></i>Créés</span><span><i style="background:#27ae60"></i>Résolus</span></div>
       </div>
-      <div style="overflow-x:auto">${ticketTableHTML(recent)}</div>
     </div>
-    <div class="side-col">
-      <div class="card"><div class="card-hdr"><div class="card-title"><i class="ti ti-chart-bar"></i>Par catégorie</div></div>${catChartHTML(vt)}</div>
-      <div class="card"><div class="card-hdr"><div class="card-title"><i class="ti ti-activity"></i>Activité récente</div></div>${activityHTML()}</div>
+    <div class="card dash-status">
+      <div class="card-hdr"><div class="card-title">Tickets par statut</div></div>
+      <div class="status-summary"><div class="status-donut" style="--p:${total?Math.round(resolved/total*100):0}%"><div><strong>${total}</strong><span>Tickets</span></div></div><div class="status-legend">${statusRows.map(r=>`<div><span><i style="background:${r[2]}"></i>${r[0]}</span><strong>${r[1]}</strong></div>`).join("")}</div></div>
     </div>
+    <div class="card dash-activity">
+      <div class="card-hdr"><div class="card-title">Activité récente</div><span class="dash-link">Voir tout</span></div>
+      <div class="dash-activity-list">${recent.length?recent.slice(0,4).map(t=>`<div class="dash-act-item"><span class="dash-act-icon"><i class="ti ti-ticket"></i></span><div><strong>${esc(t.titre)}</strong><small>${esc(t.numero)} · ${timeAgo(t.created_at)}</small></div></div>`).join(""):`<div class="empty-state compact"><i class="ti ti-activity"></i><p>Aucune activité récente</p></div>`}</div>
+    </div>
+  </div>
+  <div class="card dash-recent">
+    <div class="card-hdr"><div class="card-title">Tickets récents</div><div class="filter-tabs">${["tous","nouveau","en_cours","en_attente","résolu"].map(s=>`<div class="ftab${filterStat===s?" active":""}" onclick="setFilter('${s}')">${s==="tous"?"Tous":STAT_L[s]}</div>`).join("")}</div></div>
+    <div style="overflow-x:auto">${ticketTableHTML(recent)}</div>
   </div>`;
   document.getElementById("mainContent").innerHTML=html;
 }
-
 /* ══════════════════════════════════════════════
    TICKET TABLE
 ══════════════════════════════════════════════ */
