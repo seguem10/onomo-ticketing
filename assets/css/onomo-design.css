@@ -5530,3 +5530,97 @@ html[dir="rtl"] body.dark-mode #modalTicket .modal{
     margin-right:auto!important;
   }
 }
+
+
+/* TICKET RENDERER RECONCILIATION — reference layout + SLA */
+.ticket-table-reference{
+  min-width:1040px!important;
+}
+.ticket-table-reference .requester-cell{
+  display:block;
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#667085;
+  font-size:9px;
+}
+.ticket-table-reference .t-sub{
+  margin-top:3px!important;
+  max-width:250px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.ticket-table-reference td:nth-child(8){
+  white-space:nowrap;
+}
+@media(max-width:720px){
+  .ticket-table-reference{
+    min-width:0!important;
+  }
+  .ticket-table-reference td:nth-child(3),
+  .ticket-table-reference td:nth-child(5){
+    display:none!important;
+  }
+  .ticket-table-reference td:nth-child(4){
+    grid-column:1/2!important;
+    grid-row:3!important;
+  }
+  .ticket-table-reference td:nth-child(6){
+    grid-column:1/2!important;
+    grid-row:4!important;
+  }
+  .ticket-table-reference td:nth-child(7){
+    grid-column:2/3!important;
+    grid-row:4!important;
+    justify-self:end!important;
+  }
+  .ticket-table-reference td:nth-child(8){
+    position:static!important;
+    grid-column:2/3!important;
+    grid-row:3!important;
+    justify-self:end!important;
+    transform:none!important;
+  }
+  .ticket-table-reference td:nth-child(9){
+    position:static!important;
+    grid-column:2/3!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    transform:none!important;
+  }
+  .ticket-table-reference td:nth-child(10){
+    position:absolute!important;
+    top:50%!important;
+    right:9px!important;
+    left:auto!important;
+    transform:translateY(-50%)!important;
+  }
+  .ticket-table-reference .requester-cell{
+    max-width:none!important;
+  }
+}
+@media(max-width:390px){
+  .ticket-table-reference tr{
+    padding-right:38px!important;
+  }
+}
+@media print{
+  .ticket-table-reference td:nth-child(9){
+    display:table-cell!important;
+  }
+  .ticket-table-reference th:nth-child(10),
+  .ticket-table-reference td:nth-child(10){
+    display:none!important;
+  }
+}
+@media(max-width:768px){
+  html[dir="rtl"] .ticket-table-reference td:nth-child(9){
+    justify-self:start!important;
+  }
+  html[dir="rtl"] .ticket-table-reference td:nth-child(10){
+    right:auto!important;
+    left:9px!important;
+  }
+}
