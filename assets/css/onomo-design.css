@@ -3751,3 +3751,368 @@ body.dark-mode #appScreen .success-wrap h3{
     border-radius:10px!important;
   }
 }
+
+
+/* PRINT / A4 LAYOUT — visual only */
+@page{
+  size:A4;
+  margin:14mm 13mm 15mm;
+}
+@media print{
+  html,body{
+    width:auto!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow:visible!important;
+    background:#fff!important;
+    color:#111827!important;
+    print-color-adjust:exact!important;
+    -webkit-print-color-adjust:exact!important;
+  }
+  body *{
+    box-shadow:none!important;
+    text-shadow:none!important;
+  }
+
+  /* Remove application chrome and interactive controls. */
+  #appScreen{
+    display:block!important;
+    height:auto!important;
+    overflow:visible!important;
+    background:#fff!important;
+  }
+  #appScreen .app-inner{
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow:visible!important;
+  }
+  #appScreen .sidebar,
+  #appScreen .sidebar-overlay,
+  #appScreen .topbar,
+  #mobileBottomNav,
+  .fab,
+  .pwa-install-bar,
+  .toast,
+  .notif-panel,
+  .detail-toolbar-reference,
+  .detail-controls,
+  #detailAIBox,
+  .detail-comment-input,
+  .tickets-page-actions,
+  .ticket-filter-strip,
+  .adv-filters,
+  .tickets-card-foot,
+  .view-toggle,
+  button:not(.print-keep){
+    display:none!important;
+  }
+
+  #appScreen .main-area{
+    display:block!important;
+    width:auto!important;
+    height:auto!important;
+    overflow:visible!important;
+    background:#fff!important;
+  }
+  #appScreen .content,
+  #mainContent{
+    width:auto!important;
+    max-width:none!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:0!important;
+    margin:0!important;
+    overflow:visible!important;
+    background:#fff!important;
+  }
+
+  /* Ticket detail print */
+  .detail-page-reference{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+  .detail-page-reference::before{
+    content:"ONOMO HOTELS · SUPPORT IT";
+    display:block!important;
+    margin:0 0 7mm!important;
+    padding-bottom:3mm!important;
+    border-bottom:1px solid #d1d5db!important;
+    color:#111827!important;
+    font-size:11px!important;
+    font-weight:700!important;
+    letter-spacing:.16em!important;
+  }
+  .detail-reference-card{
+    overflow:visible!important;
+    border:0!important;
+    border-radius:0!important;
+    background:#fff!important;
+  }
+  .detail-reference-head{
+    padding:0 0 5mm!important;
+    border-bottom:1px solid #e5e7eb!important;
+    break-inside:avoid!important;
+  }
+  .detail-reference-head h1{
+    margin:0 0 3mm!important;
+    color:#111827!important;
+    font-size:20px!important;
+    line-height:1.25!important;
+    letter-spacing:-.02em!important;
+  }
+  .detail-badges{
+    display:flex!important;
+    gap:5px!important;
+    flex-wrap:wrap!important;
+  }
+  .detail-badges .badge,
+  .sla-badge{
+    border:1px solid #d1d5db!important;
+    background:#fff!important;
+    color:#374151!important;
+    font-size:8px!important;
+  }
+  .detail-reference-columns{
+    display:grid!important;
+    grid-template-columns:.9fr 1.1fr!important;
+    border-bottom:1px solid #e5e7eb!important;
+    break-inside:avoid!important;
+  }
+  .detail-info-section,
+  .detail-desc-section{
+    padding:5mm 0!important;
+    background:#fff!important;
+  }
+  .detail-info-section{
+    padding-right:6mm!important;
+    border-right:1px solid #e5e7eb!important;
+  }
+  .detail-desc-section{
+    padding-left:6mm!important;
+  }
+  .detail-info-section h3,
+  .detail-desc-section h3,
+  .comment-title{
+    color:#111827!important;
+    font-size:9px!important;
+    text-transform:uppercase!important;
+    letter-spacing:.06em!important;
+  }
+  .detail-info-list{
+    gap:2.3mm!important;
+  }
+  .detail-info-list>div{
+    grid-template-columns:30mm minmax(0,1fr)!important;
+    gap:3mm!important;
+    font-size:8.5px!important;
+  }
+  .detail-info-list span{
+    color:#6b7280!important;
+  }
+  .detail-info-list strong{
+    color:#111827!important;
+    overflow-wrap:anywhere!important;
+  }
+  .detail-desc-text,
+  .detail-attachments{
+    color:#374151!important;
+    font-size:9px!important;
+    line-height:1.55!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  /* Comments/history */
+  .detail-tabbar{
+    display:none!important;
+  }
+  .detail-comments-wrap,
+  .detail-history-reference{
+    padding:5mm 0 0!important;
+    border:0!important;
+    background:#fff!important;
+  }
+  .detail-comments-wrap::before{
+    content:"Commentaires";
+    display:block!important;
+    margin-bottom:3mm!important;
+    color:#111827!important;
+    font-size:9px!important;
+    font-weight:700!important;
+    text-transform:uppercase!important;
+    letter-spacing:.06em!important;
+  }
+  .detail-comments-wrap .c-item,
+  #ticketHistoryList>div{
+    break-inside:avoid!important;
+  }
+  .detail-comments-wrap .c-item{
+    display:grid!important;
+    grid-template-columns:8mm minmax(0,1fr)!important;
+    gap:3mm!important;
+    margin:0 0 3mm!important;
+  }
+  .detail-comments-wrap .c-av{
+    width:8mm!important;
+    height:8mm!important;
+    background:#f3f4f6!important;
+    color:#111827!important;
+    border:1px solid #d1d5db!important;
+    font-size:7px!important;
+  }
+  .detail-comments-wrap .c-meta{
+    color:#374151!important;
+    font-size:8px!important;
+  }
+  .detail-comments-wrap .c-text{
+    padding:2.5mm 3mm!important;
+    border:1px solid #e5e7eb!important;
+    border-radius:2mm!important;
+    background:#fafafa!important;
+    color:#111827!important;
+    font-size:8.5px!important;
+    line-height:1.5!important;
+  }
+  .detail-history-reference{
+    page-break-before:auto!important;
+  }
+  #ticketHistoryList>div{
+    margin:0 0 2.5mm!important;
+    padding:2.5mm 3mm!important;
+    border:1px solid #e5e7eb!important;
+    border-radius:2mm!important;
+    background:#fff!important;
+    color:#374151!important;
+    font-size:8px!important;
+  }
+
+  /* Reports */
+  .page-head,
+  .page-header,
+  .view-header{
+    margin-bottom:5mm!important;
+  }
+  .page-head h1,
+  .page-head h2,
+  .page-header h1,
+  .view-header h1{
+    color:#111827!important;
+    font-size:18px!important;
+  }
+  .page-head p,
+  .page-header p,
+  .view-header p{
+    color:#6b7280!important;
+    font-size:8.5px!important;
+  }
+  .kpi-row{
+    grid-template-columns:repeat(4,1fr)!important;
+    gap:3mm!important;
+    margin-bottom:5mm!important;
+    break-inside:avoid!important;
+  }
+  .kpi-card{
+    min-height:0!important;
+    padding:3.5mm!important;
+    border:1px solid #d1d5db!important;
+    border-radius:2.5mm!important;
+    background:#fff!important;
+  }
+  .kpi-lbl{color:#6b7280!important;font-size:7.5px!important}
+  .kpi-val{color:#111827!important;font-size:18px!important}
+  .kpi-sub{color:#6b7280!important;font-size:7px!important}
+  .two-col{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:4mm!important;
+  }
+  .report-section,
+  .card{
+    break-inside:avoid-page!important;
+    border:1px solid #d1d5db!important;
+    border-radius:2.5mm!important;
+    background:#fff!important;
+  }
+  .report-section{
+    padding:4mm!important;
+  }
+  .section-title,
+  .card-title{
+    color:#111827!important;
+    font-size:9px!important;
+  }
+  .bar-track,
+  .rate-track{
+    background:#eceff3!important;
+  }
+  .ticket-table,
+  .ticket-table-reference{
+    width:100%!important;
+    min-width:0!important;
+    border-collapse:collapse!important;
+    font-size:7.5px!important;
+  }
+  .ticket-table thead,
+  .ticket-table-reference thead{
+    display:table-header-group!important;
+  }
+  .ticket-table tbody,
+  .ticket-table-reference tbody{
+    display:table-row-group!important;
+  }
+  .ticket-table tr,
+  .ticket-table-reference tr{
+    display:table-row!important;
+    break-inside:avoid!important;
+    background:#fff!important;
+  }
+  .ticket-table th,
+  .ticket-table-reference th{
+    display:table-cell!important;
+    padding:2mm!important;
+    border-bottom:1px solid #9ca3af!important;
+    background:#f3f4f6!important;
+    color:#374151!important;
+    font-size:7px!important;
+  }
+  .ticket-table td,
+  .ticket-table-reference td{
+    position:static!important;
+    display:table-cell!important;
+    width:auto!important;
+    height:auto!important;
+    padding:2mm!important;
+    border-bottom:1px solid #e5e7eb!important;
+    color:#111827!important;
+    font-size:7.5px!important;
+    vertical-align:top!important;
+  }
+  .ticket-table-reference td:nth-child(9),
+  .ticket-table .row-action-btn{
+    display:none!important;
+  }
+  .ticket-table-reference .t-title,
+  .ticket-table .t-title{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    color:#111827!important;
+  }
+
+  /* Avoid dark mode affecting printed output. */
+  body.dark-mode,
+  body.dark-mode #appScreen,
+  body.dark-mode #appScreen .main-area,
+  body.dark-mode #appScreen .content,
+  body.dark-mode .card,
+  body.dark-mode .report-section,
+  body.dark-mode .detail-reference-card{
+    background:#fff!important;
+    color:#111827!important;
+  }
+
+  a[href]::after{
+    content:none!important;
+  }
+}
