@@ -1499,3 +1499,177 @@ html,body{max-width:100%;overflow-x:hidden}
   #appScreen .main-area{flex:1 1 0!important;width:0!important}
   #appScreen .content{overflow-y:auto!important;overflow-x:hidden!important}
 }
+
+
+/* USER SCREENSHOT FOLLOW-UP — laptop dashboard + additional roles */
+#modalUser #uRolesMulti{
+  margin-left:16px!important;
+  margin-right:16px!important;
+  margin-bottom:13px!important;
+}
+#modalUser #uRolesMulti>.field-lbl{
+  margin-bottom:7px!important;
+}
+#modalUser #uRoleChoices{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px 12px!important;
+  padding:10px 11px!important;
+  border:1px solid #e3e7ec!important;
+  border-radius:9px!important;
+  background:#fbfcfd!important;
+}
+#modalUser #uRoleChoices label{
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  min-height:26px!important;
+  margin:0!important;
+  padding:2px 1px!important;
+  color:#475467!important;
+  font-size:9px!important;
+  font-weight:600!important;
+  cursor:pointer!important;
+}
+#modalUser #uRoleChoices input[type="checkbox"],
+#modalUser #uHotelsCheckbox input[type="checkbox"]{
+  width:15px!important;
+  height:15px!important;
+  flex:0 0 15px!important;
+  margin:0!important;
+  accent-color:#b88725!important;
+}
+#modalUser #uHotelsCheckbox{
+  gap:3px!important;
+}
+#modalUser #uHotelsCheckbox label{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:28px!important;
+  color:#475467!important;
+  font-size:9px!important;
+  font-weight:600!important;
+}
+
+/* Laptop / 1280px-class screens: use a balanced grid instead of squeezing six cards. */
+@media(min-width:1101px) and (max-width:1450px){
+  #appScreen .content{
+    padding:22px 22px 36px!important;
+  }
+  #appScreen .dash-welcome{
+    flex-wrap:wrap!important;
+    gap:12px!important;
+  }
+  #appScreen .dash-context{
+    margin-left:auto!important;
+    flex-wrap:wrap!important;
+    justify-content:flex-end!important;
+  }
+  #appScreen .stats-grid-six{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:10px!important;
+  }
+  #appScreen .stats-grid-six .stat-card{
+    min-height:118px!important;
+    padding:14px!important;
+  }
+  #appScreen .stats-grid-six .stat-icon{
+    margin-bottom:10px!important;
+  }
+  #appScreen .stats-grid-six .stat-val{
+    font-size:25px!important;
+  }
+  #appScreen .dash-analytics{
+    grid-template-columns:minmax(0,1.45fr) minmax(300px,.85fr)!important;
+    gap:12px!important;
+  }
+  #appScreen .dash-trend,
+  #appScreen .dash-status{
+    min-width:0!important;
+  }
+  #appScreen .dash-activity{
+    grid-column:1/-1!important;
+    min-height:220px!important;
+  }
+  #appScreen .dash-analytics>.card{
+    min-height:280px!important;
+  }
+  #appScreen .trend-chart{
+    height:215px!important;
+  }
+  #appScreen .status-summary{
+    gap:16px!important;
+    padding:24px 18px 16px!important;
+  }
+  #appScreen .status-donut{
+    width:112px!important;
+    height:112px!important;
+  }
+  #appScreen .status-donut::after{
+    width:64px!important;
+    height:64px!important;
+  }
+  #appScreen .dash-activity-list{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:0 14px!important;
+  }
+  #appScreen .dash-act-item{
+    min-width:0!important;
+  }
+}
+
+/* Slightly smaller laptop screens / browser zoom. */
+@media(min-width:900px) and (max-width:1100px){
+  #appScreen .stats-grid-six{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  #appScreen .dash-analytics{
+    grid-template-columns:1fr!important;
+  }
+  #appScreen .dash-activity{
+    grid-column:auto!important;
+  }
+  #appScreen .dash-context{
+    flex-wrap:wrap!important;
+  }
+}
+
+/* Keep long content from forcing page-level horizontal scrolling. */
+#appScreen .card-hdr,
+#appScreen .dash-welcome,
+#appScreen .status-summary,
+#appScreen .tickets-card-foot{
+  min-width:0!important;
+}
+#appScreen .card-title,
+#appScreen .dash-link,
+#appScreen .dash-period{
+  min-width:0!important;
+}
+#appScreen .dash-act-item>div{
+  min-width:0!important;
+}
+#appScreen .dash-act-item strong{
+  display:block!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+body.dark-mode #modalUser #uRoleChoices,
+body.dark-mode #modalUser #uHotelsCheckbox{
+  background:#1d2732!important;
+  border-color:#394654!important;
+}
+body.dark-mode #modalUser #uRoleChoices label,
+body.dark-mode #modalUser #uHotelsCheckbox label{
+  color:#c2c8d0!important;
+}
+
+@media(max-width:620px){
+  #modalUser #uRoleChoices{
+    grid-template-columns:1fr!important;
+  }
+}
