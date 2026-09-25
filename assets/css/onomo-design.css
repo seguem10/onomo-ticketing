@@ -5238,3 +5238,295 @@ html[dir="rtl"] body.dark-mode #modalTicket .modal{
     padding-bottom:max(10px,env(safe-area-inset-bottom))!important;
   }
 }
+
+
+/* EXTREME RESPONSIVE PASS — small phones, landscape, short screens */
+@media(max-width:390px){
+  #appScreen .content{
+    padding-left:9px!important;
+    padding-right:9px!important;
+  }
+  #appScreen .topbar{
+    padding-left:8px!important;
+    padding-right:8px!important;
+    gap:5px!important;
+  }
+  #appScreen .topbar-title{
+    font-size:10px!important;
+  }
+  #appScreen #menuToggleBtn,
+  #appScreen #notifBtn,
+  #appScreen .topbar>.btn-icon{
+    width:32px!important;
+    height:32px!important;
+    min-width:32px!important;
+  }
+
+  #appScreen .stats-grid-six,
+  #appScreen .kpi-row{
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+  }
+  #appScreen .stats-grid-six .stat-card,
+  #appScreen .kpi-card{
+    min-height:88px!important;
+    padding:10px!important;
+  }
+  #appScreen .stats-grid-six .stat-val,
+  #appScreen .kpi-val{
+    font-size:21px!important;
+  }
+  #appScreen .stats-grid-six .stat-lbl,
+  #appScreen .kpi-lbl{
+    font-size:8px!important;
+  }
+
+  .tickets-page-actions{
+    grid-template-columns:1fr!important;
+  }
+  .tickets-search,
+  .tickets-filter-btn,
+  .tickets-page-actions .btn-gold{
+    grid-column:1!important;
+  }
+  .tickets-page-actions .btn-gold,
+  .tickets-filter-btn{
+    min-height:40px!important;
+  }
+
+  .ticket-table-reference tr{
+    padding:12px 38px 12px 11px!important;
+  }
+  .ticket-table-reference .t-title{
+    font-size:10px!important;
+  }
+  .ticket-filter-pill{
+    padding:0 8px!important;
+  }
+
+  .detail-controls{
+    grid-template-columns:1fr!important;
+  }
+  .detail-toolbar-reference{
+    flex-wrap:wrap!important;
+  }
+  .detail-reference-head h1{
+    font-size:16px!important;
+  }
+
+  #modalTicket .modal-foot{
+    grid-template-columns:1fr!important;
+  }
+  #modalTicket .modal-foot .btn{
+    min-height:40px!important;
+  }
+  #modalUser #uRoleChoices{
+    grid-template-columns:1fr!important;
+  }
+  #modalMFA #mfaVerifyCode,
+  #mfaLoginOverlay #mfaLoginCode{
+    letter-spacing:.28em!important;
+  }
+
+  #mobileBottomNav .mbnav-item{
+    font-size:7px!important;
+    padding-left:2px!important;
+    padding-right:2px!important;
+  }
+  #mobileBottomNav .mbnav-item i{
+    font-size:17px!important;
+  }
+}
+
+/* Very small phones */
+@media(max-width:340px){
+  #appScreen .stats-grid-six,
+  #appScreen .kpi-row{
+    grid-template-columns:1fr!important;
+  }
+  #appScreen .stats-grid-six .stat-card,
+  #appScreen .kpi-card{
+    min-height:78px!important;
+  }
+  #appScreen .user-row,
+  #appScreen .hotel-row{
+    margin-left:4px!important;
+    margin-right:4px!important;
+  }
+  #appScreen .badge,
+  #appScreen .sla-badge,
+  #appScreen .role-tag{
+    font-size:7px!important;
+    padding-left:6px!important;
+    padding-right:6px!important;
+  }
+  #loginScreen .login-wrap{
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+  #loginScreen .login-h{
+    font-size:22px!important;
+  }
+}
+
+/* Phone landscape: prioritize vertical space. */
+@media(max-width:900px) and (max-height:520px) and (orientation:landscape){
+  #appScreen .topbar{
+    height:46px!important;
+    min-height:46px!important;
+  }
+  #mobileBottomNav{
+    min-height:50px!important;
+  }
+  #mobileBottomNav .mbnav-item{
+    padding-top:4px!important;
+    padding-bottom:4px!important;
+  }
+  #mobileBottomNav .mbnav-item i{
+    font-size:16px!important;
+  }
+  #appScreen .content{
+    padding-top:9px!important;
+    padding-bottom:64px!important;
+  }
+  #appScreen .sidebar{
+    width:min(66vw,290px)!important;
+  }
+  #appScreen .sb-brand{
+    min-height:54px!important;
+    padding-bottom:8px!important;
+  }
+  #appScreen .sb-logo .onomo-wordmark{
+    height:30px!important;
+  }
+  #appScreen .nav-item{
+    min-height:34px!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+  #appScreen .sb-sec-lbl{
+    padding-top:7px!important;
+  }
+
+  #loginScreen .login-shell{
+    align-items:flex-start!important;
+    padding-top:10px!important;
+    padding-bottom:10px!important;
+  }
+  #loginScreen .login-form-side{
+    max-width:520px!important;
+  }
+  #loginScreen .login-wrap{
+    padding-top:14px!important;
+    padding-bottom:14px!important;
+  }
+  #loginScreen .login-brand{
+    margin-bottom:12px!important;
+    min-height:46px!important;
+  }
+  #loginScreen .login-logo .onomo-wordmark{
+    height:38px!important;
+  }
+  #loginScreen .login-h{
+    font-size:20px!important;
+  }
+  #loginScreen .login-d{
+    margin-bottom:10px!important;
+  }
+  #loginScreen .form-g{
+    margin-bottom:9px!important;
+  }
+  #loginScreen .form-ctrl{
+    height:38px!important;
+  }
+  #loginScreen #loginBtn{
+    height:40px!important;
+  }
+
+  #modalTicket .modal,
+  #modalUser .modal,
+  #modalHotel .modal,
+  #modalStatus .modal,
+  #modalConfirmUser .modal,
+  #modalEmailNotif .modal,
+  #modalMFA .modal{
+    height:100dvh!important;
+    min-height:100dvh!important;
+    max-height:100dvh!important;
+  }
+  #modalTicket .modal-hdr,
+  #modalUser .modal-hdr,
+  #modalHotel .modal-hdr,
+  #modalStatus .modal-hdr,
+  #modalConfirmUser .modal-hdr,
+  #modalEmailNotif .modal-hdr,
+  #modalMFA .modal-hdr{
+    min-height:44px!important;
+    padding-top:7px!important;
+    padding-bottom:7px!important;
+  }
+  #modalTicket .modal-foot,
+  #modalUser .modal-foot,
+  #modalHotel .modal-foot,
+  #modalStatus .modal-foot,
+  #modalConfirmUser .modal-foot,
+  #modalEmailNotif .modal-foot,
+  #modalMFA .modal-foot{
+    padding-top:7px!important;
+    padding-bottom:7px!important;
+  }
+}
+
+/* Short laptop screens: reduce vertical chrome, preserve working area. */
+@media(min-width:901px) and (max-height:720px){
+  #appScreen .topbar{
+    height:50px!important;
+    min-height:50px!important;
+  }
+  #appScreen .content{
+    padding-top:14px!important;
+    padding-bottom:18px!important;
+  }
+  #appScreen .sb-brand{
+    padding-top:4px!important;
+    padding-bottom:10px!important;
+  }
+  #appScreen .sb-logo .onomo-wordmark{
+    height:32px!important;
+  }
+  #appScreen .sb-nav{
+    padding-top:8px!important;
+  }
+  #appScreen .nav-item{
+    min-height:34px!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+  #appScreen .sb-sec-lbl{
+    padding-top:9px!important;
+    padding-bottom:4px!important;
+  }
+  #appScreen .stats-grid-six .stat-card{
+    min-height:100px!important;
+  }
+  #appScreen .dash-analytics>.card{
+    min-height:245px!important;
+  }
+  #appScreen .trend-chart{
+    height:180px!important;
+  }
+}
+
+/* Large displays: keep content comfortable instead of stretching infinitely. */
+@media(min-width:1800px){
+  #appScreen .content{
+    padding-left:max(30px,calc((100vw - 1680px)/2))!important;
+    padding-right:max(30px,calc((100vw - 1680px)/2))!important;
+  }
+  #appScreen #mainContent{
+    width:100%!important;
+    max-width:1680px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
