@@ -300,3 +300,98 @@ body{background:var(--onomo-canvas)!important;color:#263244}
 #loginScreen .login-card input::placeholder{color:#98a2b3!important;opacity:1}
 #loginScreen .login-card .btn-primary,#loginScreen .login-card .btn-primary *{color:#fff!important}
 #loginScreen .login-card a{color:#b77f17!important}
+
+
+/* TRUE UI REFACTOR — approved split-screen login, presentation only */
+#loginScreen{padding:0!important;background:#fff!important}
+#loginScreen::before,#loginScreen::after{display:none!important}
+.login-shell{display:grid;width:100%;min-height:100vh;grid-template-columns:minmax(430px,1.03fr) minmax(520px,.97fr);background:#fff}
+.login-visual{position:relative;overflow:hidden;min-height:100vh;background:
+linear-gradient(180deg,rgba(11,17,25,.16),rgba(9,14,21,.54)),
+linear-gradient(135deg,#3f382d 0%,#151b21 48%,#7c5c30 100%);color:#fff}
+.login-visual::before{content:"";position:absolute;inset:0;background:
+radial-gradient(circle at 25% 32%,rgba(226,183,102,.28),transparent 17%),
+linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px),
+linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:auto,72px 72px,72px 72px;opacity:.65}
+.login-visual::after{content:"";position:absolute;left:7%;right:7%;bottom:8%;height:32%;border-radius:18px 18px 0 0;background:linear-gradient(155deg,rgba(192,143,68,.32),rgba(21,27,34,.15));box-shadow:0 -70px 110px rgba(211,164,86,.13)}
+.login-visual-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,8,12,.35),transparent 52%,rgba(4,8,12,.12))}
+.login-visual-brand{position:absolute;z-index:2;left:50%;top:48%;width:min(72%,520px);transform:translate(-50%,-50%);text-align:center}
+.login-visual-brand .onomo-wordmark{height:78px!important;max-width:320px!important;margin:0 auto 22px;padding:8px 13px!important;border-radius:10px!important}
+.login-visual-rule{width:52px;height:2px;margin:0 auto 20px;background:var(--onomo-gold)}
+.login-visual-brand h1{font-size:23px;letter-spacing:-.025em;margin:0 0 9px;font-weight:650}
+.login-visual-brand p{font-size:13px;color:rgba(255,255,255,.78)}
+.login-visual-values{position:absolute;z-index:2;left:7%;bottom:4%;display:flex;gap:10px;align-items:center;font-size:10px;color:rgba(255,255,255,.72);letter-spacing:.02em}
+.login-form-side{position:relative;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}
+.login-form-top{position:absolute;right:38px;top:30px}
+#loginScreen .login-form-top .language-selector{position:static!important;min-width:74px!important;background:#fff!important;color:#344054!important;border:1px solid #d0d5dd!important;backdrop-filter:none!important}
+#loginScreen .login-wrap{width:min(100%,480px)!important;max-width:none!important;padding:34px!important}
+#loginScreen .login-brand{display:none!important}
+#loginScreen .login-card{padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;color:#172033!important}
+#loginScreen .login-h{font-size:28px!important;font-weight:760!important;letter-spacing:-.04em!important;color:#172033!important;margin-bottom:7px!important}
+#loginScreen .login-d{font-size:13px!important;color:#667085!important;margin-bottom:30px!important}
+#loginScreen .form-g{margin-bottom:18px!important}
+#loginScreen .form-lbl{font-size:11px!important;font-weight:650!important;color:#475467!important;margin-bottom:7px!important}
+#loginScreen .form-ctrl{height:46px!important;padding:0 14px!important;background:#fff!important;border:1px solid #d0d5dd!important;border-radius:8px!important;color:#172033!important;box-shadow:0 1px 2px rgba(16,24,40,.03)!important}
+#loginScreen .form-ctrl::placeholder{color:#98a2b3!important}
+#loginScreen .form-ctrl:focus{border-color:#b88a2e!important;box-shadow:0 0 0 3px rgba(196,147,45,.11)!important}
+#loginScreen .eye-btn{right:13px!important;color:#98a2b3!important}
+#loginScreen #loginBtn{height:48px!important;margin-top:8px!important;border-radius:8px!important;background:linear-gradient(135deg,#202b36,#111922)!important;color:#fff!important;box-shadow:0 6px 15px rgba(17,25,34,.14)!important;font-size:13px!important}
+#loginScreen #loginBtn:hover{background:#0e1620!important;transform:translateY(-1px)}
+.login-forgot{display:block;margin:15px auto 0;border:0;background:none;color:#a97817!important;cursor:pointer;font-size:11px;font-weight:650}
+#loginScreen .login-err{background:#fff4f2!important;color:#b42318!important;border:1px solid #fecdca!important}
+@media(max-width:900px){.login-shell{grid-template-columns:1fr}.login-visual{display:none}.login-form-side{background:linear-gradient(180deg,#f8f6f1,#fff)}#loginScreen .login-brand{display:block!important;margin-bottom:26px!important}#loginScreen .login-logo .onomo-wordmark{height:58px!important;margin:auto!important}#loginScreen .login-tagline{color:#667085!important}.login-form-top{right:20px;top:18px}}
+@media(max-width:560px){#loginScreen .login-wrap{padding:24px!important}#loginScreen .login-h{font-size:24px!important}.login-form-top{right:14px;top:12px}}
+
+
+/* TRUE UI REFACTOR — app workspace */
+#appScreen .main-area{background:#f6f7f9!important}
+#appScreen .topbar{height:72px!important;padding:0 28px!important;background:rgba(255,255,255,.96)!important;border-bottom:1px solid #e8eaed!important}
+#appScreen .topbar-title{font-size:18px!important;font-weight:720!important;letter-spacing:-.025em!important;color:#18212b!important}
+#appScreen .content{padding:26px 28px 40px!important;max-width:1680px!important;width:100%!important}
+#appScreen .sidebar{width:244px!important;background:linear-gradient(180deg,#18222d 0%,#111a23 100%)!important;padding:16px 12px!important}
+#appScreen .sb-brand{padding:4px 8px 17px!important;border-bottom:1px solid rgba(255,255,255,.08)!important}
+#appScreen .sb-logo .onomo-wordmark{height:42px!important;max-width:180px!important;background:#fff!important}
+#appScreen .sb-logo-sub{margin:7px 0 0 5px!important;color:rgba(255,255,255,.42)!important;letter-spacing:.16em!important}
+#appScreen .sb-nav{padding-top:12px!important}
+#appScreen .sb-sec-lbl{padding:14px 10px 6px!important;color:rgba(255,255,255,.34)!important}
+#appScreen .nav-item{min-height:40px!important;margin:2px 0!important;padding:9px 10px!important;border-radius:9px!important;color:rgba(255,255,255,.68)!important}
+#appScreen .nav-item i{font-size:17px!important}
+#appScreen .nav-item:hover{background:rgba(255,255,255,.06)!important;color:#fff!important}
+#appScreen .nav-item.active{background:linear-gradient(90deg,rgba(201,151,42,.22),rgba(201,151,42,.08))!important;color:#f1d28a!important;box-shadow:inset 2px 0 0 #c9972a!important}
+#appScreen .nav-badge{background:rgba(255,255,255,.12)!important;color:#fff!important}
+#appScreen .nav-badge.urgent{background:#b42318!important}
+#appScreen .sb-foot{padding:14px 9px 4px!important;border-top:1px solid rgba(255,255,255,.08)!important}
+#appScreen .sb-av{background:#c9972a!important;color:#17212b!important}
+#appScreen .btn-gold{background:#c9972a!important;color:#17212b!important;box-shadow:0 2px 6px rgba(117,82,15,.16)!important}
+#appScreen .btn-gold:hover{background:#b88725!important}
+#appScreen .search-box{width:280px!important;background:#f8f9fa!important;border-color:#e4e7ec!important}
+#appScreen .card,#appScreen .report-section,#appScreen .kpi-card,#appScreen .stat-card{border:1px solid #e7e9ed!important;border-radius:12px!important;box-shadow:0 2px 7px rgba(20,28,38,.035)!important}
+#appScreen .card-hdr{padding:16px 18px!important}
+#appScreen .stats-grid{gap:12px!important;margin-bottom:18px!important}
+#appScreen .stat-card{min-height:128px!important;padding:18px!important;background:#fff!important}
+#appScreen .stat-icon{width:36px!important;height:36px!important;border-radius:9px!important}
+#appScreen .stat-val{font-size:29px!important;letter-spacing:-.045em!important;color:#18212b!important}
+#appScreen .stat-lbl{font-size:11px!important;color:#667085!important}
+#appScreen .panel-row{gap:16px!important}
+#appScreen .ticket-table th{height:42px!important;padding:10px 16px!important;background:#f8f9fa!important;color:#7b8493!important}
+#appScreen .ticket-table td{height:54px!important;padding:10px 16px!important}
+#appScreen .ticket-table tbody tr:hover{background:#fbfaf7!important}
+#appScreen .t-num{color:#9a711d!important;font-weight:650!important}
+#appScreen .t-title{font-weight:620!important;color:#26313d!important}
+#appScreen .filter-tabs{gap:5px!important}
+#appScreen .ftab{padding:5px 11px!important;border-radius:7px!important}
+#appScreen .ftab.active{background:#fbf5e7!important;color:#8b6518!important;border-color:#ead6a7!important}
+#appScreen .detail-layout{gap:18px!important}
+#appScreen .detail-title{font-size:20px!important;letter-spacing:-.025em!important}
+#appScreen .meta-grid,#appScreen .desc-box{background:#fafafa!important;border-color:#e7e9ed!important;border-radius:10px!important}
+#appScreen .c-text{background:#f8f9fa!important;border-color:#e7e9ed!important}
+#modalTicket .modal{max-width:640px!important;padding:0!important;overflow:hidden!important;border-radius:14px!important}
+#modalTicket .modal-hdr{margin:0!important;padding:20px 22px!important;border-bottom:1px solid #e7e9ed!important;background:#fbfbfc!important}
+#modalTicket .modal>.form-g,#modalTicket .modal>.form-row,#modalTicket #aiBtnWrap,#modalTicket #aiBox{margin-left:22px!important;margin-right:22px!important}
+#modalTicket .modal>.form-g:first-of-type{margin-top:20px!important}
+#modalTicket .modal-foot{margin:20px 0 0!important;padding:16px 22px!important;background:#fbfbfc!important}
+#modalTicket .field-ctrl{min-height:42px!important}
+#modalTicket textarea.field-ctrl{min-height:96px!important;padding-top:10px!important}
+#appScreen .notif-panel{border-radius:12px!important}
+@media(max-width:1100px){#appScreen .content{padding:22px!important}}
+@media(max-width:768px){#appScreen .topbar{height:58px!important;padding:0 12px!important}#appScreen .content{padding:14px 12px 82px!important}#appScreen .stat-card{min-height:112px!important;padding:14px!important}#appScreen .sidebar{width:270px!important}#modalTicket .modal{max-height:94vh!important}}
