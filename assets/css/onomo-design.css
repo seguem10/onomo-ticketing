@@ -671,7 +671,7 @@ url("https://www.onomohotels.com/app/uploads/2023/04/omomo-hotel-casablanca-city
 #loginScreen .login-visual{
   background:
     linear-gradient(90deg,rgba(7,9,12,.22) 0%,rgba(7,9,12,.12) 55%,rgba(7,9,12,.30) 100%),
-    url("https://www.kayak.com.au/rimg/himg/08/c4/c7/leonardo-236437654-ONOMO_Casablanca_-21_O-619939.jpg?crop=true&height=1215&width=2160") center center/cover no-repeat!important;
+    url("https://www.onomohotels.com/app/uploads/2023/04/onomo-hotel-casablanca-city-center-azour-terrace-2-1-scaled.webp") center center/cover no-repeat!important;
 }
 #loginScreen .login-form-side{
   top:50%!important;
@@ -802,7 +802,7 @@ url("https://www.onomohotels.com/app/uploads/2023/04/omomo-hotel-casablanca-city
 /* SYSTEM UI FINAL POLISH — visual only */
 #forceChangeScreen{background:
 linear-gradient(90deg,rgba(13,18,24,.64),rgba(13,18,24,.36)),
-url("https://www.kayak.com.au/rimg/himg/08/c4/c7/leonardo-236437654-ONOMO_Casablanca_-21_O-619939.jpg?crop=true&height=1215&width=2160") center/cover no-repeat!important}
+url("https://www.onomohotels.com/app/uploads/2023/04/onomo-hotel-casablanca-city-center-azour-terrace-2-1-scaled.webp") center/cover no-repeat!important}
 #forceChangeScreen>div:first-child{background:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.28))!important}
 #forceChangeScreen>div:nth-child(2){max-width:390px!important;padding:14px!important}
 #forceChangeScreen>div:nth-child(2)>div:first-child{margin-bottom:18px!important}
