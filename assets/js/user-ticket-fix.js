@@ -24,6 +24,17 @@
     try{const rows=await window.sbFetch('rpc/requester_available_it',{method:'POST',body:'{}',prefer:'return=representation'});return Array.isArray(rows)?rows:[];}
     catch(error){console.warn('ONOMO IT autorisés indisponibles',error);return []}
   }
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  async function requesterITWithRetry(){
+    // Auth restoration and the profile refresh can finish just after the modal
+    // opens.  A short retry prevents a false "no IT available" result.
+    for(const delay of [0,250,750]){
+      if(delay)await wait(delay);
+      const available=await requesterIT();
+      if(available.length)return available;
+    }
+    return [];
+  }
   function assignmentNotice(select,message,kind='info'){
     let note=document.getElementById('ntAgentScopeNotice');
     if(!note){note=document.createElement('div');note.id='ntAgentScopeNotice';note.style.cssText='font-size:11px;margin-top:6px;line-height:1.45';select.parentElement?.appendChild(note)}
@@ -37,7 +48,7 @@
     const a=document.getElementById('ntAgent');
     if(a){
       a.innerHTML="<option value=''>"+t('select_it_option','— Sélectionner un IT —')+"</option>";
-      const available=await requesterIT();
+      const available=await requesterITWithRetry();
       const groups={local:[],regional:[]};available.forEach(x=>groups[x.scope_type==='regional'?'regional':'local'].push(x));
       [['local',t('it_your_hotel','IT de votre hôtel')],['regional',t('regional_it','IT régional')]].forEach(([scope,label])=>{
         if(!groups[scope].length)return;const group=document.createElement('optgroup');group.label=label;
