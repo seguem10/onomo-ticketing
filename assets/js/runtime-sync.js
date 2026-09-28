@@ -173,7 +173,16 @@
     try{
       // Supabase intentionally returns the same confirmation for known and
       // unknown addresses, avoiding account enumeration.
-      await client.auth.resetPasswordForEmail(email,{redirectTo:`${location.origin}${location.pathname}#reset-password`});
+      /* Recovery links must never point to an ephemeral Vercel preview or to
+         the former onomo-it-ticketing deployment. Both can disappear before a
+         recipient opens the email, yielding Vercel's DEPLOYMENT_NOT_FOUND.
+         Always send users to the stable production origin instead. */
+      const stableOrigin='https://onomo-ticketing.vercel.app';
+      const currentOrigin=location.origin;
+      const isLocal=/^(https?:\/\/(localhost|127\.0\.0\.1)(?::\d+)?)$/i.test(currentOrigin);
+      const recoveryOrigin=isLocal?currentOrigin:stableOrigin;
+      const recoveryPath=isLocal?location.pathname:'/';
+      await client.auth.resetPasswordForEmail(email,{redirectTo:`${recoveryOrigin}${recoveryPath}#reset-password`});
       showToast(t('reset_email_sent','Si un compte correspond à cette adresse, un lien de réinitialisation a été envoyé.'),'ok');
       return true;
     }catch(error){
