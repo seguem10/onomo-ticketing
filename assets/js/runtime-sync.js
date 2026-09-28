@@ -604,6 +604,13 @@
     startInactivityWatcher();
     initMobileAndPwaUi();
     showPasswordRecoveryUrlError();
+    /* Bind the recovery control from JavaScript instead of relying on an
+       inline global handler. This keeps the action functional with stricter
+       CSP policies and after a service-worker cached update. */
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click',event=>{
+      event.preventDefault();
+      void requestPasswordReset();
+    });
     restoreSession();
   });
 })();
