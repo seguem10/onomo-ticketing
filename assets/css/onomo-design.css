@@ -5963,7 +5963,9 @@ html[dir="rtl"] .kanban-col-hdr{
     display:block!important;
     position:absolute!important;
     z-index:1!important;
-    top:calc(env(safe-area-inset-top, 0px) + 19dvh)!important;
+    /* Keep the identity and form comfortably above the browser navigation.
+       This moves the mobile composition upward by roughly 30px on phones. */
+    top:calc(env(safe-area-inset-top, 0px) + 15dvh)!important;
     left:50%!important;
     width:min(88vw,340px)!important;
     transform:translateX(-50%)!important;
@@ -6023,7 +6025,7 @@ html[dir="rtl"] .kanban-col-hdr{
   #loginScreen .login-form-side{
     position:absolute!important;
     z-index:2!important;
-    top:max(268px,40dvh)!important;
+    top:max(238px,36dvh)!important;
     right:9.5vw!important;
     left:9.5vw!important;
     bottom:auto!important;
