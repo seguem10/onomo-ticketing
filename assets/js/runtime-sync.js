@@ -572,6 +572,24 @@
       const bar=document.getElementById('pwaInstallBar');if(bar)bar.classList.remove('show');
     }catch(_){}
   }
+  function showPasswordRecoveryUrlError(){
+    /* Supabase sends recovery failures in the URL fragment. The fragment is
+       never handled by Vercel, so render a clear local message instead of
+       leaving the user at the sign-in screen with an opaque error URL. */
+    try{
+      const params=new URLSearchParams(location.hash.replace(/^#/,''));
+      if(!params.get('error'))return;
+      const error=document.getElementById('loginErr'),message=document.getElementById('loginErrMsg');
+      if(message){
+        message.dataset.i18n='reset_link_invalid';
+        message.textContent=t('reset_link_invalid','Le lien de réinitialisation est invalide ou a expiré.');
+      }
+      error?.classList.add('show');
+      /* Remove the failed, potentially shareable error fragment after reading
+         it so a refresh returns to a clean sign-in URL. */
+      history.replaceState(null,'',`${location.pathname}${location.search}`);
+    }catch(_){ }
+  }
   function initMobileAndPwaUi(){
     hideMobileNavigationBeforeLogin();hideInstallBannerIfInstalled();
     window.addEventListener('appinstalled',()=>{try{localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');}catch(_){}hideInstallBannerIfInstalled();});
@@ -585,6 +603,7 @@
     try{['touchstart','pointerdown','pointermove','keydown','click','input','change'].forEach(evt=>document.addEventListener(evt,recordUserActivity,{passive:true}));}catch(_){}
     startInactivityWatcher();
     initMobileAndPwaUi();
+    showPasswordRecoveryUrlError();
     restoreSession();
   });
 })();
