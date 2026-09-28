@@ -1568,6 +1568,7 @@ async function loadAllData(){
 ══════════════════════════════════════════════ */
 async function createTicket(data){
   const localId = "t"+Date.now();
+  let persistedTicket;
   const t={
     id: localId,
     numero: genNum(),
@@ -1593,6 +1594,7 @@ async function createTicket(data){
       // Replace the complete optimistic object so its permanent id and
       // canonical database-generated number appear without a page refresh.
       tickets = tickets.map(x=>x.id===localId?{...x,...created}:x);
+      persistedTicket=tickets.find(x=>String(x.id)===String(created.id))||created;
       saveTickets(tickets);
     }catch(e){
       console.error('Supabase createTicket failed:',e);
@@ -1604,7 +1606,9 @@ async function createTicket(data){
       return null;
     }
   }
-  return t;
+  // Uploads must use the permanent UUID returned by Supabase, not the
+  // optimistic browser id. Storage RLS scopes each attachment path to it.
+  return persistedTicket||t;
 }
 
 async function updateTicket(id,updates){
