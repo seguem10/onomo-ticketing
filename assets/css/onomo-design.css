@@ -5963,7 +5963,7 @@ html[dir="rtl"] .kanban-col-hdr{
     display:block!important;
     position:absolute!important;
     z-index:1!important;
-    top:calc(env(safe-area-inset-top, 0px) + 40px)!important;
+    top:calc(env(safe-area-inset-top, 0px) + 19dvh)!important;
     left:50%!important;
     width:min(88vw,340px)!important;
     transform:translateX(-50%)!important;
@@ -5988,6 +5988,7 @@ html[dir="rtl"] .kanban-col-hdr{
     top:51px!important;
     left:0!important;
     width:100%!important;
+    transform:none!important;
     display:block!important;
     margin:0!important;
     color:#fff!important;
@@ -5995,7 +5996,7 @@ html[dir="rtl"] .kanban-col-hdr{
     font-weight:700!important;
     letter-spacing:.55em!important;
     line-height:1!important;
-    text-indent:.55em!important;
+    text-indent:0!important;
   }
   #loginScreen .login-visual-rule{
     width:46px!important;
@@ -6022,24 +6023,24 @@ html[dir="rtl"] .kanban-col-hdr{
   #loginScreen .login-form-side{
     position:absolute!important;
     z-index:2!important;
-    top:max(255px,35dvh)!important;
-    right:14px!important;
-    left:14px!important;
+    top:max(268px,40dvh)!important;
+    right:9.5vw!important;
+    left:9.5vw!important;
     bottom:auto!important;
     width:auto!important;
-    max-width:390px!important;
+    max-width:430px!important;
     min-height:0!important;
     margin:0 auto!important;
     transform:none!important;
     overflow:visible!important;
     border:1px solid rgba(255,255,255,.54)!important;
     border-radius:20px!important;
-    background:rgba(255,255,255,.42)!important;
+    background:rgba(255,255,255,.55)!important;
     box-shadow:0 18px 40px rgba(0,0,0,.31)!important;
-    backdrop-filter:blur(11px) saturate(125%)!important;
-    -webkit-backdrop-filter:blur(11px) saturate(125%)!important;
+    backdrop-filter:blur(18px) saturate(128%)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(128%)!important;
   }
-  #loginScreen .login-wrap{padding:24px 22px 22px!important}
+  #loginScreen .login-wrap{padding:28px 26px 25px!important}
   #loginScreen .login-brand{display:none!important}
   #loginScreen .login-form-top{
     display:block!important;
