@@ -1,7 +1,7 @@
 /* PWA update coordinator: one root worker, immediate activation and one safe reload per build. */
 (function(){
   'use strict';
-  const BUILD='20260925-7';
+  const BUILD='20260925-8';
   const RELOAD_KEY='onomo_pwa_reloaded_build';
 
   const hideInstallPrompt=()=>{

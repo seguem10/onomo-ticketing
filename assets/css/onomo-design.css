@@ -5841,7 +5841,6 @@ html[dir="rtl"] .kanban-col-hdr{
   }
 }
 
-
 /* LOGIN BRAND LABEL TEST — visual only
    Move HOTELS directly below ONOMO and render it white. */
 #loginScreen .login-visual-brand{
@@ -5864,4 +5863,217 @@ html[dir="rtl"] .kanban-col-hdr{
 }
 #loginScreen .login-visual-brand::before{
   margin-bottom:26px!important;
+}
+
+/* ── Mobile experience: compact navigation + transparent Onomo sign-in ── */
+@media(max-width:720px){
+  body.is-authenticated #mobileBottomNav{
+    min-height:76px!important;
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom, 0px))!important;
+    background:rgba(255,255,255,.97)!important;
+    border-top:1px solid rgba(16,24,40,.10)!important;
+    box-shadow:0 -10px 28px rgba(16,24,40,.12)!important;
+    backdrop-filter:blur(16px)!important;
+    -webkit-backdrop-filter:blur(16px)!important;
+  }
+  #mobileBottomNav>div{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:7px!important;
+    width:100%!important;
+    max-width:520px!important;
+    margin:0 auto!important;
+  }
+  #mobileBottomNav .mbnav-item{
+    min-width:0!important;
+    min-height:58px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:4px!important;
+    padding:6px 3px!important;
+    border-radius:13px!important;
+    color:#667085!important;
+    font-size:10px!important;
+    font-weight:650!important;
+    line-height:1.2!important;
+    text-align:center!important;
+    white-space:normal!important;
+    transition:background .18s ease,color .18s ease,transform .18s ease!important;
+  }
+  #mobileBottomNav .mbnav-item i{
+    display:block!important;
+    font-size:20px!important;
+    line-height:20px!important;
+  }
+  #mobileBottomNav .mbnav-item.active{
+    background:#eef4ff!important;
+    color:#155eef!important;
+  }
+  #mobileBottomNav .mbnav-new-ticket{
+    background:#fff8e7!important;
+    color:#a86d00!important;
+  }
+  #mobileBottomNav .mbnav-new-ticket i{
+    display:grid!important;
+    width:24px!important;
+    height:24px!important;
+    place-items:center!important;
+    border-radius:50%!important;
+    background:#c9972a!important;
+    color:#fff!important;
+    font-size:17px!important;
+    line-height:1!important;
+  }
+  #mobileBottomNav .mbnav-new-ticket:active,
+  #mobileBottomNav .mbnav-item:active{transform:scale(.96)!important}
+  body.is-authenticated #fabBtn{display:none!important}
+
+  #loginScreen{
+    min-height:100dvh!important;
+    overflow:hidden!important;
+    background:#111820!important;
+  }
+  #loginScreen .login-shell{
+    position:relative!important;
+    display:block!important;
+    min-height:100dvh!important;
+    width:100%!important;
+    padding:0!important;
+    background:transparent!important;
+  }
+  #loginScreen .login-visual{
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    min-height:100dvh!important;
+    filter:none!important;
+    background:linear-gradient(180deg,rgba(6,10,14,.45) 0%,rgba(6,10,14,.19) 44%,rgba(6,10,14,.61) 100%),url("https://www.onomohotels.com/app/uploads/2023/04/onomo-hotel-casablanca-city-center-azour-terrace-2-1-scaled.webp") center center/cover no-repeat!important;
+  }
+  #loginScreen .login-visual::before{
+    display:block!important;
+    content:""!important;
+    position:absolute!important;
+    inset:0!important;
+    background:linear-gradient(180deg,rgba(9,14,19,.12),rgba(9,14,19,.04) 42%,rgba(9,14,19,.35))!important;
+  }
+  #loginScreen .login-visual-brand{
+    display:block!important;
+    position:absolute!important;
+    z-index:1!important;
+    top:calc(env(safe-area-inset-top, 0px) + 40px)!important;
+    left:50%!important;
+    width:min(88vw,340px)!important;
+    transform:translateX(-50%)!important;
+    text-align:center!important;
+    color:#fff!important;
+  }
+  #loginScreen .login-visual-brand .onomo-wordmark{display:none!important}
+  #loginScreen .login-visual-brand::before{
+    content:"ONOMO"!important;
+    display:block!important;
+    color:#fff!important;
+    font-size:42px!important;
+    font-weight:700!important;
+    letter-spacing:.12em!important;
+    line-height:1!important;
+    text-indent:.12em!important;
+    text-shadow:0 2px 14px rgba(0,0,0,.26)!important;
+  }
+  #loginScreen .login-visual-brand::after{
+    content:"HOTELS"!important;
+    position:absolute!important;
+    top:51px!important;
+    left:0!important;
+    width:100%!important;
+    display:block!important;
+    margin:0!important;
+    color:#fff!important;
+    font-size:8px!important;
+    font-weight:700!important;
+    letter-spacing:.55em!important;
+    line-height:1!important;
+    text-indent:.55em!important;
+  }
+  #loginScreen .login-visual-rule{
+    width:46px!important;
+    height:2px!important;
+    margin:16px auto 18px!important;
+    background:#c9972a!important;
+  }
+  #loginScreen .login-visual-brand h1{
+    margin:0!important;
+    color:#fff!important;
+    font-size:20px!important;
+    font-weight:700!important;
+    line-height:1.25!important;
+    text-shadow:0 2px 14px rgba(0,0,0,.36)!important;
+  }
+  #loginScreen .login-visual-brand p{
+    margin:8px 0 0!important;
+    color:rgba(255,255,255,.94)!important;
+    font-size:13px!important;
+    line-height:1.4!important;
+    text-shadow:0 2px 12px rgba(0,0,0,.38)!important;
+  }
+  #loginScreen .login-visual-values{display:none!important}
+  #loginScreen .login-form-side{
+    position:absolute!important;
+    z-index:2!important;
+    top:max(255px,35dvh)!important;
+    right:14px!important;
+    left:14px!important;
+    bottom:auto!important;
+    width:auto!important;
+    max-width:390px!important;
+    min-height:0!important;
+    margin:0 auto!important;
+    transform:none!important;
+    overflow:visible!important;
+    border:1px solid rgba(255,255,255,.54)!important;
+    border-radius:20px!important;
+    background:rgba(255,255,255,.42)!important;
+    box-shadow:0 18px 40px rgba(0,0,0,.31)!important;
+    backdrop-filter:blur(11px) saturate(125%)!important;
+    -webkit-backdrop-filter:blur(11px) saturate(125%)!important;
+  }
+  #loginScreen .login-wrap{padding:24px 22px 22px!important}
+  #loginScreen .login-brand{display:none!important}
+  #loginScreen .login-form-top{
+    display:block!important;
+    position:absolute!important;
+    z-index:3!important;
+    top:12px!important;
+    right:14px!important;
+  }
+  #loginScreen .login-form-top .language-selector{
+    min-width:68px!important;
+    padding:6px 8px!important;
+    border:1px solid rgba(16,24,40,.15)!important;
+    border-radius:8px!important;
+    background:rgba(255,255,255,.68)!important;
+    color:#344054!important;
+    backdrop-filter:blur(8px)!important;
+  }
+  #loginScreen .login-card{background:transparent!important;border:0!important;box-shadow:none!important}
+  #loginScreen .login-h{margin-top:0!important;padding-right:76px!important;color:#101828!important;font-size:25px!important}
+  #loginScreen .login-d{margin-bottom:20px!important;color:#475467!important;font-size:13px!important}
+  #loginScreen .form-lbl{color:#344054!important;font-size:12px!important}
+  #loginScreen .login-card .form-ctrl{
+    background:rgba(255,255,255,.69)!important;
+    border-color:rgba(52,64,84,.25)!important;
+    color:#101828!important;
+  }
+  #loginScreen .login-card .form-ctrl::placeholder{color:#98a2b3!important}
+  #loginScreen .input-wrap .eye-btn{color:#667085!important}
+  #loginScreen .login-card .btn-primary{
+    min-height:48px!important;
+    background:#101828!important;
+    box-shadow:0 8px 18px rgba(16,24,40,.22)!important;
+  }
+  #loginScreen .login-forgot{color:#9a6b12!important}
+  html[dir="rtl"] #loginScreen .login-form-top{right:auto!important;left:14px!important}
+  html[dir="rtl"] #loginScreen .login-h{padding-right:0!important;padding-left:76px!important}
 }

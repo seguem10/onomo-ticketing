@@ -92,6 +92,20 @@
     }
     return client;
   }
+  function releaseLegacyLoginLock(email){
+    /* Older builds counted every temporary SDK/network failure as a bad
+       password and stored a device-only lock. Once the real Supabase client
+       is available, that stale browser marker must never block an account. */
+    try{
+      const all=JSON.parse(localStorage.getItem('onomo_login_guard')||'{}');
+      if(!all||typeof all!=='object')return;
+      const key=String(email||'').trim().toLowerCase();
+      if(key&&Object.prototype.hasOwnProperty.call(all,key)){
+        delete all[key];
+        localStorage.setItem('onomo_login_guard',JSON.stringify(all));
+      }
+    }catch(_){ }
+  }
 
   /* The original shell predates Supabase Auth and falls back to browser data
      whenever a read fails. That is useful for an offline demo, but unsafe in
@@ -386,6 +400,7 @@
       const email=document.getElementById('loginEmail')?.value.trim().toLowerCase(),pwd=document.getElementById('loginPwd')?.value||'';
       const client=await waitForAuthClient();
       if(client&&email&&pwd){
+        releaseLegacyLoginLock(email);
         try{
           const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
           if(error)throw error;
