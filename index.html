@@ -4406,7 +4406,7 @@ renderReportGlobal = function(){
 /* hide viewToggle on non-list views */
 const _ov = renderView;
 renderView = function(){
-  const nonListViews = ['dashboard','detail','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile'];
+  const nonListViews = ['dashboard','detail','assistant','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile'];
   const vt = document.getElementById('viewToggle');
   if(vt) vt.style.display = nonListViews.includes(currentView) ? 'none' : 'flex';
   updateCounts();
@@ -4421,6 +4421,11 @@ renderView = function(){
     'report-agents': renderReportAgents,
     'report-anomalies': renderReportAnomalies,
     'report-my': renderReportMy,
+    assistant: () => {
+      const target=document.getElementById('mainContent');
+      if(!window.ITAssistant?.renderAssistantView&&target)target.innerHTML='<div class="loading-state"><i class="ti ti-loader-2 spin"></i> Chargement de l’Assistant IT…</div>';
+      ensureITAssistant().then(assistant=>assistant.renderAssistantView()).catch(()=>{});
+    },
     users: renderUsers,
     'hotels-admin': renderHotelsAdmin,
     settings: renderSettings,
