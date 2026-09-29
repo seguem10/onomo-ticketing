@@ -42,6 +42,11 @@
     try{const {data,error}=await client.auth.getSession();if(error)throw error;return data?.session||null;}
     catch(error){console.warn('Lecture session Supabase impossible',error);return null;}
   }
+  // A small, read-only bridge for modules (AI assistant, ticket analysis) that
+  // must call an authenticated Edge Function.  The client key and access token
+  // remain inside the existing Supabase Auth session; no token is persisted or
+  // exposed in the DOM.
+  window.OnomoAuth={...(window.OnomoAuth||{}),getSession:getAuthSession};
   function installAuthenticatedSbFetch(){
     if(typeof window.sbFetch!=='function')return;
     window.sbFetch=async function(path,opts={}){
