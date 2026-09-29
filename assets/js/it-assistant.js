@@ -16,7 +16,7 @@
   const isTechnician=()=>Boolean(window.canManageTickets?.(window.currentUser));
   const request=async body=>{
     const session=await window.OnomoAuth?.getSession?.();
-    const settings=window.settings||{};
+    const settings=window.OnomoAuth?.getConfig?.()||window.settings||{};
     if(!session?.access_token||!settings.sbUrl||!settings.sbKey)throw new Error(tr('assistant_auth_unavailable','Session Supabase indisponible. Reconnectez-vous.'));
     const response=await fetch(`${settings.sbUrl}/functions/v1/ai-it-assistant`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`,apikey:settings.sbKey},body:JSON.stringify({...body,language:language()})});
     const data=await response.json().catch(()=>({}));

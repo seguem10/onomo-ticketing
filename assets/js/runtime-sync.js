@@ -46,7 +46,10 @@
   // must call an authenticated Edge Function.  The client key and access token
   // remain inside the existing Supabase Auth session; no token is persisted or
   // exposed in the DOM.
-  window.OnomoAuth={...(window.OnomoAuth||{}),getSession:getAuthSession};
+  window.OnomoAuth={...(window.OnomoAuth||{}),getSession:getAuthSession,getConfig:()=>{
+    const s=cfg()||{};
+    return {sbUrl:s.sbUrl||'',sbKey:s.sbKey||''};
+  }};
   function installAuthenticatedSbFetch(){
     if(typeof window.sbFetch!=='function')return;
     window.sbFetch=async function(path,opts={}){
@@ -510,7 +513,10 @@
     const roles=[...new Set(roleValues.map(roleDatabaseName).filter(Boolean))];
     await window.sbFetch('rpc/replace_user_roles',{method:'POST',body:JSON.stringify({target_user_id:targetUserId,role_names:roles}),prefer:'return=minimal'});
   }
-  window.OnomoAuth={createUser:createAuthUser,getClient:getAuthClient,getSession:getAuthSession,restore:restoreSession};
+  window.OnomoAuth={createUser:createAuthUser,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
+    const s=cfg()||{};
+    return {sbUrl:s.sbUrl||'',sbKey:s.sbKey||''};
+  },restore:restoreSession};
 
   const previousSubmitUser=window.submitUser;
   if(typeof previousSubmitUser==='function'){
