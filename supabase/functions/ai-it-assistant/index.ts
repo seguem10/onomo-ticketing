@@ -82,7 +82,9 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
       ?await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1200,response_format:{type:'json_object'},messages:[{role:'system',content:'Tu réponds uniquement avec un objet JSON valide.'},{role:'user',content:prompt}]})})
       :await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY!,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
     if(!response.ok){console.error('AI provider',response.status);return send(req,{error:'Le service Assistant IT est temporairement indisponible.'},502);}
-    const provider=await response.json(); const answer=parseAnswer(String(OPENAI_KEY?provider?.choices?.[0]?.message?.content:provider?.content?.[0]?.text??''));
+    const provider=await response.json();
+    const providerText=OPENAI_KEY ? provider?.choices?.[0]?.message?.content : (provider?.content?.[0]?.text ?? '');
+    const answer=parseAnswer(String(providerText));
     const sources=(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
       await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}]);
