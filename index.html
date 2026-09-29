@@ -1722,6 +1722,23 @@ function switchView(v,el){
 }
 function onSearch(v){searchQ=v;if(["dashboard","tickets","urgents","my-tickets"].includes(currentView))renderView();}
 function setFilter(s){filterStat=s;renderView();}
+let itAssistantLoader=null;
+function ensureITAssistant(){
+  if(window.ITAssistant?.renderAssistantView)return Promise.resolve(window.ITAssistant);
+  if(itAssistantLoader)return itAssistantLoader;
+  itAssistantLoader=new Promise((resolve,reject)=>{
+    const previous=document.querySelector('script[data-it-assistant-loader]');
+    if(previous)previous.remove();
+    const script=document.createElement('script');
+    script.src=`assets/js/it-assistant.js?v=20260929-2`;
+    script.async=true;
+    script.dataset.itAssistantLoader='true';
+    script.onload=()=>window.ITAssistant?.renderAssistantView?resolve(window.ITAssistant):reject(new Error('Assistant IT non initialisé'));
+    script.onerror=()=>reject(new Error('Assistant IT indisponible'));
+    document.body.appendChild(script);
+  }).catch(error=>{itAssistantLoader=null;window.showToast?.(error.message||'Assistant IT indisponible.','err');throw error;});
+  return itAssistantLoader;
+}
 
 function renderView(){
   updateCounts();
@@ -1731,7 +1748,11 @@ function renderView(){
     "my-tickets":()=>renderTicketList(getMyTickets(),"Mes tickets assignés"),
     detail:renderDetail,"report-global":renderReportGlobal,
     "report-hotel":renderReportHotel,"report-agents":renderReportAgents,
-    "report-my":renderReportMy,users:renderUsers,assistant:()=>window.ITAssistant?.renderAssistantView?.(),
+    "report-my":renderReportMy,users:renderUsers,assistant:()=>{
+      const target=document.getElementById('mainContent');
+      if(!window.ITAssistant?.renderAssistantView&&target)target.innerHTML='<div class="loading-state"><i class="ti ti-loader-2 spin"></i> Chargement de l’Assistant IT…</div>';
+      ensureITAssistant().then(assistant=>assistant.renderAssistantView()).catch(()=>{});
+    },
     "hotels-admin":renderHotelsAdmin,settings:renderSettings
   };
   (M[currentView]||renderDashboard)();
@@ -4455,7 +4476,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/i18n.js?v=20260925-6"></script>
 <script src="assets/js/modern-features.js?v=20260925-4"></script>
 <script src="assets/js/runtime-sync.js?v=20260928-reset-3"></script>
-<script src="assets/js/it-assistant.js?v=20260929-1"></script>
+<script src="assets/js/it-assistant.js?v=20260929-2" data-it-assistant-loader="true"></script>
 <script src="assets/js/pwa-update.js?v=20260925-8"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
 <script src="assets/js/dashboard-polish.js?v=20260925-2"></script>
