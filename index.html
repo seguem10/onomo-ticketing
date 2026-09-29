@@ -3895,6 +3895,16 @@ switchView = function(v, el){
   if(isMobile()) closeSidebar();
   origSwitchView(v, el);
 };
+// The application is served with a strict CSP on Vercel. Expose navigation
+// explicitly and do not depend only on inline onclick resolution.
+window.switchView=switchView;
+window.ensureITAssistant=ensureITAssistant;
+document.addEventListener('click',event=>{
+  const item=event.target.closest?.('.nav-item[data-view]');
+  if(!item||item.dataset.view!=='assistant')return;
+  event.preventDefault();
+  switchView('assistant',item);
+});
 
 window.addEventListener('resize', applyMobileUI);
 
