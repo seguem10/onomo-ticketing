@@ -116,11 +116,17 @@ Tu conseilles seulement : ne demande jamais ni n’affiche mots de passe, clés,
 Procédures internes validées (elles seules peuvent être décrites comme validées) :\n${procedureContext||'Aucune procédure validée applicable.'}\n\nIncidents similaires visibles pour cet utilisateur :\n${similarTickets.map(item=>`${item.numero} | ${item.titre} | ${item.categorie} | ${item.statut}\n${item.description}`).join('\n')||'Aucun incident similaire exploitable.'}\n\nContexte :\n${context}\n\nRéponds uniquement avec JSON : {"answer":"résumé du problème","causes":["causes probables"],"questions":["..."],"checks":["Vérification — résultat attendu — action suivante"],"solution":["..."],"validation":["..."],"assumptions":["..."],"suggested_ticket":{"title":"...","description":"résumé, diagnostic et vérifications déjà réalisées","category":"catégorie existante la plus proche","priority":"P1/P2/P3/P4 ou Urgente/Haute/Normale/Basse"}}.`;
   try{
     const providerName=GEMINI_KEY?'gemini':OPENAI_KEY?'openai':'anthropic';
-    const response=GEMINI_KEY
+    let response=GEMINI_KEY
       ?await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:1200}})})
       :OPENAI_KEY
       ?await requestProvider('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1200,response_format:{type:'json_object'},messages:[{role:'system',content:'Tu réponds uniquement avec un objet JSON valide.'},{role:'user',content:prompt}]})})
       :await requestProvider('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY!,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+    // Gemini can return 503 during high demand. Flash-Lite is also available
+    // on the free tier, so use it as a no-cost failover before the safe UI
+    // fallback is shown to the user.
+    if(GEMINI_KEY&&!response.ok&&response.status===503&&GEMINI_MODEL!=='gemini-3.5-flash-lite'){
+      response=await requestProvider('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:1200}})});
+    }
     const providerUnavailable=!response.ok;
     const providerError=providerUnavailable?await response.text():'';
     if(providerUnavailable)console.error('AI provider',response.status,providerError.slice(0,500));
