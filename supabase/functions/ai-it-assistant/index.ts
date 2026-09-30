@@ -118,10 +118,10 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     const answer=providerUnavailable?fallbackAnswer(domain,message,language):parseAnswer(String(providerText));
     const sources=(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
-      await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}]);
+      await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}]);
       await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
       return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets});
     }
     return send(req,{ticket_id:ticket.id,answer,sources,similar_tickets:similarTickets});
-  }catch(error){console.error('ai-it-assistant',error);const answer=fallbackAnswer(domain,message,language);const sources=[];if(conversation){await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,fallback:true}}]);return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets});}return send(req,{ticket_id:ticket?.id,answer,sources,similar_tickets:similarTickets});}
+  }catch(error){console.error('ai-it-assistant',error);const answer=fallbackAnswer(domain,message,language);const sources=[];if(conversation){await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,fallback:true}}]);return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets});}return send(req,{ticket_id:ticket?.id,answer,sources,similar_tickets:similarTickets});}
 });
