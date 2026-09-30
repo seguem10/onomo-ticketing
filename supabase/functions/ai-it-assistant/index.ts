@@ -17,7 +17,9 @@ const SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? firstProjectKey("SUPA
 const ANTHROPIC_KEY=Deno.env.get("ANTHROPIC_API_KEY");
 const OPENAI_KEY=Deno.env.get("OPENAI_API_KEY");
 const GEMINI_KEY=Deno.env.get("GEMINI_API_KEY");
-const GEMINI_MODEL=Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
+// Use the Flash model available on Gemini's free tier by default.  A project
+// can still opt into a different enabled model through GEMINI_MODEL.
+const GEMINI_MODEL=Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash";
 const domains=new Set(['microsoft365','sage1000','citrix','opera','pos','network','maintenance','general']);
 const allowedOrigin=(origin:string)=>origin==='https://onomo-ticketing.vercel.app'||/^https:\/\/onomo-ticketing(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)||/^http:\/\/(localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin);
 const headers=(req:Request)=>({"Access-Control-Allow-Origin":allowedOrigin(req.headers.get('origin')??'')?req.headers.get('origin')??'':"https://onomo-ticketing.vercel.app","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS",Vary:"Origin","Content-Type":"application/json"});
