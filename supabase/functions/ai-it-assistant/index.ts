@@ -3,9 +3,17 @@
 // is provided automatically by Supabase Edge Functions.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const firstProjectKey=(name:string)=>{
+  try{
+    const values=JSON.parse(Deno.env.get(name)||'{}');
+    return Object.values(values).find(value=>typeof value==='string'&&value) as string|undefined;
+  }catch(_){return undefined;}
+};
 const URL=Deno.env.get("SUPABASE_URL")!;
-const ANON=Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
-const SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+// Supabase now exposes plural JSON key maps to Edge Functions.  Retain the
+// legacy names as fallbacks so existing projects continue to work.
+const ANON=Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? firstProjectKey("SUPABASE_PUBLISHABLE_KEYS");
+const SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? firstProjectKey("SUPABASE_SECRET_KEYS");
 const ANTHROPIC_KEY=Deno.env.get("ANTHROPIC_API_KEY");
 const OPENAI_KEY=Deno.env.get("OPENAI_API_KEY");
 const domains=new Set(['microsoft365','sage1000','citrix','opera','pos','network','maintenance','general']);
