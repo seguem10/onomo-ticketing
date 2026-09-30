@@ -16,6 +16,8 @@ const ANON=Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_AN
 const SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? firstProjectKey("SUPABASE_SECRET_KEYS");
 const ANTHROPIC_KEY=Deno.env.get("ANTHROPIC_API_KEY");
 const OPENAI_KEY=Deno.env.get("OPENAI_API_KEY");
+const GEMINI_KEY=Deno.env.get("GEMINI_API_KEY");
+const GEMINI_MODEL=Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
 const domains=new Set(['microsoft365','sage1000','citrix','opera','pos','network','maintenance','general']);
 const allowedOrigin=(origin:string)=>origin==='https://onomo-ticketing.vercel.app'||/^https:\/\/onomo-ticketing(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)||/^http:\/\/(localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin);
 const headers=(req:Request)=>({"Access-Control-Allow-Origin":allowedOrigin(req.headers.get('origin')??'')?req.headers.get('origin')??'':"https://onomo-ticketing.vercel.app","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS",Vary:"Origin","Content-Type":"application/json"});
@@ -52,7 +54,7 @@ Deno.serve(async req=>{
   const userClient=createClient(URL,ANON,{global:{headers:{Authorization:`Bearer ${token}`}},auth:{persistSession:false,autoRefreshToken:false}});
   const {data:{user}}=await userClient.auth.getUser(token);
   if(!user)return send(req,{error:'Session expirée ou invalide.'},401);
-  if((!OPENAI_KEY&&!ANTHROPIC_KEY)||!SERVICE)return send(req,{error:'Le service Assistant IT n’est pas configuré côté serveur.'},503);
+  if((!GEMINI_KEY&&!OPENAI_KEY&&!ANTHROPIC_KEY)||!SERVICE)return send(req,{error:'Le service Assistant IT n’est pas configuré côté serveur.'},503);
   let input:any;try{input=await req.json();}catch{return send(req,{error:'Données invalides.'},400);}
   const action=input.action==='ticket'?'ticket':'chat';
   const domain=domains.has(input.domain)?input.domain:'general';
@@ -99,13 +101,18 @@ Deno.serve(async req=>{
 Tu conseilles seulement : ne demande jamais ni n’affiche mots de passe, clés, jetons, données clients ou données de carte bancaire. N’affirme jamais qu’une procédure non citée est validée. Si les informations sont insuffisantes, pose au maximum trois questions ciblées à la fois. Pour Sage 1000, Citrix, OPERA PMS, POS, Microsoft 365 et réseau, ne fabrique jamais de commandes, paramètres ou procédures propres au client. Privilégie l’interface graphique. Si une commande est utile, précise son objectif, le résultat attendu et l’action suivante. Pour Sage, OPERA, POS et opérations de production, rappelle le risque, la sauvegarde et la validation humaine avant une action à impact. Ne propose jamais une action destructive ni un changement automatique.
 Procédures internes validées (elles seules peuvent être décrites comme validées) :\n${procedureContext||'Aucune procédure validée applicable.'}\n\nIncidents similaires visibles pour cet utilisateur :\n${similarTickets.map(item=>`${item.numero} | ${item.titre} | ${item.categorie} | ${item.statut}\n${item.description}`).join('\n')||'Aucun incident similaire exploitable.'}\n\nContexte :\n${context}\n\nRéponds uniquement avec JSON : {"answer":"résumé du problème","causes":["causes probables"],"questions":["..."],"checks":["Vérification — résultat attendu — action suivante"],"solution":["..."],"validation":["..."],"assumptions":["..."],"suggested_ticket":{"title":"...","description":"résumé, diagnostic et vérifications déjà réalisées","category":"catégorie existante la plus proche","priority":"P1/P2/P3/P4 ou Urgente/Haute/Normale/Basse"}}.`;
   try{
-    const response=OPENAI_KEY
+    const providerName=GEMINI_KEY?'gemini':OPENAI_KEY?'openai':'anthropic';
+    const response=GEMINI_KEY
+      ?await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:1200}})})
+      :OPENAI_KEY
       ?await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1200,response_format:{type:'json_object'},messages:[{role:'system',content:'Tu réponds uniquement avec un objet JSON valide.'},{role:'user',content:prompt}]})})
       :await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY!,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
     const providerUnavailable=!response.ok;
     if(providerUnavailable)console.error('AI provider',response.status);
     const provider=providerUnavailable?null:await response.json();
-    const providerText=OPENAI_KEY ? provider?.choices?.[0]?.message?.content : (provider?.content?.[0]?.text ?? '');
+    const providerText=providerName==='gemini'
+      ?provider?.candidates?.[0]?.content?.parts?.map((part:any)=>part?.text ?? '').join('')
+      :providerName==='openai' ? provider?.choices?.[0]?.message?.content : (provider?.content?.[0]?.text ?? '');
     const answer=providerUnavailable?fallbackAnswer(domain,message,language):parseAnswer(String(providerText));
     const sources=(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
