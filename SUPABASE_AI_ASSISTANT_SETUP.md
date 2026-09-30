@@ -1,5 +1,20 @@
 # Assistant IT — mise en service Supabase
 
+## Mode procédures guidées sans API IA
+
+L'application fournit un premier niveau de diagnostic local pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance. Il fonctionne même si aucun fournisseur IA n'est configuré. Les réponses sont marquées **« modèle à valider par l'IT »** : elles ne sont pas des procédures fournisseur officielles.
+
+Après `p21`, exécutez aussi `supabase/p22_it_procedure_review_workflow.sql`. Il ajoute le statut de revue et la langue aux procédures. Après contrôle par l'équipe IT, un administrateur peut approuver une procédure avec :
+
+```sql
+update public.it_procedures
+set approval_status = 'approved',
+    is_validated = true,
+    validated_by = auth.uid(),
+    validated_at = now()
+where id = '<id-du-guide>';
+```
+
 ## 1. Base de données
 
 Dans Supabase SQL Editor, exécuter une seule fois :

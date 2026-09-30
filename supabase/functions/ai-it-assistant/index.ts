@@ -39,6 +39,90 @@ const requestProvider=async(url:string,init:RequestInit)=>{
 const clean=(value:unknown,max=6000)=>String(value??'').replace(/\b(?:password|mot de passe|token|api[_ -]?key|secret)\s*[:=]\s*\S+/gi,'[REDACTED]').replace(/\b(?:sk-[A-Za-z0-9_-]{12,}|eyJ[A-Za-z0-9_-]{20,})\b/g,'[REDACTED]').replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,'[REDACTED_EMAIL]').replace(/\b(?:\d[ -]*?){13,19}\b/g,'[REDACTED_PAYMENT]').replace(/[\u0000-\u001f]/g,' ').trim().slice(0,max);
 const toText=(items:unknown)=>Array.isArray(items)?items.map(item=>clean(item,900)).filter(Boolean).slice(0,8):[];
 const priority=(value:unknown)=>{const key=String(value??'').toLowerCase();if(/crit|urgent|p1/.test(key))return 'Urgente';if(/haut|high|p2/.test(key))return 'Haute';if(/bas|low|p4/.test(key))return 'Basse';return 'Normale';};
+// First-line, provider-free support.  These are deliberately conservative
+// diagnostic templates: they are not vendor-specific runbooks and never carry
+// out a change.  They keep the assistant useful when an external model is not
+// configured or unavailable, while letting the IT team validate a real local
+// procedure later in it_procedures.
+const procedureGuide=(domain:string,message:string,language:string)=>{
+  const en=language==='en', ar=language==='ar';
+  const make=(answer:string,causes:string[],questions:string[],checks:string[],solution:string[],validation:string[],title:string,category='IT / Réseau')=>({
+    mode:'procedure',answer,causes,questions,checks,solution,validation,
+    assumptions:[ar?'هذا نموذج تشخيص أولي من ONOMO، وليس إجراءً معتمداً خاصاً بالمورد. يجب أن يراجعه مسؤول IT مخوّل قبل أي تغيير.':en?'This is an ONOMO initial diagnostic template, not a vendor-approved procedure. An authorized IT owner must review it before any change.':'Ceci est un modèle initial de diagnostic ONOMO, pas une procédure fournisseur validée. Un responsable IT habilité doit le vérifier avant tout changement.'],
+    suggested_ticket:{title,description:`${ar?'الطلب':'Request'}: ${message}\n\n${ar?'التحققات المقترحة':'Suggested checks'}: ${checks.join(' ')}`,category,priority:'Normale'}
+  });
+  const common=ar?{
+    network:'تحقق من اتصال الشبكة والتاريخ والوقت على الجهاز؛ سجّل النتيجة قبل التصعيد.', evidence:'سجّل رسالة الخطأ الدقيقة والوقت واسم الجهاز، من دون كلمة مرور أو بيانات عميل.', safe:'لا تغيّر إعدادات الإنتاج أو الحسابات تلقائياً.'
+  }:en?{
+    network:'Check network connectivity and the workstation date/time; record the result before escalation.', evidence:'Record the exact error, time, and device name, without passwords or customer data.', safe:'Do not change production settings or accounts automatically.'
+  }:{
+    network:'Vérifiez la connexion réseau et la date/heure du poste ; consignez le résultat avant escalade.', evidence:'Relevez le message exact, l’heure et le nom du poste, sans mot de passe ni donnée client.', safe:'Ne modifiez pas automatiquement un paramètre de production ou un compte.'
+  };
+  if(domain==='opera')return make(
+    ar?'نموذج طلب OPERA: يتم تنفيذ إنشاء المستخدم أو تعديل صلاحياته حصراً بواسطة مسؤول OPERA مخوّل بعد تحقق الموافقة.':en?'OPERA request template: user creation or permission changes must be performed only by an authorized OPERA administrator after approval is checked.':'Modèle de demande OPERA : la création d’utilisateur ou la modification des droits doit être effectuée uniquement par un administrateur OPERA habilité, après contrôle de l’accord.',
+    ar?['طلب وصول جديد','حساب موجود لكنه معطّل','صلاحيات أو منشأة غير مطابقة']:en?['New access request','Existing but disabled account','Incorrect role or property scope']:['Nouvelle demande d’accès','Compte existant mais désactivé','Rôle ou périmètre hôtel incorrect'],
+    ar?['ما الفندق والقسم المعنيان ؟','ما الدور المطلوب وأي تاريخ انتهاء ؟','هل توجد موافقة موثقة من المدير أو مالك التطبيق ؟']:en?['Which hotel and department are concerned?','What role and expiry date are required?','Is documented manager or application-owner approval available?']:['Quel hôtel et quel département sont concernés ?','Quel rôle et quelle date de fin sont demandés ?','Une approbation documentée du responsable ou du propriétaire applicatif est-elle disponible ?'],
+    [common.evidence,ar?'تحقق من الموافقة ومن أقل صلاحيات لازمة، وتأكد أن الحساب غير موجود أو غير معطّل.':en?'Verify approval and least-privilege role, and confirm the account does not already exist or is disabled.':'Vérifiez l’approbation et le rôle au moindre privilège, puis assurez-vous que le compte n’existe pas déjà ou n’est pas désactivé.',ar?'اطلب من المسؤول المخوّل استخدام واجهة OPERA المعتمدة في الفندق؛ لا تشارك بيانات الدخول.':en?'Ask the authorized administrator to use the property’s approved OPERA interface; never share credentials.':'Demandez à l’administrateur habilité d’utiliser l’interface OPERA approuvée de l’établissement ; ne partagez jamais d’identifiants.'],
+    [common.safe,ar?'وثّق الدور والفندق والقسم والموافقة في التذكرة.':en?'Document the role, property, department, and approval in the ticket.':'Consignez le rôle, l’hôtel, le département et l’approbation dans le ticket.'],
+    [ar?'L’utilisateur accède uniquement à l’hôtel et aux fonctions autorisés.':en?'The user accesses only the authorized property and functions.':'L’utilisateur accède uniquement à l’hôtel et aux fonctions autorisés.'],
+    ar?'OPERA : demande de compte ou droits':'OPERA: access or user request'
+  );
+  if(domain==='microsoft365')return make(
+    ar?'نموذج تشخيص Microsoft 365: ابدأ بعزل ما إذا كانت المشكلة خاصة بمستخدم واحد أو عامة قبل أي تغيير في الحساب.':en?'Microsoft 365 diagnostic template: first isolate whether the issue is limited to one user or is service-wide before changing an account.':'Modèle de diagnostic Microsoft 365 : commencez par isoler si le problème concerne un seul utilisateur ou le service avant toute modification de compte.',
+    ar?['جلسة أو اتصال منتهي','عطل خدمة أو شبكة','حساب أو ترخيص يحتاج تحققاً']:en?['Expired session or connectivity issue','Service or network incident','Account or licence requires verification']:['Session ou connectivité expirée','Incident de service ou de réseau','Compte ou licence à vérifier'],
+    ar?['أي تطبيق يتأثر وما نص الخطأ ؟','هل يتأثر مستخدمون آخرون ؟','هل يعمل الوصول من متصفح أو شبكة أخرى ؟']:en?['Which app is affected and what is the exact error?','Are other users affected?','Does it work from another browser or network?']:['Quelle application est touchée et quel est le message exact ?','D’autres utilisateurs sont-ils concernés ?','Le service fonctionne-t-il depuis un autre navigateur ou réseau ?'],
+    [common.network,ar?'تحقق من صفحة حالة Microsoft 365 المعتمدة في المؤسسة ومن وجود انقطاع عام.':en?'Check the organization-approved Microsoft 365 status page for a broader incident.':'Vérifiez la page de statut Microsoft 365 approuvée par l’organisation pour identifier un incident plus large.',ar?'Demande à l’utilisateur de fermer/réouvrir sa session et de tester une fenêtre privée, sans supprimer de données.':'Ask the user to sign out/in and test a private browser window without deleting data.'],
+    [common.safe,ar?'إذا كان الأثر لمستخدم واحد، سلّم نتيجة التشخيص إلى مسؤول Microsoft 365 pour contrôle du compte, de la licence ou de MFA.':en?'If only one user is affected, hand the findings to the Microsoft 365 owner to check the account, licence, or MFA.':'Si un seul utilisateur est concerné, transmettez les constats au responsable Microsoft 365 pour contrôler le compte, la licence ou la MFA.'],
+    [ar?'يعمل التطبيق من جديد، ولا تظهر رسالة الخطأ، ويؤكد المستخدم وصوله للوظيفة المطلوبة.':en?'The app works again, the error is gone, and the user confirms the required access.':'L’application fonctionne de nouveau, le message d’erreur a disparu et l’utilisateur confirme l’accès requis.'],
+    ar?'Microsoft 365 : accès ou messagerie indisponible':'Microsoft 365: access or mail issue'
+  );
+  if(domain==='citrix')return make(
+    ar?'نموذج تشخيص Citrix: حدّد إن كان العطل في الدخول أو تشغيل التطبيق أو داخل الجلسة، من دون تعديل إعدادات الخادم.':en?'Citrix diagnostic template: identify whether the failure is at sign-in, application launch, or inside the session, without changing server settings.':'Modèle de diagnostic Citrix : identifiez si l’échec survient à la connexion, au lancement de l’application ou dans la session, sans modifier les paramètres serveur.',
+    ar?['عميل Citrix أو جلسة تالفة','شبكة أو VPN غير متاح','تطبيق منشور أو profil utilisateur indisponible']:en?['Citrix client or session issue','Network or VPN unavailable','Published app or user profile unavailable']:['Client Citrix ou session défaillante','Réseau ou VPN indisponible','Application publiée ou profil utilisateur indisponible'],
+    ar?['هل يظهر البوابة وتسجيل الدخول ؟','هل يتأثر مستخدمون آخرون أو تطبيق آخر ؟','ما رمز الخطأ ووقت ظهوره ؟']:en?['Can the user reach the gateway and sign in?','Are other users or another app affected?','What error code and time are shown?']:['L’utilisateur atteint-il le portail et la connexion ?','D’autres utilisateurs ou une autre application sont-ils concernés ?','Quel code d’erreur et à quel moment apparaît-il ?'],
+    [common.network,ar?'أغلق جلسة Citrix من الجهاز فقط ثم أعد فتح التطبيق المنشور؛ لا تُنهِ جلسات على الخادم.':en?'Close the Citrix session only on the workstation then reopen the published app; do not terminate server sessions.':'Fermez la session Citrix uniquement sur le poste puis relancez l’application publiée ; ne terminez pas de sessions côté serveur.',common.evidence],
+    [common.safe,ar?'صعّد إلى فريق Citrix مع اسم التطبيق والوقت ورمز الخطأ وتأثير المستخدم.':en?'Escalate to the Citrix team with app name, time, error code, and user impact.':'Escaladez vers l’équipe Citrix avec le nom de l’application, l’heure, le code d’erreur et l’impact utilisateur.'],
+    [ar?'يفتح التطبيق المطلوب، وتستقر الجلسة، ويمكن للمستخدم إنجاز العملية غير الحساسة المتفق عليها.':en?'The required application opens, the session is stable, and the user can complete the agreed non-sensitive task.':'L’application demandée s’ouvre, la session est stable et l’utilisateur peut réaliser l’opération non sensible convenue.'],
+    ar?'Citrix : accès ou application indisponible':'Citrix: access or application unavailable'
+  );
+  if(domain==='sage1000')return make(
+    ar?'نموذج تشخيص Sage 1000: احمِ البيانات comptables; لا تعيد تشغيل خدمات أو عمليات في الإنتاج دون المسؤول المالي وIT.':en?'Sage 1000 diagnostic template: protect accounting data; do not restart production services or jobs without the finance and IT owners.':'Modèle de diagnostic Sage 1000 : protégez les données comptables ; ne redémarrez aucun service ou traitement de production sans le responsable finance et IT.',
+    ar?['توقف في التطبيق أو الجلسة','مشكلة شبكة أو جهاز','معالجة مالية أو صيانة en cours']:en?['Application or session issue','Network or workstation issue','Financial process or maintenance in progress']:['Incident applicatif ou de session','Problème de réseau ou de poste','Traitement financier ou maintenance en cours'],
+    ar?['ما العملية التي كانت جارية ؟','هل توجد رسالة أو رقم مرجعي ؟','هل المستخدم الوحيد المتأثر ؟']:en?['Which business operation was running?','Is there an error or reference number?','Is this the only affected user?']:['Quelle opération métier était en cours ?','Existe-t-il un message ou un numéro de référence ?','Est-ce le seul utilisateur impacté ?'],
+    [common.evidence,common.network,ar?'تحقق مع finance من عدم وجود clôture, export ou traitement critique avant toute reprise.':en?'Confirm with Finance that no close, export, or critical process is running before any retry.':'Confirmez avec la finance qu’aucune clôture, export ou traitement critique n’est en cours avant toute reprise.'],
+    [common.safe,ar?'صعّد الطلب إلى مالك Sage et IT avec l’impact et l’heure; لا تحذف cache ou données.':en?'Escalate to the Sage owner and IT with impact and time; do not delete cache or data.':'Escaladez au propriétaire Sage et à l’IT avec l’impact et l’heure ; ne supprimez ni cache ni données.'],
+    [ar?'يؤكد مالك التطبيق أن العملية متسقة ويمكن للمستخدم reprendre sans différence comptable.':en?'The application owner confirms the process is consistent and the user can resume with no accounting discrepancy.':'Le propriétaire applicatif confirme que le traitement est cohérent et que l’utilisateur peut reprendre sans écart comptable.'],
+    ar?'Sage 1000 : accès ou traitement à vérifier':'Sage 1000: access or process to check'
+  );
+  if(domain==='pos')return make(
+    ar?'نموذج تشخيص POS: احمِ المبيعات والمدفوعات؛ لا تعيد احتساب أو إلغاء عملية دفع من دون موافقة مسؤول POS/المالية.':en?'POS diagnostic template: protect sales and payments; do not reprocess or void a payment without POS/Finance owner approval.':'Modèle de diagnostic POS : protégez les ventes et paiements ; ne repassez ni n’annulez un paiement sans l’accord du responsable POS/finance.',
+    ar?['محطة أو طابعة غير متصلة','شبكة محلية أو périphérique','عملية دفع غير مؤكدة']:en?['Terminal or printer disconnected','Local network or peripheral issue','Payment transaction not confirmed']:['Terminal ou imprimante déconnecté','Réseau local ou périphérique','Transaction de paiement non confirmée'],
+    ar?['هل تم الخصم بالفعل ؟','ما رقم caisse et heure ?','هل محطات أخرى تعمل ؟']:en?['Was the payment already charged?','What are the till number and time?','Are other terminals working?']:['Le paiement a-t-il déjà été débité ?','Quel est le numéro de caisse et l’heure ?','D’autres terminaux fonctionnent-ils ?'],
+    [common.network,common.evidence,ar?'احتفظ بتفاصيل العملية حسب سياسة sécurité et avise le responsable caisse قبل أي nouvelle tentative.':en?'Preserve the transaction details per security policy and notify the till manager before any retry.':'Conservez les détails de transaction selon la politique de sécurité et prévenez le responsable de caisse avant toute nouvelle tentative.'],
+    [common.safe,ar?'إذا لم يؤكد POS العملية، استخدم مسار التصعيد المالي المعتمد لتجنب double débit.':en?'If POS does not confirm the transaction, use the approved Finance escalation path to avoid duplicate charging.':'Si le POS ne confirme pas la transaction, utilisez le circuit d’escalade finance approuvé pour éviter un double débit.'],
+    [ar?'تأكيد حالة كل عملية من المسؤول المالي، وتشغيل المحطة أو مسار بديل معتمد.':en?'Finance confirms each transaction status and the terminal or approved fallback is operational.':'La finance confirme le statut de chaque transaction et le terminal ou le mode dégradé approuvé fonctionne.'],
+    ar?'POS : incident caisse ou paiement':'POS: till or payment incident'
+  );
+  if(domain==='maintenance')return make(
+    ar?'نموذج صيانة: أمّن الأشخاص والمعدات أولاً. لا تفتح جهازاً كهربائياً ولا تتجاوز وسائل الحماية.':en?'Maintenance template: protect people and equipment first. Do not open electrical equipment or bypass safety measures.':'Modèle maintenance : sécurisez d’abord les personnes et l’équipement. N’ouvrez pas un équipement électrique et ne contournez pas les protections.',
+    ar?['عطل équipement','طاقة أو اتصال','تآكل أو ضرر مادي']:en?['Equipment fault','Power or connectivity issue','Wear or physical damage']:['Défaillance d’équipement','Alimentation ou connectivité','Usure ou dommage physique'],
+    ar?['هل يوجد خطر فوري أو دخان/حرارة/ماء ؟','ما مكان ورقم الجهاز ؟','متى بدأ العطل وهل يعيق الخدمة ؟']:en?['Is there immediate danger, smoke, heat, or water?','What are the location and asset number?','When did it start and does it affect service?']:['Y a-t-il un danger immédiat, fumée, chaleur ou eau ?','Quel est l’emplacement et le numéro d’équipement ?','Depuis quand et quel impact sur le service ?'],
+    [ar?'في حال وجود خطر، أبعد المستخدمين واتبع إجراء السلامة/الطوارئ المحلي.':en?'If there is danger, keep users away and follow the local safety/emergency procedure.':'En cas de danger, éloignez les utilisateurs et appliquez la procédure locale de sécurité/urgence.',common.evidence,ar?'تحقق فقط من alimentation, câble visible et indication d’état, sans démontage.':en?'Check only power, visible cabling, and status indicator, without disassembly.':'Contrôlez uniquement l’alimentation, le câblage visible et l’indicateur d’état, sans démontage.'],
+    [common.safe,ar?'صعّد إلى الفريق المختص مع الموقع والأثر والصور غير الحساسة إذا سمحت السياسة.':en?'Escalate to the qualified team with location, impact, and non-sensitive photos if policy allows.':'Escaladez vers l’équipe qualifiée avec l’emplacement, l’impact et des photos non sensibles si la politique l’autorise.'],
+    [ar?'يؤكد الفني المؤهل سلامة الجهاز وعودته للخدمة.':en?'A qualified technician confirms equipment safety and return to service.':'Un technicien qualifié confirme la sécurité de l’équipement et son retour en service.'],
+    ar?'Maintenance : équipement à sécuriser':'Maintenance: equipment to secure','Maintenance'
+  );
+  const isNetwork=domain==='network'||domain==='general';
+  return make(
+    ar?(isNetwork?'نموذج تشخيص الشبكة: حدّد نطاق العطل قبل إعادة تشغيل أي جهاز شبكة.':'نموذج دعم IT: اجمع الأعراض بشكل آمن ثم صعّد بالدلائل.'):(en?(isNetwork?'Network diagnostic template: identify the incident scope before rebooting any network device.':'IT support template: collect symptoms safely, then escalate with evidence.'):(isNetwork?'Modèle de diagnostic réseau : déterminez le périmètre de l’incident avant de redémarrer un équipement réseau.':'Modèle de support IT : recueillez les symptômes de manière sûre puis escaladez avec les éléments utiles.')),
+    ar?['انقطاع محلي','شبكة Wi-Fi أو câblage','خدمة خارجية أو إعداد جهاز']:en?['Local outage','Wi-Fi or cabling','External service or device setting']:['Incident local','Wi-Fi ou câblage','Service externe ou paramétrage du poste'],
+    ar?['أي مواقع أو مستخدمين متأثرين ؟','هل يعمل جهاز أو شبكة أخرى ؟','ما الوقت ورسالة الخطأ ؟']:en?['Which locations or users are affected?','Does another device or network work?','What are the time and exact error?']:['Quels sites ou utilisateurs sont concernés ?','Un autre poste ou réseau fonctionne-t-il ?','Quelle est l’heure et le message exact ?'],
+    [common.network,ar?'اختبر خدمة معتمدة من poste concerné et autre poste pour isoler le périmètre.':en?'Test an approved service from the affected workstation and another workstation to isolate the scope.':'Testez un service approuvé depuis le poste concerné puis un autre poste afin d’isoler le périmètre.',common.evidence],
+    [common.safe,ar?'صعّد إلى فريق réseau avec périmètre, heure et résultats; لا تعيد تشغيل switch/routeur دون autorisation.':en?'Escalate to the network team with scope, time, and results; do not reboot a switch/router without authorization.':'Escaladez vers l’équipe réseau avec le périmètre, l’heure et les résultats ; ne redémarrez pas un switch/routeur sans autorisation.'],
+    [ar?'تعمل الخدمة من الموقع المتأثر ويتم تأكيد الاستقرار من مستخدم واحد على الأقل.':en?'The service works from the affected location and at least one user confirms stability.':'Le service fonctionne depuis le site concerné et au moins un utilisateur confirme la stabilité.'],
+    ar?(isNetwork?'Réseau : connectivité indisponible':'Support IT : incident à qualifier'):(isNetwork?'Network: connectivity unavailable':'IT support: incident to qualify')
+  );
+};
 const fallbackAnswer=(domain:string,message:string,language:string)=>{
   const isEn=language==='en', isAr=language==='ar';
   const label=domain==='general'?'IT':domain;
@@ -68,7 +152,8 @@ Deno.serve(async req=>{
   const userClient=createClient(URL,ANON,{global:{headers:{Authorization:`Bearer ${token}`}},auth:{persistSession:false,autoRefreshToken:false}});
   const {data:{user}}=await userClient.auth.getUser(token);
   if(!user)return send(req,{error:'Session expirée ou invalide.'},401);
-  if((!GEMINI_KEY&&!OPENAI_KEY&&!ANTHROPIC_KEY)||!SERVICE)return send(req,{error:'Le service Assistant IT n’est pas configuré côté serveur.'},503);
+  // The procedure guide remains available even when no external AI key exists.
+  if(!SERVICE)return send(req,{error:'Le service Assistant IT n’est pas configuré côté serveur.'},503);
   let input:any;try{input=await req.json();}catch{return send(req,{error:'Données invalides.'},400);}
   const action=input.action==='ticket'?'ticket':'chat';
   const domain=domains.has(input.domain)?input.domain:'general';
@@ -109,6 +194,25 @@ Deno.serve(async req=>{
       if(ticket)query.neq('id',ticket.id);
       const {data}=await query;similarTickets=(data??[]).map(item=>({...item,description:clean(item.description,700)}));
     }
+  }
+  // A provider-free guide is intentionally the first response for a chat.
+  // It gives repeatable, safe steps and prevents an upstream outage from
+  // replacing useful guidance with a vague generic fallback.
+  if(action==='chat'){
+    const answer=procedureGuide(domain,message,language);
+    const sources=[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
+    await service.from('it_ai_messages').insert([
+      {conversation_id:conversation.id,author:'user',content:message,metadata:{}},
+      {conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}
+    ]);
+    await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
+    return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,provider:'procedure-guide'});
+  }
+  if(action==='ticket'){
+    const ticketDomain=ticket.categorie==='Maintenance'?'maintenance':domain;
+    const answer=procedureGuide(ticketDomain,`${ticket.titre}\n${ticket.description??''}`,language);
+    const sources=[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
+    return send(req,{ticket_id:ticket.id,answer,sources,similar_tickets:similarTickets,provider:'procedure-guide'});
   }
   const context=action==='ticket'?`Ticket ${ticket.numero}: ${ticket.titre}\nDescription: ${clean(ticket.description,5000)}\nCatégorie: ${ticket.categorie}; priorité: ${ticket.priorite}; statut: ${ticket.statut}; hôtel: ${ticket.hotel}`:`Domaine: ${domain}\nConversation précédente:\n${history.map(item=>`${item.author}: ${item.content}`).join('\n')}\nNouvelle demande: ${message}`;
   const prompt=`Tu es l’assistant IT interne d’un groupe hôtelier. Réponds en ${language==='ar'?'arabe':language==='en'?'anglais':'français'}.
