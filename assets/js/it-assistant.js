@@ -10,9 +10,9 @@
   const PHOTO_MAX_BYTES=5*1024*1024;
   const esc=value=>window.esc?window.esc(value):String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const photoTranslations={
-    fr:{assistant_add_photo:'Ajouter des photos',assistant_photo_help:'JPG, PNG ou WebP — 5 Mo maximum par photo.',assistant_remove_photo:'Supprimer la photo',assistant_photo_rejected:'Photo refusée : JPG, PNG ou WebP, 5 Mo maximum.',assistant_photo_session:'Photo non envoyée : session indisponible.',assistant_photo_failed:'Photo non envoyée.'},
-    en:{assistant_add_photo:'Add photos',assistant_photo_help:'JPG, PNG or WebP — 5 MB maximum per photo.',assistant_remove_photo:'Remove photo',assistant_photo_rejected:'Photo rejected: JPG, PNG or WebP, 5 MB maximum.',assistant_photo_session:'Photo was not sent: session unavailable.',assistant_photo_failed:'Photo was not sent.'},
-    ar:{assistant_add_photo:'إضافة صور',assistant_photo_help:'JPG أو PNG أو WebP — بحد أقصى 5 ميغابايت لكل صورة.',assistant_remove_photo:'حذف الصورة',assistant_photo_rejected:'تم رفض الصورة: JPG أو PNG أو WebP، بحد أقصى 5 ميغابايت.',assistant_photo_session:'لم يتم إرسال الصورة: الجلسة غير متاحة.',assistant_photo_failed:'لم يتم إرسال الصورة.'}
+    fr:{assistant_add_photo:'Ajouter des photos',assistant_photo_help:'JPG, PNG ou WebP — 5 Mo maximum par photo.',assistant_remove_photo:'Supprimer la photo',assistant_photo_rejected:'Photo refusée : JPG, PNG ou WebP, 5 Mo maximum.',assistant_photo_session:'Photo non envoyée : session indisponible.',assistant_photo_failed:'Photo non envoyée.',assistant_analyze_photos:'Analyser les photos avec Gemini',assistant_analyze_photos_help:'Les captures sélectionnées seront envoyées à Gemini uniquement après votre confirmation.',assistant_analyze_photos_confirm:'Les photos jointes seront envoyées à Gemini pour analyser uniquement les symptômes techniques visibles. Ne continuez pas si elles contiennent des mots de passe, données clients ou données personnelles. Continuer ?',assistant_photo_analysis_loading:'Analyse des captures…',assistant_photo_analysis_failed:'Analyse des photos indisponible. Réessayez ou créez un ticket.'},
+    en:{assistant_add_photo:'Add photos',assistant_photo_help:'JPG, PNG or WebP — 5 MB maximum per photo.',assistant_remove_photo:'Remove photo',assistant_photo_rejected:'Photo rejected: JPG, PNG or WebP, 5 MB maximum.',assistant_photo_session:'Photo was not sent: session unavailable.',assistant_photo_failed:'Photo was not sent.',assistant_analyze_photos:'Analyze photos with Gemini',assistant_analyze_photos_help:'The selected screenshots will be sent to Gemini only after your confirmation.',assistant_analyze_photos_confirm:'The attached photos will be sent to Gemini to analyze only visible technical symptoms. Do not continue if they contain passwords, customer data, or personal data. Continue?',assistant_photo_analysis_loading:'Analyzing screenshots…',assistant_photo_analysis_failed:'Photo analysis is unavailable. Try again or create a ticket.'},
+    ar:{assistant_add_photo:'إضافة صور',assistant_photo_help:'JPG أو PNG أو WebP — بحد أقصى 5 ميغابايت لكل صورة.',assistant_remove_photo:'حذف الصورة',assistant_photo_rejected:'تم رفض الصورة: JPG أو PNG أو WebP، بحد أقصى 5 ميغابايت.',assistant_photo_session:'لم يتم إرسال الصورة: الجلسة غير متاحة.',assistant_photo_failed:'لم يتم إرسال الصورة.',assistant_analyze_photos:'تحليل الصور باستخدام Gemini',assistant_analyze_photos_help:'لن تُرسل اللقطات المختارة إلى Gemini إلا بعد تأكيدك.',assistant_analyze_photos_confirm:'سيتم إرسال الصور المرفقة إلى Gemini لتحليل الأعراض التقنية المرئية فقط. لا تتابع إذا كانت تتضمن كلمات مرور أو بيانات عملاء أو بيانات شخصية. هل تريد المتابعة؟',assistant_photo_analysis_loading:'جارٍ تحليل اللقطات…',assistant_photo_analysis_failed:'تحليل الصور غير متاح. أعد المحاولة أو أنشئ تذكرة.'}
   };
   const tr=(key,fallback,values={})=>{
     const translate=window.OnomoI18n?.translate;
@@ -43,7 +43,8 @@
     const saved=state.uploadedPhotos.filter(row=>!state.photos.some(photo=>photo.path===row.storage_path)).map(row=>`<a class="assistant-photo-item assistant-photo-saved" href="${esc(row.preview||'#')}" target="_blank" rel="noopener" ${row.preview?'':'aria-disabled="true"'}>${row.preview?`<img src="${esc(row.preview)}" alt="${esc(row.file_name)}">`:'<i class="ti ti-photo"></i>'}<span>${esc(row.file_name)}</span><i class="ti ti-external-link"></i></a>`).join('');
     return `${pending}${saved}`;
   };
-  const refreshPhotoTray=()=>{const tray=document.getElementById('assistantPhotoTray');if(tray)tray.innerHTML=photoTray();};
+  const photoAnalyzerControl=()=>state.conversationId&&state.uploadedPhotos.length?`<div class="assistant-photo-analysis"><button class="btn btn-outline" id="assistantAnalyzePhotos" type="button" onclick="ITAssistant.analyzePhotos()"><i class="ti ti-photo-search"></i>${esc(tr('assistant_analyze_photos','Analyser les photos avec Gemini'))}</button><small>${esc(tr('assistant_analyze_photos_help','Les captures sélectionnées seront envoyées à Gemini uniquement après votre confirmation.'))}</small></div>`:'';
+  const refreshPhotoTray=()=>{const tray=document.getElementById('assistantPhotoTray');if(tray)tray.innerHTML=photoTray()+photoAnalyzerControl();};
   async function selectPhotos(files){
     const selected=Array.from(files||[]).slice(0,4);
     if(!selected.length)return;
@@ -77,6 +78,28 @@
         await window.sbFetch('it_ai_attachments',{method:'POST',body:JSON.stringify({conversation_id:conversationId,uploaded_by:session.user.id,file_name:photo.file.name,storage_path:path,content_type:photo.file.type,file_size:photo.file.size})});
         photo.path=path;state.uploadedPhotos.push({file_name:photo.file.name,storage_path:path});
       }catch(error){console.error('Assistant photo upload failed',error);window.showToast?.(tr('assistant_photo_failed','Photo non envoyée.'),'err');}
+    }
+  }
+  async function analyzePhotos(){
+    if(!state.conversationId||!state.uploadedPhotos.length){
+      window.showToast?.(tr('assistant_photo_failed','Photo non envoyée.'),'err');
+      return;
+    }
+    // Uploading is private to Supabase. Sending an image to an external model is
+    // intentionally a separate, visible action that requires the user's consent.
+    if(!window.confirm(tr('assistant_analyze_photos_confirm','Les photos jointes seront envoyées à Gemini pour analyser uniquement les symptômes techniques visibles. Ne continuez pas si elles contiennent des mots de passe, données clients ou données personnelles. Continuer ?')))return;
+    const button=document.getElementById('assistantAnalyzePhotos');
+    if(button){button.disabled=true;button.innerHTML=`<i class="ti ti-loader-2 spin"></i>${esc(tr('assistant_photo_analysis_loading','Analyse des captures…'))}`;}
+    try{
+      const result=await request({action:'image_analysis',conversation_id:state.conversationId,domain:state.domain});
+      const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[],image_analysis:true};
+      state.messages.push({author:'assistant',content:result.answer.answer,metadata});
+      state.lastAnswer=metadata;
+      renderAssistantView();
+    }catch(error){
+      console.error('Assistant photo analysis failed',error);
+      window.showToast?.(error.message||tr('assistant_photo_analysis_failed','Analyse des photos indisponible. Réessayez ou créez un ticket.'),'err');
+      if(button){button.disabled=false;button.innerHTML=`<i class="ti ti-photo-search"></i>${esc(tr('assistant_analyze_photos','Analyser les photos avec Gemini'))}`;}
     }
   }
   const list=(title,items,cls='')=>items?.length?`<section class="assistant-block ${cls}"><h4>${esc(title)}</h4><ul>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></section>`:'';
@@ -124,6 +147,7 @@
     const domainOptions=domainKeys.map(key=>`<option value="${key}" ${state.domain===key?'selected':''}>${esc(domainLabels[key])}</option>`).join('');
     const messages=state.messages.length?state.messages.map(conversationMessage).join(''):`<div class="assistant-empty"><i class="ti ti-message-chatbot"></i><h3>${esc(tr('assistant_start_title','Comment puis-je vous aider ?'))}</h3><p>${esc(tr('assistant_start_description','Choisissez un domaine, décrivez le problème et l’assistant vous guidera sans créer de ticket.'))}</p></div>`;
     try{target.innerHTML=`<div class="assistant-page"><header class="assistant-header"><div><span class="assistant-kicker"><i class="ti ti-sparkles"></i>${esc(tr('assistant_name','Assistant IT'))}</span><h1>${esc(tr('assistant_title','Diagnostic IT guidé'))}</h1><p>${esc(tr('assistant_subtitle','Conseils pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance.'))}</p></div><button class="btn btn-outline" onclick="ITAssistant.startConversation()"><i class="ti ti-plus"></i>${esc(tr('assistant_new_conversation','Nouvelle conversation'))}</button></header><div class="assistant-layout"><aside class="assistant-history"><div class="assistant-history-title">${esc(tr('assistant_conversations','Mes conversations'))}</div>${state.conversations.length?state.conversations.map(item=>`<button class="assistant-history-item ${item.id===state.conversationId?'active':''}" onclick="ITAssistant.openConversation('${item.id}')"><i class="ti ti-message"></i><span>${esc(item.title||domainLabels[item.domain]||tr('assistant_name','Assistant IT'))}</span></button>`).join(''):`<p>${esc(tr('assistant_no_conversations','Aucune conversation enregistrée.'))}</p>`}</aside><main class="assistant-chat"><div class="assistant-safety"><i class="ti ti-shield-lock"></i>${esc(tr('assistant_safety','Ne saisissez jamais de mot de passe, clé API, jeton ou donnée client.'))}</div><div id="assistantMessages" class="assistant-messages">${messages}</div>${state.lastAnswer?.suggested_ticket?.title?`<div class="assistant-ticket-cta"><div><strong>${esc(tr('assistant_ticket_offer','Le problème persiste ?'))}</strong><span>${esc(tr('assistant_ticket_offer_description','Créez un ticket prérempli avec le résumé des vérifications.'))}</span></div><button class="btn btn-gold" onclick="ITAssistant.createTicketFromConversation()"><i class="ti ti-ticket"></i>${esc(tr('assistant_create_ticket','Créer un ticket à partir de cette conversation'))}</button></div>`:''}<form class="assistant-composer" onsubmit="ITAssistant.sendMessage(event)"><select id="assistantDomain" aria-label="${esc(tr('assistant_domain','Domaine IT'))}" onchange="ITAssistant.changeDomain(this.value)">${domainOptions}</select><textarea id="assistantInput" rows="3" maxlength="6000" placeholder="${esc(tr('assistant_placeholder','Décrivez le symptôme, le poste concerné et ce qui a déjà été essayé…'))}" required></textarea><div class="assistant-photo-controls"><label class="assistant-photo-button" for="assistantPhotos"><i class="ti ti-camera"></i>${esc(tr('assistant_add_photo','Ajouter des photos'))}<input id="assistantPhotos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onchange="ITAssistant.selectPhotos(this.files)"></label><span>${esc(tr('assistant_photo_help','JPG, PNG ou WebP — 5 Mo maximum par photo.'))}</span><div id="assistantPhotoTray" class="assistant-photo-tray">${photoTray()}</div></div><button class="btn btn-gold" id="assistantSendBtn" type="submit"><i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}</button></form></main></div></div>`;}catch(error){console.error('Assistant IT: rendu impossible',error);target.innerHTML=`<div class="assistant-page"><div class="assistant-service-error"><i class="ti ti-alert-circle"></i><strong>${esc(tr('assistant_unavailable_title','Assistant IT indisponible'))}</strong><p>${esc(tr('assistant_render_failed','Impossible d’afficher l’assistant. Veuillez réessayer.'))}</p></div></div>`;}
+    refreshPhotoTray();
     const messagesNode=document.getElementById('assistantMessages');if(messagesNode)messagesNode.scrollTop=messagesNode.scrollHeight;
   }
   async function sendMessage(event){
@@ -176,5 +200,5 @@
     }catch(error){window.showToast?.(tr('assistant_save_failed','Impossible d’enregistrer la solution.'),'err');}
   }
   function closeTicketAssistant(){document.getElementById('ticketAssistantModal')?.remove();}
-  window.ITAssistant={renderAssistantView,sendMessage,startConversation,openConversation:loadConversation,changeDomain,selectPhotos,removePhoto,createTicketFromConversation,openTicketAssistant,saveTicketSolution,closeTicketAssistant};
+  window.ITAssistant={renderAssistantView,sendMessage,startConversation,openConversation:loadConversation,changeDomain,selectPhotos,removePhoto,analyzePhotos,createTicketFromConversation,openTicketAssistant,saveTicketSolution,closeTicketAssistant};
 })();

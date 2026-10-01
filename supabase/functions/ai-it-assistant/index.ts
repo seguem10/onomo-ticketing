@@ -20,6 +20,9 @@ const GEMINI_KEY=Deno.env.get("GEMINI_API_KEY");
 // Use the Flash model available on Gemini's free tier by default.  A project
 // can still opt into a different enabled model through GEMINI_MODEL.
 const GEMINI_MODEL=Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash";
+// Vision can use a separately configured compatible Gemini model.  It falls
+// back to the text model only when that model supports image input.
+const GEMINI_VISION_MODEL=Deno.env.get("GEMINI_VISION_MODEL") ?? GEMINI_MODEL;
 const domains=new Set(['microsoft365','sage1000','citrix','opera','pos','network','maintenance','general']);
 const allowedOrigin=(origin:string)=>origin==='https://onomo-ticketing.vercel.app'||/^https:\/\/onomo-ticketing(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)||/^http:\/\/(localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin);
 const headers=(req:Request)=>({"Access-Control-Allow-Origin":allowedOrigin(req.headers.get('origin')??'')?req.headers.get('origin')??'':"https://onomo-ticketing.vercel.app","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS",Vary:"Origin","Content-Type":"application/json"});
@@ -38,6 +41,11 @@ const requestProvider=async(url:string,init:RequestInit)=>{
 };
 const clean=(value:unknown,max=6000)=>String(value??'').replace(/\b(?:password|mot de passe|token|api[_ -]?key|secret)\s*[:=]\s*\S+/gi,'[REDACTED]').replace(/\b(?:sk-[A-Za-z0-9_-]{12,}|eyJ[A-Za-z0-9_-]{20,})\b/g,'[REDACTED]').replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,'[REDACTED_EMAIL]').replace(/\b(?:\d[ -]*?){13,19}\b/g,'[REDACTED_PAYMENT]').replace(/[\u0000-\u001f]/g,' ').trim().slice(0,max);
 const toText=(items:unknown)=>Array.isArray(items)?items.map(item=>clean(item,900)).filter(Boolean).slice(0,8):[];
+const toBase64=(buffer:ArrayBuffer)=>{
+  const bytes=new Uint8Array(buffer);let result='';
+  for(let start=0;start<bytes.length;start+=0x8000)result+=String.fromCharCode(...bytes.subarray(start,start+0x8000));
+  return btoa(result);
+};
 const priority=(value:unknown)=>{const key=String(value??'').toLowerCase();if(/crit|urgent|p1/.test(key))return 'Urgente';if(/haut|high|p2/.test(key))return 'Haute';if(/bas|low|p4/.test(key))return 'Basse';return 'Normale';};
 // First-line, provider-free support.  These are deliberately conservative
 // diagnostic templates: they are not vendor-specific runbooks and never carry
@@ -268,7 +276,7 @@ Deno.serve(async req=>{
   // The procedure guide remains available even when no external AI key exists.
   if(!SERVICE)return send(req,{error:'Le service Assistant IT n’est pas configuré côté serveur.'},503);
   let input:any;try{input=await req.json();}catch{return send(req,{error:'Données invalides.'},400);}
-  const action=input.action==='ticket'?'ticket':input.action==='history'?'history':'chat';
+  const action=input.action==='ticket'?'ticket':input.action==='history'?'history':input.action==='image_analysis'?'image_analysis':'chat';
   const domain=domains.has(input.domain)?input.domain:'general';
   const language=['fr','en','ar'].includes(input.language)?input.language:'fr';
   const service=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -300,6 +308,43 @@ Deno.serve(async req=>{
     const {data:messages,error:messagesError}=await service.from('it_ai_messages').select('author,content,metadata,created_at').eq('conversation_id',ownedConversation.id).order('created_at',{ascending:true});
     if(messagesError)return send(req,{error:'Impossible de charger la conversation.'},500);
     return send(req,{conversation:ownedConversation,messages:messages??[]});
+  }
+  if(action==='image_analysis'){
+    if(!GEMINI_KEY)return send(req,{error:'Analyse d’image indisponible : Gemini n’est pas configuré côté serveur.'},503);
+    const conversationId=String(input.conversation_id??'');
+    if(!conversationId)return send(req,{error:'Conversation manquante.'},400);
+    const {data:ownedConversation,error:conversationError}=await service.from('it_ai_conversations').select('id,domain,title').eq('id',conversationId).eq('user_id',user.id).maybeSingle();
+    if(conversationError||!ownedConversation)return send(req,{error:'Conversation introuvable ou accès non autorisé.'},403);
+    const {data:attachmentRows,error:attachmentsError}=await service.from('it_ai_attachments').select('id,file_name,storage_path,content_type,file_size,created_at').eq('conversation_id',ownedConversation.id).eq('uploaded_by',user.id).order('created_at',{ascending:false}).limit(2);
+    if(attachmentsError)return send(req,{error:'Impossible de préparer les captures.'},500);
+    const acceptedTypes=new Set(['image/jpeg','image/png','image/webp']);
+    let totalSize=0;
+    const attachments=(attachmentRows??[]).filter(row=>{
+      const size=Number(row.file_size)||0;
+      if(!acceptedTypes.has(String(row.content_type))||size<=0||size>5*1024*1024||totalSize+size>4*1024*1024)return false;
+      totalSize+=size;return true;
+    });
+    if(!attachments.length)return send(req,{error:'Aucune capture compatible à analyser. Ajoutez au maximum deux images JPG, PNG ou WebP totalisant 4 Mo.'},400);
+    try{
+      const imageParts:any[]=[];
+      for(const attachment of attachments){
+        const {data,error}=await service.storage.from('it-assistant-images').download(attachment.storage_path);
+        if(error||!data)throw new Error('private-image-download-failed');
+        const buffer=await data.arrayBuffer();
+        if(buffer.byteLength===0||buffer.byteLength>5*1024*1024)throw new Error('invalid-image-size');
+        imageParts.push({inlineData:{mimeType:attachment.content_type,data:toBase64(buffer)}});
+      }
+      const visionPrompt=`Tu es un assistant IT hôtelier. Analyse seulement les symptômes techniques visuellement observables dans les captures jointes. Ignore les visages, noms, messages privés et toute donnée personnelle ou client. Ne lis jamais ni ne répète un mot de passe, jeton, clé ou donnée bancaire. Ne déduis pas d'informations non visibles. Réponds en ${language==='ar'?'arabe':language==='en'?'anglais':'français'} avec un JSON strict : {"answer":"résumé visuel prudent","causes":["..."],"questions":["..."],"checks":["vérification — résultat attendu — action suivante"],"solution":["..."],"validation":["..."],"assumptions":["analyse visuelle à vérifier"],"suggested_ticket":{"title":"...","description":"...","category":"IT / Réseau","priority":"Normale"}}. Domaine déclaré : ${domain}.`;
+      const response=await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_VISION_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:visionPrompt},...imageParts]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:1100}})});
+      if(!response.ok){console.error('Gemini image analysis',response.status,(await response.text()).slice(0,500));return send(req,{error:'Analyse d’image temporairement indisponible. Réessayez ou créez un ticket.'},502);}
+      const provider=await response.json();
+      const providerText=provider?.candidates?.[0]?.content?.parts?.map((part:any)=>part?.text??'').join('')||'';
+      const answer=parseAnswer(String(providerText));
+      const sources=[{id:'gemini-photo-analysis',title:'Analyse de captures Gemini — à vérifier',source:'Analyse demandée explicitement par l’utilisateur',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
+      await service.from('it_ai_messages').insert({conversation_id:ownedConversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,image_analysis:true,attachment_count:attachments.length}});
+      await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',ownedConversation.id);
+      return send(req,{conversation_id:ownedConversation.id,answer,sources,similar_tickets:[],provider:'gemini-vision'});
+    }catch(error){console.error('ai-it-image-analysis',error);return send(req,{error:'Analyse d’image temporairement indisponible. Réessayez ou créez un ticket.'},502);}
   }
   const hotel=ticket?.hotel??null;
   const {data:allProcedures}=await service.from('it_procedures').select('id,title,domain,content,source_label,source_url,effective_date,hotel').eq('is_validated',true).in('domain',[domain,'general']).order('effective_date',{ascending:false}).limit(12);
