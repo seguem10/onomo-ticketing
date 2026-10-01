@@ -3,14 +3,21 @@
    authenticated Supabase Edge Function. */
 (function(){
   'use strict';
-  const state={conversationId:null,domain:'general',messages:[],lastAnswer:null,conversations:[]};
+  const state={conversationId:null,domain:'general',messages:[],lastAnswer:null,conversations:[],photos:[],uploadedPhotos:[]};
   const domainKeys=['microsoft365','sage1000','citrix','opera','pos','network','maintenance','general'];
   const domainLabels={microsoft365:'Microsoft 365',sage1000:'Sage 1000',citrix:'Citrix',opera:'OPERA PMS',pos:'POS',network:'IT / Réseau',maintenance:'Maintenance',general:'Support IT'};
+  const PHOTO_TYPES=new Set(['image/jpeg','image/png','image/webp']);
+  const PHOTO_MAX_BYTES=5*1024*1024;
   const esc=value=>window.esc?window.esc(value):String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const photoTranslations={
+    fr:{assistant_add_photo:'Ajouter des photos',assistant_photo_help:'JPG, PNG ou WebP — 5 Mo maximum par photo.',assistant_remove_photo:'Supprimer la photo',assistant_photo_rejected:'Photo refusée : JPG, PNG ou WebP, 5 Mo maximum.',assistant_photo_session:'Photo non envoyée : session indisponible.',assistant_photo_failed:'Photo non envoyée.'},
+    en:{assistant_add_photo:'Add photos',assistant_photo_help:'JPG, PNG or WebP — 5 MB maximum per photo.',assistant_remove_photo:'Remove photo',assistant_photo_rejected:'Photo rejected: JPG, PNG or WebP, 5 MB maximum.',assistant_photo_session:'Photo was not sent: session unavailable.',assistant_photo_failed:'Photo was not sent.'},
+    ar:{assistant_add_photo:'إضافة صور',assistant_photo_help:'JPG أو PNG أو WebP — بحد أقصى 5 ميغابايت لكل صورة.',assistant_remove_photo:'حذف الصورة',assistant_photo_rejected:'تم رفض الصورة: JPG أو PNG أو WebP، بحد أقصى 5 ميغابايت.',assistant_photo_session:'لم يتم إرسال الصورة: الجلسة غير متاحة.',assistant_photo_failed:'لم يتم إرسال الصورة.'}
+  };
   const tr=(key,fallback,values={})=>{
     const translate=window.OnomoI18n?.translate;
-    const text=translate?translate(key,window.OnomoI18n?.language,values):(window.OnomoI18n?.t?.(key)||fallback);
-    return text===key?fallback:text;
+    const text=translate?translate(key,window.OnomoI18n?.language,values):(window.OnomoI18n?.t?.(key)||key);
+    return text===key?(photoTranslations[window.OnomoI18n?.language||'fr']?.[key]||fallback):text;
   };
   const language=()=>window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
   const isTechnician=()=>Boolean(window.canManageTickets?.(window.currentUser));
@@ -23,6 +30,48 @@
     if(!response.ok||data.error)throw new Error(data.error||tr('assistant_unavailable','Le service Assistant IT est temporairement indisponible.'));
     return data;
   };
+  const safePhotoName=name=>String(name||'photo').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-120);
+  const photoSignatureValid=async file=>{
+    const bytes=new Uint8Array(await file.slice(0,16).arrayBuffer());
+    const starts=(...signature)=>signature.every((value,index)=>bytes[index]===value);
+    if(file.type==='image/jpeg')return starts(0xff,0xd8,0xff);
+    if(file.type==='image/png')return starts(0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a);
+    return file.type==='image/webp'&&starts(0x52,0x49,0x46,0x46)&&bytes[8]===0x57&&bytes[9]===0x45&&bytes[10]===0x42&&bytes[11]===0x50;
+  };
+  const photoTray=()=>{
+    const pending=state.photos.map((photo,index)=>`<div class="assistant-photo-item"><img src="${esc(photo.preview)}" alt="${esc(photo.file.name)}"><span>${esc(photo.file.name)}</span><button type="button" aria-label="${esc(tr('assistant_remove_photo','Supprimer la photo'))}" onclick="ITAssistant.removePhoto(${index})"><i class="ti ti-x"></i></button></div>`).join('');
+    const saved=state.uploadedPhotos.filter(row=>!state.photos.some(photo=>photo.path===row.storage_path)).map(row=>`<div class="assistant-photo-item assistant-photo-saved"><i class="ti ti-photo"></i><span>${esc(row.file_name)}</span></div>`).join('');
+    return `${pending}${saved}`;
+  };
+  const refreshPhotoTray=()=>{const tray=document.getElementById('assistantPhotoTray');if(tray)tray.innerHTML=photoTray();};
+  async function selectPhotos(files){
+    const selected=Array.from(files||[]).slice(0,4);
+    if(!selected.length)return;
+    const valid=await Promise.all(selected.map(async file=>file&&file.size>0&&file.size<=PHOTO_MAX_BYTES&&PHOTO_TYPES.has(file.type)&&await photoSignatureValid(file)));
+    if(valid.some(value=>!value)){window.showToast?.(tr('assistant_photo_rejected','Photo refusée : JPG, PNG ou WebP, 5 Mo maximum.'),'err');return;}
+    selected.forEach(file=>state.photos.push({file,preview:URL.createObjectURL(file),path:null}));
+    const input=document.getElementById('assistantPhotos');if(input)input.value='';
+    refreshPhotoTray();
+  }
+  function removePhoto(index){const photo=state.photos[index];if(photo?.preview)URL.revokeObjectURL(photo.preview);state.photos.splice(index,1);refreshPhotoTray();}
+  async function loadAssistantPhotos(conversationId){
+    if(!conversationId||typeof window.sbFetch!=='function'){state.uploadedPhotos=[];return;}
+    try{const rows=await window.sbFetch(`it_ai_attachments?conversation_id=eq.${encodeURIComponent(conversationId)}&select=id,file_name,storage_path,created_at&order=created_at.asc`);state.uploadedPhotos=Array.isArray(rows)?rows:[];}catch(_){state.uploadedPhotos=[];}
+  }
+  async function uploadPhotos(conversationId){
+    const waiting=state.photos.filter(photo=>!photo.path);if(!waiting.length||!conversationId)return;
+    const client=window.OnomoAuth?.getClient?.();const session=await window.OnomoAuth?.getSession?.();
+    if(!client||!session?.user){window.showToast?.(tr('assistant_photo_session','Photo non envoyée : session indisponible.'),'err');return;}
+    for(const photo of waiting){
+      const path=`${session.user.id}/${conversationId}/${crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`}-${safePhotoName(photo.file.name)}`;
+      try{
+        const {error:uploadError}=await client.storage.from('it-assistant-images').upload(path,photo.file,{contentType:photo.file.type,upsert:false});
+        if(uploadError)throw uploadError;
+        await window.sbFetch('it_ai_attachments',{method:'POST',body:JSON.stringify({conversation_id:conversationId,uploaded_by:session.user.id,file_name:photo.file.name,storage_path:path,content_type:photo.file.type,file_size:photo.file.size})});
+        photo.path=path;state.uploadedPhotos.push({file_name:photo.file.name,storage_path:path});
+      }catch(error){console.error('Assistant photo upload failed',error);window.showToast?.(tr('assistant_photo_failed','Photo non envoyée.'),'err');}
+    }
+  }
   const list=(title,items,cls='')=>items?.length?`<section class="assistant-block ${cls}"><h4>${esc(title)}</h4><ul>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></section>`:'';
   function answerCard(answer,sources=[]){
     if(!answer)return'';
@@ -43,7 +92,7 @@
         window.sbFetch(`it_ai_messages?conversation_id=eq.${encodeURIComponent(id)}&select=author,content,metadata,created_at&order=created_at.asc`)
       ]);
       if(!conversation?.[0])throw new Error('not-found');
-      state.conversationId=id;state.domain=conversation[0].domain||'general';state.messages=messages||[];
+      state.conversationId=id;state.domain=conversation[0].domain||'general';state.messages=messages||[];await loadAssistantPhotos(id);
       const last=[...state.messages].reverse().find(item=>item.author==='assistant');state.lastAnswer=last?.metadata||null;
       renderAssistantView();
     }catch(error){window.showToast?.(tr('assistant_conversation_unavailable','Conversation indisponible.'),'err');}
@@ -71,7 +120,7 @@
     }
     const domainOptions=domainKeys.map(key=>`<option value="${key}" ${state.domain===key?'selected':''}>${esc(domainLabels[key])}</option>`).join('');
     const messages=state.messages.length?state.messages.map(conversationMessage).join(''):`<div class="assistant-empty"><i class="ti ti-message-chatbot"></i><h3>${esc(tr('assistant_start_title','Comment puis-je vous aider ?'))}</h3><p>${esc(tr('assistant_start_description','Choisissez un domaine, décrivez le problème et l’assistant vous guidera sans créer de ticket.'))}</p></div>`;
-    try{target.innerHTML=`<div class="assistant-page"><header class="assistant-header"><div><span class="assistant-kicker"><i class="ti ti-sparkles"></i>${esc(tr('assistant_name','Assistant IT'))}</span><h1>${esc(tr('assistant_title','Diagnostic IT guidé'))}</h1><p>${esc(tr('assistant_subtitle','Conseils pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance.'))}</p></div><button class="btn btn-outline" onclick="ITAssistant.startConversation()"><i class="ti ti-plus"></i>${esc(tr('assistant_new_conversation','Nouvelle conversation'))}</button></header><div class="assistant-layout"><aside class="assistant-history"><div class="assistant-history-title">${esc(tr('assistant_conversations','Mes conversations'))}</div>${state.conversations.length?state.conversations.map(item=>`<button class="assistant-history-item ${item.id===state.conversationId?'active':''}" onclick="ITAssistant.openConversation('${item.id}')"><i class="ti ti-message"></i><span>${esc(item.title||domainLabels[item.domain]||tr('assistant_name','Assistant IT'))}</span></button>`).join(''):`<p>${esc(tr('assistant_no_conversations','Aucune conversation enregistrée.'))}</p>`}</aside><main class="assistant-chat"><div class="assistant-safety"><i class="ti ti-shield-lock"></i>${esc(tr('assistant_safety','Ne saisissez jamais de mot de passe, clé API, jeton ou donnée client.'))}</div><div id="assistantMessages" class="assistant-messages">${messages}</div>${state.lastAnswer?.suggested_ticket?.title?`<div class="assistant-ticket-cta"><div><strong>${esc(tr('assistant_ticket_offer','Le problème persiste ?'))}</strong><span>${esc(tr('assistant_ticket_offer_description','Créez un ticket prérempli avec le résumé des vérifications.'))}</span></div><button class="btn btn-gold" onclick="ITAssistant.createTicketFromConversation()"><i class="ti ti-ticket"></i>${esc(tr('assistant_create_ticket','Créer un ticket à partir de cette conversation'))}</button></div>`:''}<form class="assistant-composer" onsubmit="ITAssistant.sendMessage(event)"><select id="assistantDomain" aria-label="${esc(tr('assistant_domain','Domaine IT'))}" onchange="ITAssistant.changeDomain(this.value)">${domainOptions}</select><textarea id="assistantInput" rows="3" maxlength="6000" placeholder="${esc(tr('assistant_placeholder','Décrivez le symptôme, le poste concerné et ce qui a déjà été essayé…'))}" required></textarea><button class="btn btn-gold" id="assistantSendBtn" type="submit"><i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}</button></form></main></div></div>`;}catch(error){console.error('Assistant IT: rendu impossible',error);target.innerHTML=`<div class="assistant-page"><div class="assistant-service-error"><i class="ti ti-alert-circle"></i><strong>${esc(tr('assistant_unavailable_title','Assistant IT indisponible'))}</strong><p>${esc(tr('assistant_render_failed','Impossible d’afficher l’assistant. Veuillez réessayer.'))}</p></div></div>`;}
+    try{target.innerHTML=`<div class="assistant-page"><header class="assistant-header"><div><span class="assistant-kicker"><i class="ti ti-sparkles"></i>${esc(tr('assistant_name','Assistant IT'))}</span><h1>${esc(tr('assistant_title','Diagnostic IT guidé'))}</h1><p>${esc(tr('assistant_subtitle','Conseils pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance.'))}</p></div><button class="btn btn-outline" onclick="ITAssistant.startConversation()"><i class="ti ti-plus"></i>${esc(tr('assistant_new_conversation','Nouvelle conversation'))}</button></header><div class="assistant-layout"><aside class="assistant-history"><div class="assistant-history-title">${esc(tr('assistant_conversations','Mes conversations'))}</div>${state.conversations.length?state.conversations.map(item=>`<button class="assistant-history-item ${item.id===state.conversationId?'active':''}" onclick="ITAssistant.openConversation('${item.id}')"><i class="ti ti-message"></i><span>${esc(item.title||domainLabels[item.domain]||tr('assistant_name','Assistant IT'))}</span></button>`).join(''):`<p>${esc(tr('assistant_no_conversations','Aucune conversation enregistrée.'))}</p>`}</aside><main class="assistant-chat"><div class="assistant-safety"><i class="ti ti-shield-lock"></i>${esc(tr('assistant_safety','Ne saisissez jamais de mot de passe, clé API, jeton ou donnée client.'))}</div><div id="assistantMessages" class="assistant-messages">${messages}</div>${state.lastAnswer?.suggested_ticket?.title?`<div class="assistant-ticket-cta"><div><strong>${esc(tr('assistant_ticket_offer','Le problème persiste ?'))}</strong><span>${esc(tr('assistant_ticket_offer_description','Créez un ticket prérempli avec le résumé des vérifications.'))}</span></div><button class="btn btn-gold" onclick="ITAssistant.createTicketFromConversation()"><i class="ti ti-ticket"></i>${esc(tr('assistant_create_ticket','Créer un ticket à partir de cette conversation'))}</button></div>`:''}<form class="assistant-composer" onsubmit="ITAssistant.sendMessage(event)"><select id="assistantDomain" aria-label="${esc(tr('assistant_domain','Domaine IT'))}" onchange="ITAssistant.changeDomain(this.value)">${domainOptions}</select><textarea id="assistantInput" rows="3" maxlength="6000" placeholder="${esc(tr('assistant_placeholder','Décrivez le symptôme, le poste concerné et ce qui a déjà été essayé…'))}" required></textarea><div class="assistant-photo-controls"><label class="assistant-photo-button" for="assistantPhotos"><i class="ti ti-camera"></i>${esc(tr('assistant_add_photo','Ajouter des photos'))}<input id="assistantPhotos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onchange="ITAssistant.selectPhotos(this.files)"></label><span>${esc(tr('assistant_photo_help','JPG, PNG ou WebP — 5 Mo maximum par photo.'))}</span><div id="assistantPhotoTray" class="assistant-photo-tray">${photoTray()}</div></div><button class="btn btn-gold" id="assistantSendBtn" type="submit"><i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}</button></form></main></div></div>`;}catch(error){console.error('Assistant IT: rendu impossible',error);target.innerHTML=`<div class="assistant-page"><div class="assistant-service-error"><i class="ti ti-alert-circle"></i><strong>${esc(tr('assistant_unavailable_title','Assistant IT indisponible'))}</strong><p>${esc(tr('assistant_render_failed','Impossible d’afficher l’assistant. Veuillez réessayer.'))}</p></div></div>`;}
     const messagesNode=document.getElementById('assistantMessages');if(messagesNode)messagesNode.scrollTop=messagesNode.scrollHeight;
   }
   async function sendMessage(event){
@@ -79,18 +128,19 @@
     if(button){button.disabled=true;button.innerHTML=`<i class="ti ti-loader-2 spin"></i>${esc(tr('assistant_thinking','Analyse…'))}`;}
     try{
       const result=await request({action:'chat',conversation_id:state.conversationId,domain:state.domain,message});
-      const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[]};state.conversationId=result.conversation_id;state.messages.push({author:'user',content:message},{author:'assistant',content:result.answer.answer,metadata});state.lastAnswer=metadata;
+      const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[]};state.conversationId=result.conversation_id;await uploadPhotos(result.conversation_id);state.messages.push({author:'user',content:message},{author:'assistant',content:result.answer.answer,metadata});state.lastAnswer=metadata;
       renderAssistantView();
     }catch(error){window.showToast?.(error.message||tr('assistant_unavailable','Le service Assistant IT est temporairement indisponible.'),'err');if(button){button.disabled=false;button.innerHTML=`<i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}`;}}
   }
   function changeDomain(domain){state.domain=domainsSafe(domain);}
   function domainsSafe(domain){return domainKeys.includes(domain)?domain:'general';}
-  function startConversation(){state.conversationId=null;state.domain='general';state.messages=[];state.lastAnswer=null;renderAssistantView();}
+  function startConversation(){state.photos.forEach(photo=>photo.preview&&URL.revokeObjectURL(photo.preview));state.conversationId=null;state.domain='general';state.messages=[];state.lastAnswer=null;state.photos=[];state.uploadedPhotos=[];renderAssistantView();}
   function createTicketFromConversation(){
     const suggested=state.lastAnswer?.suggested_ticket;if(!suggested)return;
     const checks=(state.lastAnswer.checks||[]).map(item=>`- ${item}`).join('\n');
     const description=[suggested.description,checks?`${tr('assistant_checks_done','Vérifications déjà effectuées :')}\n${checks}`:'',`${tr('assistant_ai_note','Note IA : cette synthèse doit être vérifiée par un technicien.')}`].filter(Boolean).join('\n\n');
     const fallbackCategory=state.domain==='maintenance'?'Maintenance':'IT / Réseau';
+    window.queueTicketAttachments?.(state.photos.map(photo=>photo.file));
     window.openNewTicket?.({titre:suggested.title,description,categorie:Array.isArray(window.CATS)&&window.CATS.includes(suggested.category)?suggested.category:fallbackCategory,priorite:suggested.priority});
   }
   async function openTicketAssistant(){
@@ -123,5 +173,5 @@
     }catch(error){window.showToast?.(tr('assistant_save_failed','Impossible d’enregistrer la solution.'),'err');}
   }
   function closeTicketAssistant(){document.getElementById('ticketAssistantModal')?.remove();}
-  window.ITAssistant={renderAssistantView,sendMessage,startConversation,openConversation:loadConversation,changeDomain,createTicketFromConversation,openTicketAssistant,saveTicketSolution,closeTicketAssistant};
+  window.ITAssistant={renderAssistantView,sendMessage,startConversation,openConversation:loadConversation,changeDomain,selectPhotos,removePhoto,createTicketFromConversation,openTicketAssistant,saveTicketSolution,closeTicketAssistant};
 })();
