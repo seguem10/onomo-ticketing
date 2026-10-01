@@ -1763,7 +1763,7 @@ function renderView(){
 ══════════════════════════════════════════════ */
 function dashboardTrendData(list,days=30){
   const dayStart=new Date();dayStart.setHours(0,0,0,0);dayStart.setDate(dayStart.getDate()-(days-1));
-  const buckets=Array.from({length:days},(_,index=>{const date=new Date(dayStart);date.setDate(dayStart.getDate()+index);return{date,created:0,resolved:0};});
+  const buckets=Array.from({length:days},(_,index)=>{const date=new Date(dayStart);date.setDate(dayStart.getDate()+index);return{date,created:0,resolved:0};});
   const indexFor=value=>{const timestamp=Date.parse(value||'');if(!Number.isFinite(timestamp))return-1;const date=new Date(timestamp);date.setHours(0,0,0,0);const index=Math.floor((date-dayStart)/86400000);return index>=0&&index<days?index:-1;};
   list.forEach(ticket=>{const createdIndex=indexFor(ticket.created_at);if(createdIndex>=0)buckets[createdIndex].created++;const resolvedIndex=indexFor(ticket.closed_at);if(resolvedIndex>=0)buckets[resolvedIndex].resolved++;});
   return buckets;
