@@ -245,7 +245,13 @@ const fallbackAnswer=(domain:string,message:string,language:string)=>{
 };
 
 function parseAnswer(raw:string){
-  try { const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim()); return {
+  try {
+    const normalized=raw.replace(/```json|```/g,'').trim();
+    // Providers occasionally wrap a valid JSON object in a short prose
+    // prefix/suffix. Extract that object rather than rendering raw JSON in
+    // the conversation, while still falling back safely if it is malformed.
+    const firstBrace=normalized.indexOf('{'),lastBrace=normalized.lastIndexOf('}');
+    const parsed=JSON.parse(firstBrace>=0&&lastBrace>firstBrace?normalized.slice(firstBrace,lastBrace+1):normalized); return {
     answer:clean(parsed.answer,4000), causes:toText(parsed.causes), questions:toText(parsed.questions), checks:toText(parsed.checks), solution:toText(parsed.solution), validation:toText(parsed.validation), assumptions:toText(parsed.assumptions),
     suggested_ticket:{title:clean(parsed.suggested_ticket?.title,180),description:clean(parsed.suggested_ticket?.description,5000),category:clean(parsed.suggested_ticket?.category,80),priority:priority(parsed.suggested_ticket?.priority)}
   }; } catch { return {answer:clean(raw,4000),questions:[],checks:[],solution:[],validation:[],assumptions:['Réponse non structurée : validation humaine requise.'],suggested_ticket:{title:'',description:'',category:'IT / Réseau'}}; }
