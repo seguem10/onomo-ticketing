@@ -80,9 +80,15 @@
     try{
       const rows=await window.sbFetch(`ticket_attachments?ticket_id=eq.${encodeURIComponent(ticketId)}&order=created_at.asc`);
       if(!Array.isArray(rows)||!rows.length){target.textContent=tr('none');return;}
+      const client=window.OnomoAuth?.getClient?.();
+      const attachments=await Promise.all(rows.map(async row=>{
+        if(!String(row.content_type||'').startsWith('image/')||!client)return row;
+        const {data,error}=await client.storage.from('ticket-attachments').createSignedUrl(row.storage_path,60);
+        return {...row,previewUrl:error?null:data?.signedUrl||null};
+      }));
       const me=String(window.currentUser?.auth_user_id||window.currentUser?.id||'');
-      target.innerHTML=rows.map(row=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><i class="ti ti-file" style="color:var(--brand)"></i><div style="min-width:0;flex:1"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(row.file_name)}</div><div style="font-size:10px;color:var(--tx3)">${formatSize(Number(row.file_size)||0)}</div></div><button class="btn btn-outline btn-sm" onclick="window.downloadTicketAttachment('${row.id}')"><i class="ti ti-download"></i></button>${String(row.uploaded_by)===me||window.currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="window.deleteTicketAttachment('${row.id}')"><i class="ti ti-trash"></i></button>`:''}</div>`).join('');
-      window.__onomoAttachments=rows;
+      target.innerHTML=attachments.map(row=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">${row.previewUrl?`<a href="${escapeHtml(row.previewUrl)}" target="_blank" rel="noopener" aria-label="${escapeHtml(row.file_name)}"><img src="${escapeHtml(row.previewUrl)}" alt="" style="display:block;width:42px;height:42px;border-radius:7px;object-fit:cover;border:1px solid var(--border)"></a>`:'<i class="ti ti-file" style="color:var(--brand)"></i>'}<div style="min-width:0;flex:1"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(row.file_name)}</div><div style="font-size:10px;color:var(--tx3)">${formatSize(Number(row.file_size)||0)}</div></div><button class="btn btn-outline btn-sm" onclick="window.downloadTicketAttachment('${row.id}')"><i class="ti ti-download"></i></button>${String(row.uploaded_by)===me||window.currentUser?.role==='admin'?`<button class="btn btn-danger btn-sm" onclick="window.deleteTicketAttachment('${row.id}')"><i class="ti ti-trash"></i></button>`:''}</div>`).join('');
+      window.__onomoAttachments=attachments;
     }catch(error){console.error('Attachment list failed',error);target.textContent=tr('loadFailed');}
   };
   window.downloadTicketAttachment=async function(id){
