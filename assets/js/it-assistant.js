@@ -40,7 +40,7 @@
   };
   const photoTray=()=>{
     const pending=state.photos.map((photo,index)=>`<div class="assistant-photo-item"><img src="${esc(photo.preview)}" alt="${esc(photo.file.name)}"><span>${esc(photo.file.name)}</span><button type="button" aria-label="${esc(tr('assistant_remove_photo','Supprimer la photo'))}" onclick="ITAssistant.removePhoto(${index})"><i class="ti ti-x"></i></button></div>`).join('');
-    const saved=state.uploadedPhotos.filter(row=>!state.photos.some(photo=>photo.path===row.storage_path)).map(row=>`<div class="assistant-photo-item assistant-photo-saved"><i class="ti ti-photo"></i><span>${esc(row.file_name)}</span></div>`).join('');
+    const saved=state.uploadedPhotos.filter(row=>!state.photos.some(photo=>photo.path===row.storage_path)).map(row=>`<a class="assistant-photo-item assistant-photo-saved" href="${esc(row.preview||'#')}" target="_blank" rel="noopener" ${row.preview?'':'aria-disabled="true"'}>${row.preview?`<img src="${esc(row.preview)}" alt="${esc(row.file_name)}">`:'<i class="ti ti-photo"></i>'}<span>${esc(row.file_name)}</span><i class="ti ti-external-link"></i></a>`).join('');
     return `${pending}${saved}`;
   };
   const refreshPhotoTray=()=>{const tray=document.getElementById('assistantPhotoTray');if(tray)tray.innerHTML=photoTray();};
@@ -56,7 +56,14 @@
   function removePhoto(index){const photo=state.photos[index];if(photo?.preview)URL.revokeObjectURL(photo.preview);state.photos.splice(index,1);refreshPhotoTray();}
   async function loadAssistantPhotos(conversationId){
     if(!conversationId||typeof window.sbFetch!=='function'){state.uploadedPhotos=[];return;}
-    try{const rows=await window.sbFetch(`it_ai_attachments?conversation_id=eq.${encodeURIComponent(conversationId)}&select=id,file_name,storage_path,created_at&order=created_at.asc`);state.uploadedPhotos=Array.isArray(rows)?rows:[];}catch(_){state.uploadedPhotos=[];}
+    try{
+      const rows=await window.sbFetch(`it_ai_attachments?conversation_id=eq.${encodeURIComponent(conversationId)}&select=id,file_name,storage_path,created_at&order=created_at.asc`);
+      const client=window.OnomoAuth?.getClient?.();
+      state.uploadedPhotos=await Promise.all((Array.isArray(rows)?rows:[]).map(async row=>{
+        const {data,error}=client?await client.storage.from('it-assistant-images').createSignedUrl(row.storage_path,60):{};
+        return {...row,preview:error?null:data?.signedUrl||null};
+      }));
+    }catch(_){state.uploadedPhotos=[];}
   }
   async function uploadPhotos(conversationId){
     const waiting=state.photos.filter(photo=>!photo.path);if(!waiting.length||!conversationId)return;
