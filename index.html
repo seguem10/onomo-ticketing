@@ -1761,6 +1761,19 @@ function renderView(){
 /* ══════════════════════════════════════════════
    DASHBOARD
 ══════════════════════════════════════════════ */
+function dashboardTrendData(list,days=30){
+  const dayStart=new Date();dayStart.setHours(0,0,0,0);dayStart.setDate(dayStart.getDate()-(days-1));
+  const buckets=Array.from({length:days},(_,index=>{const date=new Date(dayStart);date.setDate(dayStart.getDate()+index);return{date,created:0,resolved:0};});
+  const indexFor=value=>{const timestamp=Date.parse(value||'');if(!Number.isFinite(timestamp))return-1;const date=new Date(timestamp);date.setHours(0,0,0,0);const index=Math.floor((date-dayStart)/86400000);return index>=0&&index<days?index:-1;};
+  list.forEach(ticket=>{const createdIndex=indexFor(ticket.created_at);if(createdIndex>=0)buckets[createdIndex].created++;const resolvedIndex=indexFor(ticket.closed_at);if(resolvedIndex>=0)buckets[resolvedIndex].resolved++;});
+  return buckets;
+}
+function dashboardTrendSVG(buckets){
+  const max=Math.max(1,...buckets.flatMap(bucket=>[bucket.created,bucket.resolved]));
+  const pointsFor=key=>buckets.map((bucket,index)=>{const x=buckets.length===1?280:Math.round(index*560/(buckets.length-1));const y=Math.round(164-(bucket[key]/max)*132);return`${x},${y}`;}).join(' ');
+  const hasData=buckets.some(bucket=>bucket.created||bucket.resolved);
+  return`<svg viewBox="0 0 560 180" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pointsFor('created')}" fill="none" stroke="#2f80ed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${pointsFor('resolved')}" fill="none" stroke="#27ae60" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${hasData?'':`<text x="280" y="98" text-anchor="middle" fill="#98a2b3" font-size="12">0</text>`}</svg>`;
+}
 function renderDashboard(){
   const tr=(key,fallback,values={})=>appText(key,fallback,values);
   const vt=visibleTickets();
@@ -1784,6 +1797,10 @@ function renderDashboard(){
     [tr("status_pending","En attente"),waiting,"#eab308"],
     [tr("status_resolved","Résolu"),resolved,"#10b981"]
   ];
+  const trendBuckets=dashboardTrendData(vt);
+  const trendCreated=trendBuckets.reduce((total,bucket)=>total+bucket.created,0);
+  const trendResolved=trendBuckets.reduce((total,bucket)=>total+bucket.resolved,0);
+  const trendSVG=dashboardTrendSVG(trendBuckets);
   let html=`<div class="dash-welcome">
     <div><h1>${tr("dashboard_greeting","Bonjour {name}",{name:userName})} <span>👋</span></h1><p>${overview}</p></div>
     <div class="dash-context"><span class="dash-chip"><i class="ti ti-building"></i>${esc(hotelLabel)}</span><span class="dash-chip"><i class="ti ti-calendar"></i>${tr("today","Aujourd'hui")}</span></div>
@@ -1801,8 +1818,8 @@ function renderDashboard(){
       <div class="card-hdr"><div class="card-title">${tr("ticket_trend","Évolution des tickets")}</div><span class="dash-period">${tr("last_30_days","30 derniers jours")} <i class="ti ti-chevron-down"></i></span></div>
       <div class="trend-chart" aria-label="${esc(tr("ticket_trend_aria","Évolution visuelle des tickets"))}">
         <div class="trend-grid"></div>
-        <svg viewBox="0 0 560 180" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,145 45,130 90,135 135,105 180,120 225,82 270,98 315,72 360,82 405,52 450,59 505,34 560,22" fill="none" stroke="#2f80ed" stroke-width="3"/><polyline points="0,160 45,154 90,148 135,150 180,132 225,140 270,118 315,126 360,104 405,115 450,92 505,84 560,67" fill="none" stroke="#27ae60" stroke-width="3"/></svg>
-        <div class="trend-legend"><span><i style="background:#2f80ed"></i>${tr("tickets_created","Créés")}</span><span><i style="background:#27ae60"></i>${tr("status_resolved","Résolus")}</span></div>
+        ${trendSVG}
+        <div class="trend-legend"><span><i style="background:#2f80ed"></i>${tr("tickets_created","Créés")} <b>${trendCreated}</b></span><span><i style="background:#27ae60"></i>${tr("status_resolved","Résolus")} <b>${trendResolved}</b></span></div>
       </div>
     </div>
     <div class="card dash-status">
