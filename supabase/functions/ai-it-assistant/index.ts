@@ -262,7 +262,7 @@ Deno.serve(async req=>{
   // The procedure guide remains available even when no external AI key exists.
   if(!SERVICE)return send(req,{error:'Le service Assistant IT n’est pas configuré côté serveur.'},503);
   let input:any;try{input=await req.json();}catch{return send(req,{error:'Données invalides.'},400);}
-  const action=input.action==='ticket'?'ticket':'chat';
+  const action=input.action==='ticket'?'ticket':input.action==='history'?'history':'chat';
   const domain=domains.has(input.domain)?input.domain:'general';
   const language=['fr','en','ar'].includes(input.language)?input.language:'fr';
   const service=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -285,6 +285,15 @@ Deno.serve(async req=>{
       const {data,error}=await service.from('it_ai_conversations').insert({user_id:user.id,domain,title:message.slice(0,120)}).select().single();
       if(error)return send(req,{error:'Impossible de créer la conversation.'},500); conversation=data;
     }
+  }
+  if(action==='history'){
+    const conversationId=String(input.conversation_id??'');
+    if(!conversationId)return send(req,{error:'Conversation manquante.'},400);
+    const {data:ownedConversation,error:conversationError}=await service.from('it_ai_conversations').select('id,domain,title').eq('id',conversationId).eq('user_id',user.id).maybeSingle();
+    if(conversationError||!ownedConversation)return send(req,{error:'Conversation introuvable ou accès non autorisé.'},403);
+    const {data:messages,error:messagesError}=await service.from('it_ai_messages').select('author,content,metadata,created_at').eq('conversation_id',ownedConversation.id).order('created_at',{ascending:true});
+    if(messagesError)return send(req,{error:'Impossible de charger la conversation.'},500);
+    return send(req,{conversation:ownedConversation,messages:messages??[]});
   }
   const hotel=ticket?.hotel??null;
   const {data:allProcedures}=await service.from('it_procedures').select('id,title,domain,content,source_label,source_url,effective_date,hotel').eq('is_validated',true).in('domain',[domain,'general']).order('effective_date',{ascending:false}).limit(12);

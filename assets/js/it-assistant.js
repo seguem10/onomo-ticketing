@@ -92,14 +92,10 @@
     try{return await window.sbFetch('it_ai_conversations?select=id,domain,title,updated_at&order=updated_at.desc&limit=20');}catch(_){return [];}
   }
   async function loadConversation(id){
-    if(typeof window.sbFetch!=='function')return;
     try{
-      const [conversation,messages]=await Promise.all([
-        window.sbFetch(`it_ai_conversations?id=eq.${encodeURIComponent(id)}&select=id,domain,title`),
-        window.sbFetch(`it_ai_messages?conversation_id=eq.${encodeURIComponent(id)}&select=author,content,metadata,created_at&order=created_at.asc`)
-      ]);
-      if(!conversation?.[0])throw new Error('not-found');
-      state.conversationId=id;state.domain=conversation[0].domain||'general';state.messages=messages||[];await loadAssistantPhotos(id);
+      const result=await request({action:'history',conversation_id:id});
+      if(!result?.conversation)throw new Error('not-found');
+      state.conversationId=id;state.domain=result.conversation.domain||'general';state.messages=Array.isArray(result.messages)?result.messages:[];await loadAssistantPhotos(id);
       const last=[...state.messages].reverse().find(item=>item.author==='assistant');state.lastAnswer=last?.metadata||null;
       renderAssistantView();
     }catch(error){window.showToast?.(tr('assistant_conversation_unavailable','Conversation indisponible.'),'err');}
