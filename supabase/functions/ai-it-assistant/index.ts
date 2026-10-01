@@ -302,10 +302,11 @@ Deno.serve(async req=>{
       const {data}=await query;similarTickets=(data??[]).map(item=>({...item,description:clean(item.description,700)}));
     }
   }
-  // A provider-free guide is intentionally the first response for a chat.
-  // It gives repeatable, safe steps and prevents an upstream outage from
-  // replacing useful guidance with a vague generic fallback.
-  if(action==='chat'){
+  // When no provider is configured, retain useful, repeatable and safe local
+  // guidance. With Gemini/OpenAI/Anthropic configured, continue below so the
+  // provider can produce a response specific to this conversation or ticket.
+  const hasProvider=Boolean(GEMINI_KEY||OPENAI_KEY||ANTHROPIC_KEY);
+  if(action==='chat'&&!hasProvider){
     const answer=procedureGuide(domain,message,language);
     const sources=[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
     await service.from('it_ai_messages').insert([
@@ -315,7 +316,7 @@ Deno.serve(async req=>{
     await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
     return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,provider:'procedure-guide'});
   }
-  if(action==='ticket'){
+  if(action==='ticket'&&!hasProvider){
     const ticketDomain=ticket.categorie==='Maintenance'?'maintenance':domain;
     const answer=procedureGuide(ticketDomain,`${ticket.titre}\n${ticket.description??''}`,language);
     const sources=[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
