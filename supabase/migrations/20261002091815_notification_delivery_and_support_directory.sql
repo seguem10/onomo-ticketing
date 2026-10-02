@@ -4,6 +4,26 @@
 
 begin;
 
+-- The web client asks only for the connected user's permissions. Keeping this
+-- helper alongside the directory migration prevents a missing-RPC fallback
+-- from weakening or hiding the IT Hotel / IT Regional interface.
+create or replace function public.my_permissions()
+returns text[]
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(array_agg(distinct permission order by permission), '{}'::text[])
+  from public.app_user_roles ur
+  join public.app_roles r on r.id = ur.role_id
+  cross join lateral jsonb_array_elements_text(r.permissions) as permission
+  where ur.user_id = (select auth.uid());
+$$;
+
+revoke all on function public.my_permissions() from public, anon;
+grant execute on function public.my_permissions() to authenticated;
+
 -- The directory is returned through a narrowly scoped RPC rather than by
 -- widening SELECT access to public.utilisateurs (which contains sensitive
 -- profile columns). Administrators and support roles can see support peers.
