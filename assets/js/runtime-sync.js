@@ -89,8 +89,11 @@
     window.__onomoAuthenticatedSbCreateTicket=create;
     window.sbLoadTickets=load;
     window.sbCreateTicket=create;
-    try{window.eval('sbLoadTickets=window.__onomoAuthenticatedSbLoadTickets; sbCreateTicket=window.__onomoAuthenticatedSbCreateTicket;');}
-    catch(error){console.warn('Binding Supabase ticket CRUD non remplacé',error);}
+    // Function declarations from the classic application script are exposed on
+    // window. Assigning the public bridge directly avoids eval, which is
+    // correctly blocked by this application's Content Security Policy.
+    window.sbLoadTickets=load;
+    window.sbCreateTicket=create;
   }
   async function waitForAuthClient(){
     let client=getAuthClient();
