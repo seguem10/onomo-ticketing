@@ -69,6 +69,16 @@ Deno.serve(async req => {
           user_id: EMAILJS_PUBLIC_KEY,
           accessToken: EMAILJS_PRIVATE_KEY || undefined,
           template_params: {
+            // Names used by the existing ONOMO Desk EmailJS template.
+            agent_email: profile.email,
+            agent_prenom: profile.prenom ?? profile.email,
+            ticket_numero: ticket.numero ?? ticket.id,
+            ticket_titre: ticket.titre,
+            ticket_hotel: ticket.hotel,
+            ticket_priorite: ticket.priorite,
+            name: "ONOMO Desk",
+            email: "it@onomohotel.com",
+            // Neutral aliases retained for a later template redesign.
             to_email: profile.email,
             to_name: `${profile.prenom ?? ""} ${profile.nom ?? ""}`.trim(),
             subject,
