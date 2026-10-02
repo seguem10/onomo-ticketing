@@ -48,12 +48,10 @@
   function ticketFor(id){return (Array.isArray(window.tickets)?window.tickets:[]).find(ticket=>String(ticket.id)===String(id))||window.currentTicket||null;}
   function install(){
     if(window.__onomoCentralNotificationDelivery)return;
-    if(typeof window.createTicket!=='function'||typeof window.updateTicket!=='function'||typeof window.addComment!=='function'){setTimeout(install,100);return;}
     window.__onomoCentralNotificationDelivery=true;
-    const create=window.createTicket,update=window.updateTicket,comment=window.addComment;
-    window.createTicket=async function(data){const ticket=await create.apply(this,arguments);if(ticket?.id)void deliver('created',ticket);return ticket;};
-    window.updateTicket=async function(id,updates){const result=await update.apply(this,arguments);const ticket=ticketFor(id);if(result&&ticket?.id)void deliver('updated',ticket);return result;};
-    window.addComment=async function(message){const ticket=ticketFor(window.currentTicket?.id);const result=await comment.apply(this,arguments);if(result&&ticket?.id)void deliver('comment',ticket);return result;};
+    // CRUD functions are wrapped by several independent modules. Hooking one
+    // here can be overwritten later, silently dropping an e-mail handoff.
+    // The definitive persistence points invoke `deliver()` explicitly instead.
   }
   window.OnomoNotificationDelivery={announce,deliver,install};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();

@@ -1609,7 +1609,11 @@ async function createTicket(data){
   }
   // Uploads must use the permanent UUID returned by Supabase, not the
   // optimistic browser id. Storage RLS scopes each attachment path to it.
-  return persistedTicket||t;
+  const finalTicket=persistedTicket||t;
+  // Notify only after Supabase has accepted the ticket and returned its
+  // permanent UUID, never for a rejected optimistic ticket.
+  if(persistedTicket?.id)void window.OnomoNotificationDelivery?.deliver?.('created',finalTicket);
+  return finalTicket;
 }
 
 async function updateTicket(id,updates){
@@ -4508,7 +4512,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/i18n.js?v=20261002-1"></script>
 <script src="assets/js/modern-features.js?v=20261002-1"></script>
 <script src="assets/js/runtime-sync.js?v=20261002-2"></script>
-<script src="assets/js/notification-delivery.js?v=20261002-1"></script>
+<script src="assets/js/notification-delivery.js?v=20261002-2"></script>
 <script src="assets/js/it-assistant.js?v=20261001-4" data-it-assistant-loader="true"></script>
 <script src="assets/js/pwa-update.js?v=20260925-8"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
