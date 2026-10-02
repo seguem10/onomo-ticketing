@@ -21,6 +21,7 @@ function escape(value: unknown) { return String(value ?? "").replace(/[&<>'"]/g,
 function eventLabel(event: string) { return ({ created: "Nouveau ticket", updated: "Ticket mis à jour", comment: "Nouveau commentaire", attachment: "Pièce jointe ajoutée" } as Record<string, string>)[event] ?? "Mise à jour de ticket"; }
 
 Deno.serve(async req => {
+  try {
   if (req.method === "OPTIONS") return new Response(null, { headers: headers(req) });
   if (req.method !== "POST") return reply(req, { error: "Méthode non autorisée." }, 405);
   if (!URL || !ANON || !SERVICE) return reply(req, { error: "Service de notification non configuré." }, 503);
@@ -56,4 +57,10 @@ Deno.serve(async req => {
     return response.ok;
   }));
   return reply(req, { email_configured: true, recipients: recipients.length, delivered: sent.filter(Boolean).length });
+  } catch (error) {
+    // Always reply with CORS headers: the browser can then show a useful
+    // message instead of a generic "Failed to fetch".
+    console.error("ticket notification delivery", error instanceof Error ? error.message : String(error));
+    return reply(req, { error: "Le service de notification a rencontré une erreur temporaire." }, 500);
+  }
 });
