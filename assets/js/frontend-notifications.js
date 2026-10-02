@@ -46,21 +46,7 @@
     if(window.__onomoFrontendNotifications)return;
     window.__onomoFrontendNotifications=true;
 
-    /* Creation and assignment emails are already handled by the main app.
-       This bridge adds the missing creator notification when a ticket is closed. */
-    const oldUpdate=window.updateTicket;
-    if(typeof oldUpdate==='function'){
-      window.updateTicket=async function(id,updates){
-        const before=(Array.isArray(window.tickets)?window.tickets:[]).find(t=>String(t.id)===String(id)) || {};
-        const result=await oldUpdate.apply(this,arguments);
-        const after=(Array.isArray(window.tickets)?window.tickets:[]).find(t=>String(t.id)===String(id)) || {...before,...updates};
-        if(String(after.statut||'').toLowerCase()==='ferme' && String(before.statut||'').toLowerCase()!=='ferme'){
-          const email=after.created_by_email || '';
-          if(email) await send(email,after,'ticket fermé');
-        }
-        return result;
-      };
-    }
+    // Notification delivery is centralised in notification-delivery.js.
   }
 
   window.OnomoEmail={send,install,emailConfig};

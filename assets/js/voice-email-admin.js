@@ -85,7 +85,9 @@
   // supported dictation entry point.  Keeping this legacy recorder hidden
   // avoids a duplicate button and a call to an optional Edge Function.
   function addVoiceButton(){return;}
-  function wrapCrud(){if(window.__onomoAutomationCrud)return;const oldCreate=window.createTicket;if(typeof oldCreate==='function')window.createTicket=async function(data){const result=await oldCreate.apply(this,arguments);try{await notifyCreated(result||data)}catch(e){console.warn('[ONOMO EMAIL] creation notification',e)}return result};const oldUpdate=window.updateTicket;if(typeof oldUpdate==='function')window.updateTicket=async function(id,updates){const before=(Array.isArray(window.tickets)?window.tickets:[]).find(t=>String(t.id)===String(id))||{};const result=await oldUpdate.apply(this,arguments);const after=(Array.isArray(window.tickets)?window.tickets:[]).find(t=>String(t.id)===String(id))||{...before,...updates};try{await notifyChanged(before,after)}catch(e){console.warn('[ONOMO EMAIL] change notification',e)}return result};window.__onomoAutomationCrud=true}
+  // Notification delivery is centralised in notification-delivery.js. Keeping
+  // this legacy module read-only avoids duplicate client-side EmailJS sends.
+  function wrapCrud(){window.__onomoAutomationCrud=true;}
   function init(){addVoiceButton();wrapCrud();const mo=new MutationObserver(()=>{addVoiceButton();wrapCrud()});mo.observe(document.body,{childList:true,subtree:true});setTimeout(addVoiceButton,700)}
   window.OnomoAutomation={startVoice,notifyCreated,notifyChanged};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();

@@ -130,7 +130,7 @@
   // runtime-sync.js. Do not retain the legacy fixed eight-hour timer here.
   window.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();});
   const deny=()=>showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');
-  const originalSwitch=window.switchView;window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['users','hotels-admin','settings'];if((!isPower(currentUser)&&restricted.includes(view))||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){deny();return;}return originalSwitch(view,el);};
+  const originalSwitch=window.switchView;window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['hotels-admin','settings'];const supportDirectory=userRoles(currentUser).some(role=>['Administrateur','IT Regional','IT Hotel'].includes(role));if((!isPower(currentUser)&&restricted.includes(view))||(!supportDirectory&&view==='users')||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){deny();return;}return originalSwitch(view,el);};
   const originalSettings=window.renderSettings;window.renderSettings=function(){if(!userRoles(currentUser).includes('Administrateur')){showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');switchView('tickets',document.querySelector('[data-view="tickets"]'));return;}return originalSettings();};
   // Hiding the menu is not sufficient: a non-administrator can call global
   // handlers from DevTools. Guard every system-settings mutator as well.

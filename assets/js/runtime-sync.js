@@ -309,6 +309,10 @@
         // Local toast notifications deliberately have no persisted flag.
         return {id:row.id,persisted:true,text,icon,color,read:Boolean(row.read_at),time:row.created_at};
       });
+      // The delivery module seeds existing alerts once, then shows a toast and
+      // (when permission is granted) an OS/PWA notification for new realtime
+      // rows. This keeps the popup on the recipient's own device.
+      window.OnomoNotificationDelivery?.announce?.(rows);
       if(typeof renderNotifDot==='function')renderNotifDot();
       if(typeof renderNotifList==='function')renderNotifList();
     }catch(error){console.warn('Synchronisation notifications indisponible',error);}
