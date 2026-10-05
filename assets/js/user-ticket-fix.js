@@ -108,10 +108,16 @@
     if(role==='demandeur'&&!hotel){window.showToast?.(t('select_requester_hotel','Sélectionnez un hôtel pour le Demandeur'),'err');return}
     const local=(Array.isArray(window.DEMO_USERS)?window.DEMO_USERS:[]).find(x=>x.id===editId);if(!local)return;
     const updated={...local,prenom,nom,email,role,hotel,hotels};
-    const pwd=document.getElementById('uPwd')?.value||'';if(pwd.trim()&&typeof window.hashPwd==='function')updated.pwd=window.hashPwd(pwd);
+    const pwd=document.getElementById('uPwd')?.value||'';
+    // Passwords are managed exclusively by Supabase Auth.  Never write a
+    // browser-derived password value to the application profile table.
+    if(pwd.trim()){
+      window.showToast?.('Pour changer un mot de passe, utilisez la procédure de réinitialisation sécurisée.','err');
+      return;
+    }
     window.DEMO_USERS=window.DEMO_USERS.map(x=>x.id===editId?updated:x);window.saveUsers?.(window.DEMO_USERS);
     if(typeof window.sbOK==='function'&&window.sbOK()&&typeof window.sbUpdateUser==='function'){
-      const payload={prenom,nom,email,role,hotel,hotels:JSON.stringify(hotels)};if(pwd.trim())payload.pwd=updated.pwd;
+      const payload={prenom,nom,email,role,hotel,hotels:JSON.stringify(hotels)};
       const ok=await window.sbUpdateUser(editId,payload);if(!ok){window.showToast?.('Erreur Supabase: modification non enregistrée','err');return}
       const rows=await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(editId)}&limit=1`);if(rows?.[0]&&typeof window.dbRowToUser==='function'){const fresh=window.dbRowToUser(rows[0]);window.DEMO_USERS=window.DEMO_USERS.map(x=>x.id===editId?fresh:x);window.saveUsers?.(window.DEMO_USERS);if(norm(window.currentUser)?.id===editId)window.currentUser={...window.currentUser,...fresh}}
     }

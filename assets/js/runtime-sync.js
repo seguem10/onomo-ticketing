@@ -564,7 +564,7 @@
         populateSelects();closeModal('modalUser');
         showToast(`Compte Supabase créé pour ${prenom} ${nom}`.trim(),'ok');
         addNotif(`Nouveau compte : ${prenom} ${nom} (${ROLE_L[role]||role})`,'user-plus','var(--green)');
-        if(typeof showEmailNotification==='function')showEmailNotification(prenom,nom,email,role,password);
+        if(typeof showEmailNotification==='function')showEmailNotification(prenom,nom,email,role);
         renderUsers();
         return result;
       }catch(error){

@@ -21,7 +21,6 @@
   function setUsersView(active){
     window.__onomoUsersView=!!active;
     try{window.currentView=active?'users':window.currentView;}catch(_){ }
-    if(active){try{window.eval('currentView="users"');}catch(_){}}
   }
   const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
   async function loadUsers(){

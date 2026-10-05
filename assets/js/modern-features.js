@@ -211,10 +211,22 @@
         if(!pwdRaw.trim()){showToast(t('temporary_password_required','Le mot de passe temporaire est requis'),'err');return;}
         if(DEMO_USERS.find(u=>u.email===email)){showToast(t('email_already_used','Email déjà utilisé'),'err');return;}
         if(sbOK()){try{const existing=await sbFetch(`utilisateurs?email=eq.${encodeURIComponent(email)}&limit=1`);if(existing&&existing.length>0){showToast(t('email_already_used_supabase','Email déjà utilisé (Supabase)'),'err');return;}}catch(e){}}
-        const newUser={id:uid(),email,pwd:hashPwd(pwdRaw),prenom,nom,role:'demandeur',hotel,hotels:[],createdAt:new Date().toISOString(),mustChangePassword:true,mfaEnabled:false,mfaSecret:null};
-        DEMO_USERS.push(newUser);saveUsers(DEMO_USERS);
-        if(sbOK()){const ok=await sbSaveUser(newUser);if(!ok)showToast(t('account_created_local_error','Compte créé localement — erreur Supabase'),'err');}
-        const name=`${prenom} ${nom}`.trim();populateSelects();closeModal('modalUser');showToast(t('account_created_for','Compte créé pour {name}').replace('{name}',name),'ok');addNotif(t('new_requester_account','Nouveau compte : {name} (Demandeur)').replace('{name}',name),'user-plus','var(--green)');showEmailNotification(prenom,nom,email,'demandeur',pwdRaw);renderUsers();return;
+        // Production provisioning is handled by the final Supabase Auth
+        // wrapper.  Do not fall back to a browser-local account or persist a
+        // weak password-derived value in public.utilisateurs.
+        if(!window.OnomoAuth?.createUser){
+          showToast(t('auth_provisioning_unavailable','Le service sécurisé de création de comptes est indisponible. Réessayez plus tard.'),'err');
+          return;
+        }
+        try{
+          await window.OnomoAuth.createUser({prenom,nom,email,password:pwdRaw,role:'demandeur',roles:['demandeur'],hotel,hotels:[]});
+          showToast(t('account_created_securely','Compte créé de manière sécurisée. Demandez à l’utilisateur d’utiliser le lien de réinitialisation pour définir son mot de passe.'),'ok');
+          closeModal('modalUser');renderUsers();return;
+        }catch(error){
+          console.error('Création sécurisée du compte',error);
+          showToast(error?.message||t('account_create_failed','Création du compte impossible'),'err');
+          return;
+        }
       }
     }
     const assigned=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);await originalSubmitUser();const email=document.getElementById('uEmail')?.value.trim().toLowerCase();const user=DEMO_USERS.find(item=>item.email===email);if(user&&assigned.length){user.roles=assigned;user.role=assigned[0];saveUsers(DEMO_USERS);if(sbOK())await sbUpdateUser(user.id,{roles:assigned,role:user.role});}

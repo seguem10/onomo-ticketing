@@ -2383,7 +2383,7 @@ function openEditUser(id){
   openModal("modalUser");
 }
 
-function getNotifMessage(prenom, nom, email, role, tempPwd){
+function getNotifMessage(prenom, nom, email, role){
   const fullname = `${prenom} ${nom}`.trim();
   return `Bonjour ${prenom},
 
@@ -2391,19 +2391,18 @@ Un compte a été créé pour vous sur le système de ticketing IT.
 
 ` +
     `Email : ${email}
-Mot de passe temporaire : ${tempPwd}
 Rôle : ${ROLE_L[role]||role}
 
 ` +
-    `Connectez-vous à l\'adresse du système et changez votre mot de passe dès la première connexion.
+    `Pour votre sécurité, aucun mot de passe n'est transmis par email. Utilisez le lien « Mot de passe oublié » du système pour définir votre mot de passe.
 
 ` +
     `Cordialement,
 L'équipe administration`;
 }
 
-function showEmailNotification(prenom, nom, email, role, tempPwd){
-  const msg = getNotifMessage(prenom, nom, email, role, tempPwd);
+function showEmailNotification(prenom, nom, email, role){
+  const msg = getNotifMessage(prenom, nom, email, role);
   // Show a modal to copy the message
   const existing = document.getElementById("modalEmailNotif");
   if(existing) existing.remove();

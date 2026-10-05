@@ -111,7 +111,6 @@
     };
     wrapped.__onomoDirectUserSave=true;
     window.submitUser=wrapped;
-    try{window.eval('submitUser=window.submitUser');}catch(_){ }
     return true;
   }
 
