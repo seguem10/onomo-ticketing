@@ -42,6 +42,12 @@ Deno.serve(async req => {
   if (authError || !auth.user) return reply(req, { error: "Session expirée ou invalide." }, 401);
   const { data: ticket, error: ticketError } = await userClient.from("tickets").select("id,numero,titre,hotel,categorie,priorite,statut").eq("id", ticketId).maybeSingle();
   if (ticketError || !ticket) return reply(req, { error: "Ticket introuvable ou accès non autorisé." }, 403);
+  // Rate-limit on the server and bind the attempt to the authenticated caller.
+  // The RPC checks ticket RLS first, so a user cannot trigger delivery for a
+  // ticket outside their hotel/role scope.
+  const { data: claimed, error: claimError } = await userClient.rpc("claim_ticket_notification_delivery", { target_ticket: ticketId, target_event: event });
+  if (claimError) { console.error("ticket notification throttle", claimError.message); return reply(req, { error: "Protection de notification indisponible." }, 503); }
+  if (claimed !== true) return reply(req, { error: "Notification déjà envoyée récemment. Réessayez dans quelques instants." }, 429);
 
   const service = createClient(URL, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: recipientRows, error: recipientsError } = await service.rpc("ticket_notification_recipient_ids", { target_ticket: ticketId });
