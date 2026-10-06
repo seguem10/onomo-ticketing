@@ -254,15 +254,28 @@ const fallbackAnswer=(domain:string,message:string,language:string)=>{
 
 function parseAnswer(raw:string){
   try {
-    const normalized=raw.replace(/```json|```/g,'').trim();
-    // Providers occasionally wrap a valid JSON object in a short prose
-    // prefix/suffix. Extract that object rather than rendering raw JSON in
-    // the conversation, while still falling back safely if it is malformed.
-    const firstBrace=normalized.indexOf('{'),lastBrace=normalized.lastIndexOf('}');
-    const parsed=JSON.parse(firstBrace>=0&&lastBrace>firstBrace?normalized.slice(firstBrace,lastBrace+1):normalized); return {
-    answer:clean(parsed.answer,4000), causes:toText(parsed.causes), questions:toText(parsed.questions), checks:toText(parsed.checks), solution:toText(parsed.solution), validation:toText(parsed.validation), assumptions:toText(parsed.assumptions),
-    suggested_ticket:{title:clean(parsed.suggested_ticket?.title,180),description:clean(parsed.suggested_ticket?.description,5000),category:clean(parsed.suggested_ticket?.category,80),priority:priority(parsed.suggested_ticket?.priority)}
-  }; } catch { return {answer:clean(raw,4000),questions:[],checks:[],solution:[],validation:[],assumptions:['Réponse non structurée : validation humaine requise.'],suggested_ticket:{title:'',description:'',category:'IT / Réseau'}}; }
+    let candidate=raw.replace(/```json|```/gi,'').trim();
+    // Gemini can occasionally return a JSON document encoded inside the
+    // `answer` property of an outer JSON object. Unwrap that shape before
+    // validating it. Never pass malformed provider text to the browser.
+    for(let depth=0;depth<3;depth++){
+      const firstBrace=candidate.indexOf('{'),lastBrace=candidate.lastIndexOf('}');
+      const json=firstBrace>=0&&lastBrace>firstBrace?candidate.slice(firstBrace,lastBrace+1):candidate;
+      const parsed=JSON.parse(json);
+      if(typeof parsed==='string'){candidate=parsed.trim();continue;}
+      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('invalid-assistant-object');
+      const value=parsed as Record<string,unknown>;
+      const nested=typeof value.answer==='string'?value.answer.trim():'';
+      if(nested.startsWith('{')&&nested.endsWith('}')&&!Array.isArray(value.causes)){candidate=nested;continue;}
+      if(typeof value.answer!=='string'||!value.answer.trim())throw new Error('missing-assistant-answer');
+      const ticket=value.suggested_ticket&&typeof value.suggested_ticket==='object'&&!Array.isArray(value.suggested_ticket)?value.suggested_ticket as Record<string,unknown>:{};
+      return {
+        answer:clean(value.answer,4000),causes:toText(value.causes),questions:toText(value.questions),checks:toText(value.checks),solution:toText(value.solution),validation:toText(value.validation),assumptions:toText(value.assumptions),
+        suggested_ticket:{title:clean(ticket.title,180),description:clean(ticket.description,5000),category:clean(ticket.category,80),priority:priority(ticket.priority)}
+      };
+    }
+    throw new Error('nested-assistant-json');
+  }catch(_){return null;}
 }
 
 Deno.serve(async req=>{
@@ -339,7 +352,9 @@ Deno.serve(async req=>{
       if(!response.ok){console.error('Gemini image analysis',response.status,(await response.text()).slice(0,500));return send(req,{error:'Analyse d’image temporairement indisponible. Réessayez ou créez un ticket.'},502);}
       const provider=await response.json();
       const providerText=provider?.candidates?.[0]?.content?.parts?.map((part:any)=>part?.text??'').join('')||'';
-      const answer=parseAnswer(String(providerText));
+      // Do not persist or render incomplete JSON returned by the provider.
+      // A conservative structured fallback is safer and remains useful.
+      const answer=parseAnswer(String(providerText))??fallbackAnswer(domain,'Analyse de capture nécessitant une validation IT.',language);
       const sources=[{id:'gemini-photo-analysis',title:'Analyse de captures Gemini — à vérifier',source:'Analyse demandée explicitement par l’utilisateur',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
       await service.from('it_ai_messages').insert({conversation_id:ownedConversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,image_analysis:true,attachment_count:attachments.length}});
       await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',ownedConversation.id);
@@ -406,7 +421,10 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     const providerText=providerName==='gemini'
       ?provider?.candidates?.[0]?.content?.parts?.map((part:any)=>part?.text ?? '').join('')
       :providerName==='openai' ? provider?.choices?.[0]?.message?.content : (provider?.content?.[0]?.text ?? '');
-    const answer=providerUnavailable?fallbackAnswer(domain,message,language):parseAnswer(String(providerText));
+    // JSON produced by an external model is untrusted input. If it cannot be
+    // parsed into the expected answer contract, return the safe structured
+    // fallback rather than displaying provider JSON to the end user.
+    const answer=providerUnavailable?fallbackAnswer(domain,message,language):(parseAnswer(String(providerText))??fallbackAnswer(domain,message,language));
     const sources=(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
       await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}]);
