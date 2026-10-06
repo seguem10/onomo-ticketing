@@ -253,29 +253,23 @@ const fallbackAnswer=(domain:string,message:string,language:string)=>{
 };
 
 function parseAnswer(raw:string){
-  try {
+  const safe={answer:'La réponse IA doit être vérifiée avant toute action.',causes:['Réponse structurée incomplète du fournisseur IA'],questions:['Quel message d’erreur exact apparaît ?'],checks:['Vérifiez la connexion réseau et l’heure du poste, puis notez le résultat.'],solution:['Ne modifiez aucun paramètre de production automatiquement. Créez un ticket si le problème persiste.'],validation:['Confirmez que le service fonctionne à nouveau après une vérification autorisée.'],assumptions:['La réponse IA était invalide ou incomplète ; validation humaine requise.'],suggested_ticket:{title:'Diagnostic IT à compléter',description:'Réponse IA incomplète : compléter les vérifications dans le ticket.',category:'IT / Réseau',priority:'Normale'}};
+  try{
     let candidate=raw.replace(/```json|```/gi,'').trim();
-    // Gemini can occasionally return a JSON document encoded inside the
-    // `answer` property of an outer JSON object. Unwrap that shape before
-    // validating it. Never pass malformed provider text to the browser.
     for(let depth=0;depth<3;depth++){
-      const firstBrace=candidate.indexOf('{'),lastBrace=candidate.lastIndexOf('}');
-      const json=firstBrace>=0&&lastBrace>firstBrace?candidate.slice(firstBrace,lastBrace+1):candidate;
-      const parsed=JSON.parse(json);
+      const first=candidate.indexOf('{'),last=candidate.lastIndexOf('}');
+      const parsed=JSON.parse(first>=0&&last>first?candidate.slice(first,last+1):candidate);
       if(typeof parsed==='string'){candidate=parsed.trim();continue;}
-      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('invalid-assistant-object');
+      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('invalid');
       const value=parsed as Record<string,unknown>;
       const nested=typeof value.answer==='string'?value.answer.trim():'';
       if(nested.startsWith('{')&&nested.endsWith('}')&&!Array.isArray(value.causes)){candidate=nested;continue;}
-      if(typeof value.answer!=='string'||!value.answer.trim())throw new Error('missing-assistant-answer');
+      if(typeof value.answer!=='string'||!value.answer.trim())throw new Error('missing-answer');
       const ticket=value.suggested_ticket&&typeof value.suggested_ticket==='object'&&!Array.isArray(value.suggested_ticket)?value.suggested_ticket as Record<string,unknown>:{};
-      return {
-        answer:clean(value.answer,4000),causes:toText(value.causes),questions:toText(value.questions),checks:toText(value.checks),solution:toText(value.solution),validation:toText(value.validation),assumptions:toText(value.assumptions),
-        suggested_ticket:{title:clean(ticket.title,180),description:clean(ticket.description,5000),category:clean(ticket.category,80),priority:priority(ticket.priority)}
-      };
+      return {answer:clean(value.answer,4000),causes:toText(value.causes),questions:toText(value.questions),checks:toText(value.checks),solution:toText(value.solution),validation:toText(value.validation),assumptions:toText(value.assumptions),suggested_ticket:{title:clean(ticket.title,180),description:clean(ticket.description,5000),category:clean(ticket.category,80),priority:priority(ticket.priority)}};
     }
-    throw new Error('nested-assistant-json');
-  }catch(_){return null;}
+  }catch(_){}
+  return safe;
 }
 
 Deno.serve(async req=>{
@@ -354,7 +348,7 @@ Deno.serve(async req=>{
       const providerText=provider?.candidates?.[0]?.content?.parts?.map((part:any)=>part?.text??'').join('')||'';
       // Do not persist or render incomplete JSON returned by the provider.
       // A conservative structured fallback is safer and remains useful.
-      const answer=parseAnswer(String(providerText))??fallbackAnswer(domain,'Analyse de capture nécessitant une validation IT.',language);
+      const answer=parseAnswer(String(providerText));
       const sources=[{id:'gemini-photo-analysis',title:'Analyse de captures Gemini — à vérifier',source:'Analyse demandée explicitement par l’utilisateur',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
       await service.from('it_ai_messages').insert({conversation_id:ownedConversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,image_analysis:true,attachment_count:attachments.length}});
       await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',ownedConversation.id);
@@ -404,7 +398,9 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
   try{
     const providerName=GEMINI_KEY?'gemini':OPENAI_KEY?'openai':'anthropic';
     let response=GEMINI_KEY
-      ?await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:1200}})})
+      // A full diagnostic contains several mandatory sections. Keep enough
+      // headroom for Gemini to close its JSON object instead of truncating it.
+      ?await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:2200}})})
       :OPENAI_KEY
       ?await requestProvider('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1200,response_format:{type:'json_object'},messages:[{role:'system',content:'Tu réponds uniquement avec un objet JSON valide.'},{role:'user',content:prompt}]})})
       :await requestProvider('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY!,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
@@ -412,7 +408,7 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     // on the free tier, so use it as a no-cost failover before the safe UI
     // fallback is shown to the user.
     if(GEMINI_KEY&&!response.ok&&response.status===503&&GEMINI_MODEL!=='gemini-3.5-flash-lite'){
-      response=await requestProvider('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:1200}})});
+      response=await requestProvider('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:2200}})});
     }
     const providerUnavailable=!response.ok;
     const providerError=providerUnavailable?await response.text():'';
@@ -424,7 +420,7 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     // JSON produced by an external model is untrusted input. If it cannot be
     // parsed into the expected answer contract, return the safe structured
     // fallback rather than displaying provider JSON to the end user.
-    const answer=providerUnavailable?fallbackAnswer(domain,message,language):(parseAnswer(String(providerText))??fallbackAnswer(domain,message,language));
+    const answer=providerUnavailable?fallbackAnswer(domain,message,language):parseAnswer(String(providerText));
     const sources=(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
       await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}]);
