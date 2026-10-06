@@ -1338,7 +1338,9 @@ function timeAgo(d){
 function timeSince(d){return timeAgo(d);}
 function genNum(){return`ONO-${Date.now().toString().slice(-5)}`;}
 function initials(s){return(s||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();}
-function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+// Escape text both for element content and for quoted HTML attributes.
+// Ticket fields, comments and display names may all originate from users.
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 
 /* ══════════════════════════════════════════════
    ROLE-BASED ACCESS HELPERS
