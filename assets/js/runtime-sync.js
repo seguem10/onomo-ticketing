@@ -160,9 +160,35 @@
     window.loadAllData=secureLoad;
   }
 
-  const writeSession=()=>{try{if(currentUser)localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,user:currentUser,at:Date.now()}));}catch(_) {}};
-  const clearSession=()=>{try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(ACTIVITY_KEY);}catch(_) {}};
-  const touch=()=>{try{if(currentUser)localStorage.setItem(ACTIVITY_KEY,String(Date.now()));}catch(_) {}};
+  /* Supabase is the only source of truth in production.  Keep no ticket,
+     comment or profile copy in persistent browser storage: shared hotel
+     workstations must not expose a previous user's data after logout. */
+  const LOCAL_DATA_KEYS=['dh_tickets','dh_comments','dh_users','dh_hotels'];
+  const purgeConnectedBrowserCache=()=>{
+    if(!hasAuthConfiguration())return;
+    try{
+      LOCAL_DATA_KEYS.forEach(key=>localStorage.removeItem(key));
+      // Remove the older profile-bearing marker written by pre-hardening builds.
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(ACTIVITY_KEY);
+    }catch(_) {}
+  };
+  const writeSession=()=>{try{
+    if(!currentUser)return;
+    if(hasAuthConfiguration()){
+      // This UI marker is deliberately tab-scoped and contains no email,
+      // role or profile. Supabase owns the real authenticated session.
+      sessionStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,at:Date.now()}));
+      return;
+    }
+    localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentUser.id,email:currentUser.email,user:currentUser,at:Date.now()}));
+  }catch(_) {}};
+  const clearSession=()=>{try{
+    localStorage.removeItem(SESSION_KEY);localStorage.removeItem(ACTIVITY_KEY);
+    sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(ACTIVITY_KEY);
+    purgeConnectedBrowserCache();
+  }catch(_) {}};
+  const touch=()=>{try{if(currentUser)(hasAuthConfiguration()?sessionStorage:localStorage).setItem(ACTIVITY_KEY,String(Date.now()));}catch(_) {}};
   let inactivityTimer=null, idleLogoutInProgress=false, lastPointerTouch=0;
   const sessionExpiredMessage=()=>window.OnomoI18n?.t('session_expired')||'Votre session a expiré pour cause d’inactivité.';
   async function expireInactiveSession(){
@@ -227,7 +253,8 @@
   window.completePasswordRecovery=completePasswordRecovery;
   function checkInactivity(){
     if(!currentUser||idleLogoutInProgress)return;
-    const last=Number(localStorage.getItem(ACTIVITY_KEY)||0);
+    const store=hasAuthConfiguration()?sessionStorage:localStorage;
+    const last=Number(store.getItem(ACTIVITY_KEY)||0);
     if(!last){touch();return;}
     if(Date.now()-last>=INACTIVITY)expireInactiveSession();
   }
@@ -351,6 +378,18 @@
     }catch(error){console.warn('Supabase Realtime indisponible',error);}
   }
   function startSync(){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();installSecureInitialDataLoad();if(syncTimer)clearInterval(syncTimer);syncTickets();syncNotifications();startRealtime();syncTimer=setInterval(syncTickets,10000);}
+
+  // The legacy static interface exposes localStorage helpers. Replace them in
+  // a configured Supabase deployment so successful API reads cannot leave
+  // tickets, comments or profiles behind on disk.
+  function disableConnectedLocalDataWrites(){
+    if(!hasAuthConfiguration())return;
+    ['saveTickets','saveCommentaires','saveUsers','saveHotels'].forEach(name=>{
+      if(typeof window[name]==='function')window[name]=()=>{};
+    });
+    purgeConnectedBrowserCache();
+  }
+  disableConnectedLocalDataWrites();
 
   async function restoreSupabaseProfile(session){
     if(!session?.user)return false;
