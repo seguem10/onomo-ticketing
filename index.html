@@ -35,7 +35,6 @@
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
@@ -1056,12 +1055,11 @@ Object.defineProperties(window,{
 var SUPABASE_URL = "https://aljnwqrjplqvehctsdqj.supabase.co"; 
 var SUPABASE_KEY = "sb_publishable_MTVHDgxw7E2pmGKy8FzfJQ_Cg9UOg8a";
 
-// ╔══════════════════════════════════════════════════════════╗
-// ║  CONFIG EMAILJS — Notifications email automatiques      ║
-// ╚══════════════════════════════════════════════════════════╝
-var EMAILJS_SERVICE_ID  = "service_n993o6q"; // Service ID EmailJS
-var EMAILJS_TEMPLATE_ID = "template_soeedb6"; // Ton template ID
-var EMAILJS_PUBLIC_KEY  = "ZGEqQPMI1BEUvdR06"; // Ta public key
+// E-mail notification delivery is server-side only.  Do not put EmailJS,
+// Resend or SMTP credentials (including provider public IDs) in browser code.
+var EMAILJS_SERVICE_ID  = "";
+var EMAILJS_TEMPLATE_ID = "";
+var EMAILJS_PUBLIC_KEY  = "";
 var APP_URL = window.location.origin + window.location.pathname; // URL auto
 
 let settings = loadSettings();
@@ -2705,18 +2703,15 @@ function renderSettings(){
         <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Notifications email</div><div class="setting-desc">Envoyer un email à l'agent lors d'une assignation</div></div><button class="toggle${settings.emailNotify?" on":""}" id="tEmail" onclick="toggleSetting('emailNotify','tEmail')"></button></div>
         <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Auto-assignation</div><div class="setting-desc">Assigner automatiquement les tickets à l'agent disponible de l'hôtel</div></div><button class="toggle${settings.autoAssign?" on":""}" id="tAuto" onclick="toggleSetting('autoAssign','tAuto')"></button></div>
       </div>
-      <!-- EmailJS config — admin uniquement -->
+      <!-- E-mail delivery — admin uniquement -->
       ${currentUser.role==="admin" ? `
       <div class="settings-section">
-        <div class="settings-title"><i class="ti ti-mail"></i>Configuration Email (EmailJS)</div>
+        <div class="settings-title"><i class="ti ti-mail"></i>Notifications e-mail sécurisées</div>
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.8">
-          Ces valeurs doivent être renseignées dans le fichier <strong>index.html</strong> directement (lignes EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY).<br>
-          Statut actuel : ${EMAILJS_SERVICE_ID ? '<span style="color:var(--green-t)"><i class="ti ti-circle-check"></i> EmailJS configuré ('+EMAILJS_SERVICE_ID+')</span>' : '<span style="color:var(--red-t)"><i class="ti ti-x"></i> SERVICE_ID manquant — emails non envoyés</span>'}
+          Les notifications sont envoyées uniquement par la fonction sécurisée Supabase. Les identifiants EmailJS, Resend ou SMTP sont conservés dans les secrets serveur et ne sont jamais affichés dans le navigateur.
         </div>
         <div style="font-size:11px;color:var(--tx2)">
-          1. Va sur <strong>emailjs.com</strong> → Email Services → copie le <strong>Service ID</strong><br>
-          2. Ouvre <strong>index.html</strong> avec Notepad → cherche <code>EMAILJS_SERVICE_ID</code><br>
-          3. Remplis la valeur entre les guillemets → sauvegarde → recharge
+          La configuration du fournisseur est gérée dans <strong>Supabase → Edge Functions → Secrets</strong>.
         </div>
       </div>
       ` : ""}
@@ -4126,59 +4121,23 @@ function advFiltersBarHTML(){
 }
 
 /* ══════════════════════════════════════════════
-   NOTIFICATIONS — EMAIL (EmailJS) + PWA PUSH
+   NOTIFICATIONS — SERVER EMAIL + PWA PUSH
 ══════════════════════════════════════════════ */
 
-// ─── EmailJS Init ───
-function initEmailJS(){
-  if(!EMAILJS_PUBLIC_KEY) return;
-  try{
-    emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
-    console.log("EmailJS initialized");
-  }catch(e){ console.warn("EmailJS init failed:", e); }
-}
+// Legacy entry points are intentionally inert. Notification delivery happens
+// via ticket-notification-delivery, which authenticates the caller and picks
+// recipients server-side. Keeping browser e-mail credentials out prevents a
+// visitor from reusing them to send arbitrary messages.
+function initEmailJS(){}
 
 async function sendEmailNotification(agent, ticket, type){
-  if(!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) return false;
-  if(!agent || !agent.email) return false;
-  try{
-    const params = {
-      agent_email:      agent.email,
-      agent_prenom:     agent.prenom || "Agent",
-      ticket_numero:    ticket.numero || "",
-      ticket_titre:     ticket.titre || "",
-      ticket_hotel:     ticket.hotel || "",
-      ticket_priorite:  ticket.priorite || "",
-      ticket_categorie: ticket.categorie || "",
-      ticket_statut:    STAT_L[ticket.statut] || ticket.statut || "",
-      app_url:          APP_URL || window.location.href,
-      name:             settings.brandName ? `${settings.brandName} Support IT` : "ONOMO Support IT"
-    };
-    const res = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
-    console.log("Email sent:", res.status, res.text);
-    return true;
-  }catch(e){
-    console.error("EmailJS error:", e);
-    return false;
-  }
+  return false;
 }
 
 async function notifyAgent(agentName, ticket, type){
   if(!agentName || !ticket) return;
   const agent = DEMO_USERS.find(u => (u.prenom+" "+u.nom).trim() === agentName);
   if(!agent) return;
-
-  // Send real email via EmailJS
-  if(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY){
-    const sent = await sendEmailNotification(agent, ticket, type);
-    if(sent){
-      showToast("Email envoyé à "+agent.prenom+" ("+agent.email+")", "ok");
-    } else {
-      showToast("Erreur envoi email à "+agent.email, "err");
-    }
-  } else {
-    console.warn("EmailJS SERVICE_ID manquant");
-  }
 
   // PWA Push notification
   const pushTitle = "[ONOMO Support IT] Ticket "+ticket.numero+" assigné";
