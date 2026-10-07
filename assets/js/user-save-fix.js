@@ -55,6 +55,13 @@
       window.showToast?.(t('supabase_update_unavailable','Supabase est indisponible. Modification non enregistrée.'),'err');
       return false;
     }
+    const temporaryPassword=document.getElementById('uPwd')?.value||'';
+    const strong=password=>password.length>=12&&/[a-z]/.test(password)&&/[A-Z]/.test(password)&&/\d/.test(password)&&/[^A-Za-z0-9]/.test(password);
+    if(temporaryPassword.trim()&&!strong(temporaryPassword)){
+      window.showToast?.('Le mot de passe doit contenir 12 caractères minimum, une majuscule, une minuscule, un chiffre et un caractère spécial.','err');
+      return false;
+    }
+    if(temporaryPassword.trim()&&!window.confirm('Définir ce mot de passe temporaire pour cet utilisateur ? Il devra le modifier à sa prochaine connexion.'))return false;
 
     try{
       const payload={prenom:d.prenom,nom:d.nom,email:d.email,role:d.role,hotel:d.hotel,hotels:d.hotels,roles:[d.role]};
@@ -65,6 +72,13 @@
       });
       if(!Array.isArray(rows)||!rows[0])throw new Error('Aucune ligne utilisateur modifiée');
 
+      if(temporaryPassword.trim()){
+        const targetUserId=rows[0].auth_user_id||rows[0].id;
+        if(!targetUserId)throw new Error('Compte Auth Supabase introuvable pour cet utilisateur.');
+        if(typeof window.OnomoAuth?.resetUserPassword!=='function')throw new Error('Le service sécurisé de réinitialisation est indisponible.');
+        await window.OnomoAuth.resetUserPassword(targetUserId,temporaryPassword);
+      }
+
       const fresh=typeof window.dbRowToUser==='function'?window.dbRowToUser(rows[0]):rows[0];
       if(Array.isArray(window.DEMO_USERS)){
         const i=window.DEMO_USERS.findIndex(x=>String(x.id)===String(id));
@@ -74,7 +88,7 @@
       if(window.currentUser&&String(window.currentUser.id)===String(id))window.currentUser={...window.currentUser,...fresh};
       window.populateSelects?.();
       window.closeModal?.('modalUser');
-      window.showToast?.(t('account_updated_sync','Compte mis à jour dans Supabase'),'ok');
+      window.showToast?.(temporaryPassword.trim()?'Mot de passe temporaire défini. L’utilisateur devra le modifier à sa prochaine connexion.':t('account_updated_sync','Compte mis à jour dans Supabase'),'ok');
       window.renderUsers?.();
       return true;
     }catch(error){

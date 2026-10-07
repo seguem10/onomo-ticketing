@@ -19,7 +19,16 @@
       authClient=window.supabase.createClient(s.sbUrl,s.sbKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'onomo-supabase-auth'}});
       authSubscription=authClient.auth.onAuthStateChange((event,session)=>{
         if(event==='PASSWORD_RECOVERY'&&session?.user){
-          setTimeout(openPasswordRecovery,0);
+          /* Recovery by email is disabled. Administrators now set temporary
+             passwords from the Users screen. */
+          setTimeout(async()=>{
+            await authClient?.auth.signOut();
+            clearSession();
+            const error=document.getElementById('loginErr'),message=document.getElementById('loginErrMsg');
+            if(message)message.textContent='La réinitialisation par e-mail est désactivée. Contactez un administrateur.';
+            error?.classList.add('show');
+            history.replaceState(null,'',location.pathname);
+          },0);
           return;
         }
         if(event==='SIGNED_OUT'){
@@ -202,65 +211,12 @@
     }catch(error){console.warn('Déconnexion pour inactivité impossible',error);}
     finally{idleLogoutInProgress=false;}
   }
-  async function requestPasswordReset(){
-    const email=document.getElementById('loginEmail')?.value.trim().toLowerCase()||'';
-    if(!email){showToast(t('email_required','L’email est requis'),'err');return false;}
-    const client=getAuthClient();
-    if(!client){showToast(t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.'),'err');return false;}
-    try{
-      // Supabase intentionally returns the same confirmation for known and
-      // unknown addresses, avoiding account enumeration.
-      /* Recovery links must never point to an ephemeral Vercel preview or to
-         the former onomo-it-ticketing deployment. Both can disappear before a
-         recipient opens the email, yielding Vercel's DEPLOYMENT_NOT_FOUND.
-         Always send users to the stable production origin instead. */
-      const stableOrigin='https://onomo-ticketing.vercel.app';
-      const currentOrigin=location.origin;
-      const isLocal=/^(https?:\/\/(localhost|127\.0\.0\.1)(?::\d+)?)$/i.test(currentOrigin);
-      const recoveryOrigin=isLocal?currentOrigin:stableOrigin;
-      const recoveryPath=isLocal?location.pathname:'/';
-      /* Use a query marker rather than a hash marker. Supabase places the
-         recovery access token in the URL fragment; a second fragment makes
-         the token unreadable and leaves the user on the sign-in page. */
-      const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:`${recoveryOrigin}${recoveryPath}?recovery=1`});
-      if(error)throw error;
-      showToast(t('reset_email_sent','Si un compte correspond à cette adresse, un lien de réinitialisation a été envoyé.'),'ok');
-      return true;
-    }catch(error){
-      console.warn('Demande de réinitialisation impossible',error);
-      /* Do not pretend that the reset email was sent when Supabase rejects
-         the request (for example, when an allowed redirect URL is missing).
-         The copy stays generic and therefore does not disclose whether an
-         account exists for a given address. */
-      showToast('Le service de réinitialisation est temporairement indisponible. Réessayez dans quelques instants.','err');
-      return false;
-    }
-  }
-  function openPasswordRecovery(){
-    document.getElementById('passwordRecoveryModal')?.remove();
-    const overlay=document.createElement('div');
-    overlay.id='passwordRecoveryModal';overlay.className='overlay open';
-    overlay.innerHTML=`<div class="modal" style="max-width:440px"><div class="modal-hdr"><div class="modal-title"><i class="ti ti-lock-reset"></i>${t('reset_password','Réinitialiser le mot de passe')}</div></div><div class="modal-body"><div class="form-g"><label class="field-lbl">${t('reset_new_password','Nouveau mot de passe')}</label><input id="recoveryPassword" class="field-ctrl" type="password" autocomplete="new-password"></div><div class="form-g"><label class="field-lbl">${t('confirm_new_password','Confirmer le nouveau mot de passe')}</label><input id="recoveryPasswordConfirm" class="field-ctrl" type="password" autocomplete="new-password"></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="completePasswordRecovery()">${t('reset_password','Réinitialiser le mot de passe')}</button></div></div>`;
-    document.body.appendChild(overlay);
-  }
-  async function completePasswordRecovery(){
-    const password=document.getElementById('recoveryPassword')?.value||'',confirm=document.getElementById('recoveryPasswordConfirm')?.value||'';
-    if(password!==confirm){showToast(t('password_mismatch','Les mots de passe ne correspondent pas'),'err');return false;}
-    if(!validPassword(password)){showToast(passwordPolicyMessage(),'err');return false;}
-    const client=getAuthClient(),session=await getAuthSession();
-    if(!client||!session?.user){showToast(t('reset_link_invalid','Le lien de réinitialisation est invalide ou a expiré.'),'err');return false;}
-    try{
-      const {error}=await client.auth.updateUser({password});if(error)throw error;
-      document.getElementById('passwordRecoveryModal')?.remove();
-      history.replaceState(null,'',location.pathname);
-      const updatedSession=await getAuthSession();
-      if(updatedSession?.user&&window.OnomoMfa?.enforce)await window.OnomoMfa.enforce(updatedSession);
-      showToast(t('reset_success','Mot de passe réinitialisé. Vous pouvez vous connecter.'),'ok');
-      return true;
-    }catch(error){console.warn('Réinitialisation du mot de passe impossible',error);showToast(t('reset_link_invalid','Le lien de réinitialisation est invalide ou a expiré.'),'err');return false;}
-  }
-  window.requestPasswordReset=requestPasswordReset;
-  window.completePasswordRecovery=completePasswordRecovery;
+  // Public email recovery is intentionally unavailable. This compatibility
+  // function only informs stale browser tabs of the supported process.
+  window.requestPasswordReset=()=>{
+    showToast('La réinitialisation par e-mail est désactivée. Contactez un administrateur.','err');
+    return false;
+  };
   function checkInactivity(){
     if(!currentUser||idleLogoutInProgress)return;
     const store=hasAuthConfiguration()?sessionStorage:localStorage;
@@ -564,6 +520,13 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
+  async function resetUserPasswordByAdmin(targetUserId,password){
+    const client=getAuthClient();if(!client)throw new Error('Supabase Auth indisponible');
+    const {data,error}=await client.functions.invoke('admin-reset-user-password',{body:{target_user_id:targetUserId,password}});
+    if(error)throw error;
+    if(data?.error)throw new Error(data.error);
+    return data;
+  }
   const roleDatabaseName=value=>({admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',demandeur:'Demandeur',requester:'Demandeur'}[value]||value);
   async function replaceUserRoles(profileId, roleValues){
     if(!profileId||!Array.isArray(roleValues)||!roleValues.length||!window.sbFetch)return;
@@ -573,7 +536,7 @@
     const roles=[...new Set(roleValues.map(roleDatabaseName).filter(Boolean))];
     await window.sbFetch('rpc/replace_user_roles',{method:'POST',body:JSON.stringify({target_user_id:targetUserId,role_names:roles}),prefer:'return=minimal'});
   }
-  window.OnomoAuth={createUser:createAuthUser,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
+  window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
     const s=cfg()||{};
     return {sbUrl:s.sbUrl||'',sbKey:s.sbKey||''};
   },restore:restoreSession};
@@ -674,14 +637,6 @@
     try{['touchstart','pointerdown','pointermove','keydown','click','input','change'].forEach(evt=>document.addEventListener(evt,recordUserActivity,{passive:true}));}catch(_){}
     startInactivityWatcher();
     initMobileAndPwaUi();
-    showPasswordRecoveryUrlError();
-    /* Bind the recovery control from JavaScript instead of relying on an
-       inline global handler. This keeps the action functional with stricter
-       CSP policies and after a service-worker cached update. */
-    document.getElementById('forgotPasswordBtn')?.addEventListener('click',event=>{
-      event.preventDefault();
-      void requestPasswordReset();
-    });
     restoreSession();
   });
 })();

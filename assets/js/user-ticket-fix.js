@@ -108,13 +108,8 @@
     if(role==='demandeur'&&!hotel){window.showToast?.(t('select_requester_hotel','Sélectionnez un hôtel pour le Demandeur'),'err');return}
     const local=(Array.isArray(window.DEMO_USERS)?window.DEMO_USERS:[]).find(x=>x.id===editId);if(!local)return;
     const updated={...local,prenom,nom,email,role,hotel,hotels};
-    const pwd=document.getElementById('uPwd')?.value||'';
-    // Passwords are managed exclusively by Supabase Auth.  Never write a
-    // browser-derived password value to the application profile table.
-    if(pwd.trim()){
-      window.showToast?.('Pour changer un mot de passe, utilisez la procédure de réinitialisation sécurisée.','err');
-      return;
-    }
+    // Password values are handled by user-save-fix through the privileged
+    // Edge Function. They are never included in this profile-table payload.
     window.DEMO_USERS=window.DEMO_USERS.map(x=>x.id===editId?updated:x);window.saveUsers?.(window.DEMO_USERS);
     if(typeof window.sbOK==='function'&&window.sbOK()&&typeof window.sbUpdateUser==='function'){
       const payload={prenom,nom,email,role,hotel,hotels:JSON.stringify(hotels)};
