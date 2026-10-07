@@ -222,13 +222,18 @@
       /* Use a query marker rather than a hash marker. Supabase places the
          recovery access token in the URL fragment; a second fragment makes
          the token unreadable and leaves the user on the sign-in page. */
-      await client.auth.resetPasswordForEmail(email,{redirectTo:`${recoveryOrigin}${recoveryPath}?recovery=1`});
+      const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:`${recoveryOrigin}${recoveryPath}?recovery=1`});
+      if(error)throw error;
       showToast(t('reset_email_sent','Si un compte correspond à cette adresse, un lien de réinitialisation a été envoyé.'),'ok');
       return true;
     }catch(error){
       console.warn('Demande de réinitialisation impossible',error);
-      showToast(t('reset_email_sent','Si un compte correspond à cette adresse, un lien de réinitialisation a été envoyé.'),'ok');
-      return true;
+      /* Do not pretend that the reset email was sent when Supabase rejects
+         the request (for example, when an allowed redirect URL is missing).
+         The copy stays generic and therefore does not disclose whether an
+         account exists for a given address. */
+      showToast('Le service de réinitialisation est temporairement indisponible. Réessayez dans quelques instants.','err');
+      return false;
     }
   }
   function openPasswordRecovery(){
