@@ -8,7 +8,7 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
-  const previewOrigin = origin.startsWith("https://onomo-ticketing") && origin.endsWith(".vercel.app");
+  const previewOrigin = origin.startsWith("https://onomo-ticketing-") && origin.endsWith(".vercel.app");
   const localOrigin = origin === "http://localhost" || origin.startsWith("http://localhost:");
   const allowed = origin === "https://onomo-ticketing.vercel.app" || previewOrigin || localOrigin;
   return { "Access-Control-Allow-Origin": allowed ? origin : "https://onomo-ticketing.vercel.app", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
