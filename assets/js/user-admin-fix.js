@@ -28,7 +28,7 @@
     try{
       if(typeof window.sbOK==='function'&&window.sbOK()&&typeof window.sbFetch==='function'){
         const remote=isAdmin()
-          ?await window.sbFetch('utilisateurs?select=id,email,prenom,nom,role,hotel,hotels,must_change_password,mfa_enabled,created_at&order=created_at.desc&limit=500')
+          ?await window.sbFetch('utilisateurs?select=id,auth_user_id,email,prenom,nom,role,hotel,hotels,must_change_password,mfa_enabled,created_at&order=created_at.desc&limit=500')
           :await window.sbFetch('rpc/get_support_directory',{method:'POST',body:'{}',prefer:'return=representation'});
         if(Array.isArray(remote)&&remote.length)rows=remote;
       }
@@ -40,7 +40,22 @@
     const filtered=q?rows.filter(u=>[u.prenom,u.nom,u.email,u.role,u.hotel].join(' ').toLowerCase().includes(q)):rows;
     if(!filtered.length)return '<div style="padding:35px;text-align:center;color:var(--tx3)">'+t('no_user_found','Aucun utilisateur trouvé.')+'</div>';
     const admin=isAdmin();
-    return '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('user','Utilisateur')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('role','Rôle')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('hotel','Hôtel')+'</th>'+(admin?'<th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('account_security','Sécurité')+'</th><th style="text-align:right;padding:10px;border-bottom:1px solid var(--border)">'+t('actions','Actions')+'</th>':'')+'</tr></thead><tbody>'+filtered.map(u=>{const id=esc(u.id||'');const name=[u.prenom,u.nom].filter(Boolean).join(' ')||u.email||t('user','Utilisateur');const role=roleValues(u)[0]||u.role||'—';const security=u.mfa_enabled?'MFA':t('standard','Standard');let actions='';if(admin){try{if(typeof openEditUser==='function'||typeof window.openEditUser==='function')actions+='<button class="btn btn-outline btn-sm" onclick="openEditUser(\''+id+'\')"><i class="ti ti-edit"></i>'+t('edit','Modifier')+'</button> ';}catch(_){ }try{if(typeof deleteUser==='function'||typeof window.deleteUser==='function')actions+='<button class="btn btn-danger btn-sm" onclick="deleteUser(\''+id+'\')"><i class="ti ti-trash"></i></button>';}catch(_){ }}return '<tr><td style="padding:11px 10px;border-bottom:1px solid var(--border)"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td style="padding:11px 10px;border-bottom:1px solid var(--border)"><span class="role-tag">'+esc(role)+'</span></td><td style="padding:11px 10px;border-bottom:1px solid var(--border)">'+esc(u.hotel||t('all_hotels','Tous les hôtels'))+'</td>'+(admin?'<td style="padding:11px 10px;border-bottom:1px solid var(--border)">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td style="padding:11px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';}).join('')+'</tbody></table></div>';
+    const cell='padding:11px 10px;border-bottom:1px solid var(--border)';
+    const headings='<thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('user','Utilisateur')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('role','Rôle')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('hotel','Hôtel')+'</th>'+(admin?'<th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('account_security','Sécurité')+'</th><th style="text-align:right;padding:10px;border-bottom:1px solid var(--border)">'+t('actions','Actions')+'</th>':'')+'</tr></thead>';
+    const body=filtered.map(u=>{
+      const id=esc(u.id||''),target=esc(u.auth_user_id||u.id||'');
+      const name=[u.prenom,u.nom].filter(Boolean).join(' ')||u.email||t('user','Utilisateur');
+      const role=roleValues(u)[0]||u.role||'—';
+      const security=u.mfa_enabled?'MFA obligatoire':t('standard','Standard');
+      let actions='';
+      if(admin){
+        if(typeof window.openEditUser==='function')actions+='<button class="btn btn-outline btn-sm" onclick="openEditUser(\''+id+'\')"><i class="ti ti-edit"></i>'+t('edit','Modifier')+'</button> ';
+        actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.setRequired(\''+target+'\','+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+ (u.mfa_enabled?'Retirer MFA':'Exiger MFA')+'</button> ';
+        if(typeof window.deleteUser==='function')actions+='<button class="btn btn-danger btn-sm" onclick="deleteUser(\''+id+'\')"><i class="ti ti-trash"></i></button>';
+      }
+      return '<tr><td style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td style="'+cell+'">'+esc(u.hotel||t('all_hotels','Tous les hôtels'))+'</td>'+(admin?'<td style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
+    }).join('');
+    return '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse">'+headings+'<tbody>'+body+'</tbody></table></div>';
   }
   async function render(){
     if(!isSupport()){window.showToast?.(t('access_denied','Accès non autorisé.'),'err');return;}

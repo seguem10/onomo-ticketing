@@ -219,7 +219,10 @@
       const isLocal=/^(https?:\/\/(localhost|127\.0\.0\.1)(?::\d+)?)$/i.test(currentOrigin);
       const recoveryOrigin=isLocal?currentOrigin:stableOrigin;
       const recoveryPath=isLocal?location.pathname:'/';
-      await client.auth.resetPasswordForEmail(email,{redirectTo:`${recoveryOrigin}${recoveryPath}#reset-password`});
+      /* Use a query marker rather than a hash marker. Supabase places the
+         recovery access token in the URL fragment; a second fragment makes
+         the token unreadable and leaves the user on the sign-in page. */
+      await client.auth.resetPasswordForEmail(email,{redirectTo:`${recoveryOrigin}${recoveryPath}?recovery=1`});
       showToast(t('reset_email_sent','Si un compte correspond à cette adresse, un lien de réinitialisation a été envoyé.'),'ok');
       return true;
     }catch(error){
@@ -245,6 +248,8 @@
       const {error}=await client.auth.updateUser({password});if(error)throw error;
       document.getElementById('passwordRecoveryModal')?.remove();
       history.replaceState(null,'',location.pathname);
+      const updatedSession=await getAuthSession();
+      if(updatedSession?.user&&window.OnomoMfa?.enforce)await window.OnomoMfa.enforce(updatedSession);
       showToast(t('reset_success','Mot de passe réinitialisé. Vous pouvez vous connecter.'),'ok');
       return true;
     }catch(error){console.warn('Réinitialisation du mot de passe impossible',error);showToast(t('reset_link_invalid','Le lien de réinitialisation est invalide ou a expiré.'),'err');return false;}
@@ -393,6 +398,9 @@
 
   async function restoreSupabaseProfile(session){
     if(!session?.user)return false;
+    /* MFA policy lives in immutable app_metadata. Gate access before any
+       profile or ticket query, so an aal1 token cannot load application data. */
+    if(window.OnomoMfa?.enforce&&!(await window.OnomoMfa.enforce(session)))return true;
     /* INITIAL_SESSION and restoreSession can arrive together on a page
        refresh. Await one profile request instead of treating the second call
        as a failure and returning the user to the login screen. */
@@ -468,6 +476,7 @@
           const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
           if(error)throw error;
           if(data?.session?.user){
+            if(window.OnomoMfa?.enforce&&!(await window.OnomoMfa.enforce(data.session)))return true;
             installAuthenticatedSbFetch();
             installSecureInitialDataLoad();
             const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(data.session.user.id)}&limit=1`);
