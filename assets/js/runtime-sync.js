@@ -548,7 +548,18 @@
   async function resetUserPasswordByAdmin(targetUserId,password){
     const client=getAuthClient();if(!client)throw new Error('Supabase Auth indisponible');
     const {data,error}=await client.functions.invoke('admin-reset-user-password',{body:{target_user_id:targetUserId,password}});
-    if(error)throw error;
+    // Supabase wraps non-2xx Edge Function responses in a FunctionHttpError.
+    // Keep the server's safe, user-facing reason instead of exposing the
+    // unhelpful generic "Edge Function returned a non-2xx status code".
+    if(error){
+      let detail='';
+      try{
+        const response=error.context;
+        const payload=response?.clone ? await response.clone().json() : null;
+        if(payload&&typeof payload.error==='string')detail=payload.error;
+      }catch(_){/* The function may not have returned JSON. */}
+      throw new Error(detail||'La réinitialisation sécurisée a échoué. Vérifiez que votre session administrateur est active puis réessayez.');
+    }
     if(data?.error)throw new Error(data.error);
     return data;
   }
