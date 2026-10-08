@@ -297,8 +297,8 @@
       notifications=rows.map(row=>{
         const body=row.body&&typeof row.body==='object'?row.body:{};
         const type=String(row.type||'info');
-        const icon=type==='assignment'?'user-check':type==='comment'?'message':type==='attachment'?'paperclip':type==='closed'?'circle-check':type==='urgent'?'alert-triangle':'ticket';
-        const color=type==='urgent'?'var(--red)':type==='closed'?'var(--green)':'var(--brand)';
+        const icon=type.startsWith('sla_')?'alarm':type==='assignment'?'user-check':type==='comment'?'message':type==='attachment'?'paperclip':type==='closed'?'circle-check':type==='urgent'?'alert-triangle':'ticket';
+        const color=type==='sla_breach'||type==='sla_critical'||type==='urgent'?'var(--red)':type==='sla_warning'?'var(--gold)':type==='closed'?'var(--green)':'var(--brand)';
         const template=body.key&&window.OnomoI18n?.t(body.key);
         const text=template&&template!==body.key?template.replace(/\{(ticket|status|file_name)\}/g,(_m,key)=>String(body[key]||'')):String(body.message||body.title||'Mise à jour de ticket');
         // Only records loaded from Supabase can be marked read in the database.
