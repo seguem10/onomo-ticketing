@@ -4056,21 +4056,31 @@ function renderKanban(list){
    SLA — délai max selon priorité
 ══════════════════════════════════════════════ */
 const SLA_HOURS = {Urgente: 1, Haute: 4, Normale: 24, Basse: 72};
+function slaDeadline(ticket){
+  const serverDeadline = Date.parse(ticket.sla_due_at || '');
+  if(Number.isFinite(serverDeadline)) return serverDeadline;
+  const openedAt = Date.parse(ticket.created_at || '');
+  if(!Number.isFinite(openedAt)) return NaN;
+  return openedAt + ((SLA_HOURS[ticket.priorite] || 24) * 3600000);
+}
 function slaHTML(ticket){
   if(ticket.statut === 'résolu' || ticket.statut === 'fermé') return '';
-  const created = new Date(ticket.created_at).getTime();
-  const elapsed = (Date.now() - created) / 3600000; // heures
+  const deadline = slaDeadline(ticket);
+  if(!Number.isFinite(deadline)) return '';
   const slaH = SLA_HOURS[ticket.priorite] || 24;
-  const pct = elapsed / slaH;
-  if(pct < 0.7) return `<span class="sla-badge sla-ok"><i class="ti ti-clock" style="font-size:8px"></i>${Math.round((slaH - elapsed) * 60)}m</span>`;
-  if(pct < 1)   return `<span class="sla-badge sla-warn"><i class="ti ti-clock" style="font-size:8px"></i>${Math.round((slaH - elapsed) * 60)}m</span>`;
+  const remainingMinutes = Math.max(0, Math.round((deadline - Date.now()) / 60000));
+  const pct = 1 - (remainingMinutes / (slaH * 60));
+  if(pct < 0.7) return `<span class="sla-badge sla-ok"><i class="ti ti-clock" style="font-size:8px"></i>${remainingMinutes}m</span>`;
+  if(pct < 1)   return `<span class="sla-badge sla-warn"><i class="ti ti-clock" style="font-size:8px"></i>${remainingMinutes}m</span>`;
   return `<span class="sla-badge sla-breach"><i class="ti ti-alarm" style="font-size:8px"></i>SLA!</span>`;
 }
 function getSLAStatus(ticket){
   if(ticket.statut === 'résolu' || ticket.statut === 'fermé') return 'ok';
-  const elapsed = (Date.now() - new Date(ticket.created_at).getTime()) / 3600000;
+  const deadline = slaDeadline(ticket);
+  if(!Number.isFinite(deadline)) return 'ok';
   const slaH = SLA_HOURS[ticket.priorite] || 24;
-  const pct = elapsed / slaH;
+  const remainingMinutes = (deadline - Date.now()) / 60000;
+  const pct = 1 - (remainingMinutes / (slaH * 60));
   return pct >= 1 ? 'breach' : pct >= 0.7 ? 'warn' : 'ok';
 }
 
