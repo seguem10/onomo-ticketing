@@ -370,6 +370,11 @@
         installSecureInitialDataLoad();
         const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
         if(rows?.[0]){
+          /* A MFA verification may emit a second auth event after the app is
+             already visible. Keep checking the policy, but do not rebuild the
+             SPA (which would interrupt the route the user has just opened). */
+          const sameUserAlreadyInApp=currentUser?.auth_user_id===session.user.id
+            &&document.getElementById('appScreen')?.classList.contains('active');
           currentUser=dbRowToUser(rows[0]);
           currentUser.auth_user_id=session.user.id;
           if(currentUser.language)window.OnomoI18n?.setLanguage(currentUser.language,false);
@@ -385,6 +390,13 @@
              in immutable app_metadata and mfa-auth resumes this restore only
              once the AAL2 challenge is verified. */
           if(window.OnomoMfa?.enforce&&!(await window.OnomoMfa.enforce(session))){
+            restoreRetries=0;
+            return true;
+          }
+          if(sameUserAlreadyInApp){
+            writeSession();
+            touch();
+            startSync();
             restoreRetries=0;
             return true;
           }
