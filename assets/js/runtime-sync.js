@@ -529,10 +529,17 @@
       await completeFirstLogin(next);
       currentUser={...currentUser,mustChangePassword:false};
       const client=getAuthClient();
-      const {data,error:refreshError}=await client.auth.refreshSession();
-      if(refreshError||!data?.session)throw refreshError||new Error('Actualisation de session impossible.');
-      showToast('Mot de passe défini. Configurez maintenant votre MFA.','ok');
-      await window.OnomoMfa?.enforce?.(data.session);
+      /* The privileged server-side password update deliberately revokes the
+         old refresh token. Do not try to refresh it: end the old session and
+         require a fresh login with the new password. On that login the MFA
+         guard runs before any application data can be loaded. */
+      await client?.auth.signOut({scope:'local'}).catch(()=>{});
+      clearSession();
+      previousLogout?.();
+      const loginError=document.getElementById('loginErr');
+      const loginMessage=document.getElementById('loginErrMsg');
+      if(loginMessage)loginMessage.textContent='Mot de passe défini. Connectez-vous avec ce nouveau mot de passe pour configurer votre MFA.';
+      loginError?.classList.add('show');
       return true;
     }
     catch(problem){fail(problem.message||t('password_update_failed','Mise à jour du mot de passe impossible'));return false;}
