@@ -4332,12 +4332,6 @@ renderDashboard = function(){
   const vt = document.getElementById('viewToggle');
   if(vt) vt.style.display = 'none';
   _origRenderDashboard();
-  // Inject SLA alerts into the dash
-  const slaBreaches = visibleTickets().filter(t => getSLAStatus(t) === 'breach');
-  if(slaBreaches.length > 0){
-    const mc = document.getElementById('mainContent');
-    if(mc) mc.insertAdjacentHTML('afterbegin', `<div class="alert alert-danger"><i class="ti ti-alarm"></i><div><strong>${slaBreaches.length} ticket(s) ont dépassé leur SLA</strong><div style="font-size:11px;margin-top:1px">${slaBreaches.map(t=>t.numero).join(' · ')}</div></div></div>`);
-  }
 };
 
 /* ══════════════════════════════════════════════
@@ -4488,6 +4482,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/assignment-scope.js?v=20261008-1"></script>
 <script src="assets/js/notification-delivery.js?v=20261002-2"></script>
 <script src="assets/js/sla-escalation-ui.js?v=20261008-1"></script>
+<script src="assets/js/sla-dashboard.js?v=20261008-1"></script>
 <script src="assets/js/it-assistant.js?v=20261001-4" data-it-assistant-loader="true"></script>
 <script src="assets/js/pwa-update.js?v=20260925-8"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
