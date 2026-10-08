@@ -49,8 +49,8 @@
     if(a){
       a.innerHTML="<option value=''>"+t('select_it_option','— Sélectionner un IT —')+"</option>";
       const available=await requesterITWithRetry();
-      const groups={local:[],regional:[]};available.forEach(x=>groups[x.scope_type==='regional'?'regional':'local'].push(x));
-      [['local',t('it_your_hotel','IT de votre hôtel')],['regional',t('regional_it','IT régional')]].forEach(([scope,label])=>{
+      const groups={local:[],regional:[],admin:[]};available.forEach(x=>groups[groups[x.scope_type]?x.scope_type:'local'].push(x));
+      [['local',t('it_your_hotel','IT de votre hôtel')],['regional',t('regional_it','IT régional')],['admin',t('assignment_admin_escalation','Administrateurs — escalade')]].forEach(([scope,label])=>{
         if(!groups[scope].length)return;const group=document.createElement('optgroup');group.label=label;
         groups[scope].forEach(x=>{const name=`${x.prenom||''} ${x.nom||''}`.trim();if(!name||!x.assigned_to)return;const o=document.createElement('option');o.value=x.assigned_to;o.dataset.assignedTo=x.assigned_to;o.dataset.assigneeName=name;o.textContent=name;group.appendChild(o)});a.appendChild(group);
       });
