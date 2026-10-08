@@ -359,9 +359,6 @@
 
   async function restoreSupabaseProfile(session){
     if(!session?.user)return false;
-    /* MFA policy lives in immutable app_metadata. Gate access before any
-       profile or ticket query, so an aal1 token cannot load application data. */
-    if(window.OnomoMfa?.enforce&&!(await window.OnomoMfa.enforce(session)))return true;
     /* INITIAL_SESSION and restoreSession can arrive together on a page
        refresh. Await one profile request instead of treating the second call
        as a failure and returning the user to the login screen. */
@@ -376,6 +373,21 @@
           currentUser=dbRowToUser(rows[0]);
           currentUser.auth_user_id=session.user.id;
           if(currentUser.language)window.OnomoI18n?.setLanguage(currentUser.language,false);
+          /* A temporary password must be replaced before the application can
+             initialise or load ticket data. The own profile is the only row
+             queried before this gate. */
+          if(currentUser.mustChangePassword){
+            window.showForceChangePassword?.();
+            restoreRetries=0;
+            return true;
+          }
+          /* MFA is enforced only after the first-password flow. The policy is
+             in immutable app_metadata and mfa-auth resumes this restore only
+             once the AAL2 challenge is verified. */
+          if(window.OnomoMfa?.enforce&&!(await window.OnomoMfa.enforce(session))){
+            restoreRetries=0;
+            return true;
+          }
           initSession();
           writeSession();
           touch();
@@ -437,7 +449,6 @@
           const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
           if(error)throw error;
           if(data?.session?.user){
-            if(window.OnomoMfa?.enforce&&!(await window.OnomoMfa.enforce(data.session)))return true;
             installAuthenticatedSbFetch();
             installSecureInitialDataLoad();
             const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(data.session.user.id)}&limit=1`);
@@ -445,6 +456,11 @@
               currentUser=dbRowToUser(rows[0]);
               currentUser.auth_user_id=data.session.user.id;
               if(currentUser.language)window.OnomoI18n?.setLanguage(currentUser.language,false);
+              if(currentUser.mustChangePassword){
+                window.showForceChangePassword?.();
+                return true;
+              }
+              if(window.OnomoMfa?.enforce&&!(await window.OnomoMfa.enforce(data.session)))return true;
               initSession();
               writeSession();
               touch();
@@ -509,7 +525,16 @@
     const fail=text=>{if(message)message.textContent=text;if(error)error.style.display='flex';};
     if(next!==confirm){fail(t('password_mismatch','Les mots de passe ne correspondent pas'));return false;}
     if(!validPassword(next)){fail(passwordPolicyMessage());return false;}
-    try{await updateSupabasePassword(next);currentUser={...currentUser,mustChangePassword:false};showToast(t('password_set','Mot de passe défini avec succès'),'ok');initSession();return true;}
+    try{
+      await completeFirstLogin(next);
+      currentUser={...currentUser,mustChangePassword:false};
+      const client=getAuthClient();
+      const {data,error:refreshError}=await client.auth.refreshSession();
+      if(refreshError||!data?.session)throw refreshError||new Error('Actualisation de session impossible.');
+      showToast('Mot de passe défini. Configurez maintenant votre MFA.','ok');
+      await window.OnomoMfa?.enforce?.(data.session);
+      return true;
+    }
     catch(problem){fail(problem.message||t('password_update_failed','Mise à jour du mot de passe impossible'));return false;}
   };
 
@@ -527,6 +552,13 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
+  async function completeFirstLogin(password){
+    const client=getAuthClient();if(!client)throw new Error('Supabase Auth indisponible');
+    const {data,error}=await client.functions.invoke('complete-first-login',{body:{password}});
+    if(error)throw error;
+    if(data?.error)throw new Error(data.error);
+    return data;
+  }
   const roleDatabaseName=value=>({admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',demandeur:'Demandeur',requester:'Demandeur'}[value]||value);
   async function replaceUserRoles(profileId, roleValues){
     if(!profileId||!Array.isArray(roleValues)||!roleValues.length||!window.sbFetch)return;
@@ -536,7 +568,7 @@
     const roles=[...new Set(roleValues.map(roleDatabaseName).filter(Boolean))];
     await window.sbFetch('rpc/replace_user_roles',{method:'POST',body:JSON.stringify({target_user_id:targetUserId,role_names:roles}),prefer:'return=minimal'});
   }
-  window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
+  window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,completeFirstLogin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
     const s=cfg()||{};
     return {sbUrl:s.sbUrl||'',sbKey:s.sbKey||''};
   },restore:restoreSession};

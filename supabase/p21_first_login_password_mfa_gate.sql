@@ -1,7 +1,6 @@
--- ONOMO Support IT — prevent profile self-privilege escalation.
--- Run after p3_settings_security_reconciliation.sql.
--- Supabase Auth remains the only password authority; public.utilisateurs is a
--- profile table and must never be used to grant a role or change scope.
+-- ONOMO Support IT — prevent a user from bypassing the first-login gate.
+-- The complete-first-login Edge Function uses the service role to clear this
+-- field only after it has replaced the temporary password and required MFA.
 
 begin;
 
@@ -12,9 +11,6 @@ security definer
 set search_path = public
 as $$
 begin
-  -- Administrators retain the managed-user workflow. A profile owner may keep
-  -- personal preferences (such as language) and password-change state, but
-  -- cannot change any access-control, scope, MFA or legacy password fields.
   if old.auth_user_id = auth.uid() and not public.is_admin() then
     if new.auth_user_id is distinct from old.auth_user_id
        or new.role is distinct from old.role
@@ -31,11 +27,6 @@ begin
   return new;
 end;
 $$;
-
-drop trigger if exists onomo_guard_profile_privilege_update on public.utilisateurs;
-create trigger onomo_guard_profile_privilege_update
-  before update on public.utilisateurs
-  for each row execute function public.guard_profile_privilege_update();
 
 revoke all on function public.guard_profile_privilege_update() from public, anon, authenticated;
 

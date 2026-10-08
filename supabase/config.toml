@@ -13,3 +13,7 @@ verify_jwt = true
 [functions.admin-reset-user-password]
 enabled = true
 verify_jwt = true
+
+[functions.complete-first-login]
+enabled = true
+verify_jwt = true
