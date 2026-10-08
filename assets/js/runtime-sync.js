@@ -552,6 +552,16 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
+
+  /* restoreSession intentionally ignores a second restore while a profile is
+     already known. After a successful MFA challenge, however, that profile is
+     precisely what must be resumed at AAL2. Expose a separate, session-backed
+     continuation so the MFA screen never needs a browser refresh. */
+  async function resumeAfterMfa(){
+    const session=await getAuthSession();
+    if(!session?.user)return false;
+    return restoreSupabaseProfile(session);
+  }
   async function resetUserPasswordByAdmin(targetUserId,password){
     const client=getAuthClient();if(!client)throw new Error('Supabase Auth indisponible');
     const {data,error}=await client.functions.invoke('admin-reset-user-password',{body:{target_user_id:targetUserId,password}});
@@ -589,7 +599,7 @@
   window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,completeFirstLogin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
     const s=cfg()||{};
     return {sbUrl:s.sbUrl||'',sbKey:s.sbKey||''};
-  },restore:restoreSession};
+  },restore:restoreSession,resumeAfterMfa};
 
   const previousSubmitUser=window.submitUser;
   if(typeof previousSubmitUser==='function'){

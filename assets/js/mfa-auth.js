@@ -16,9 +16,13 @@
     return [...(data?.totp||[]),...(data?.phone||[])].filter(factor=>factor.status==='verified');
   };
   const resume=async()=>{
-    close();
     const active=await session();
-    if(active?.user)await window.OnomoAuth?.restore?.();
+    if(!active?.user)throw new Error('Session MFA indisponible. Reconnectez-vous.');
+    const restored=window.OnomoAuth?.resumeAfterMfa
+      ? await window.OnomoAuth.resumeAfterMfa()
+      : await window.OnomoAuth?.restore?.();
+    if(restored===false)throw new Error('Impossible de reprendre la session sécurisée. Reconnectez-vous.');
+    close();
   };
   async function verify(){
     const code=document.getElementById('nativeMfaCode')?.value.trim()||'';
@@ -27,7 +31,6 @@
     try{
       const {error}=await auth.auth.mfa.challengeAndVerify({factorId:state.factor.id,code});
       if(error)throw error;
-      await auth.auth.refreshSession();
       await resume();
     }catch(error){showError(error?.message||'Code MFA incorrect ou expiré.');}
   }
