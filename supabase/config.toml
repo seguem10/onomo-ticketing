@@ -17,3 +17,7 @@ verify_jwt = true
 [functions.complete-first-login]
 enabled = true
 verify_jwt = false
+
+[functions.sla-escalation-email]
+enabled = true
+verify_jwt = false
