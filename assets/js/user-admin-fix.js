@@ -20,7 +20,6 @@
   }
   function setUsersView(active){
     window.__onomoUsersView=!!active;
-    try{window.currentView=active?'users':window.currentView;}catch(_){ }
   }
   const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
   async function loadUsers(){
@@ -90,13 +89,27 @@
     item.style.display=isSupport()?'flex':'none';
     if(item.dataset.usersFixBound==='1'){wrapUserActions();return;}
     item.dataset.usersFixBound='1';
-    item.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();render();},true);
+    /* Go through the normal router.  Calling render() directly used to paint
+       the Users screen while the application's lexical currentView stayed on
+       "dashboard".  A later ticket/background refresh then correctly rendered
+       that stale route and appeared to send the user back to the dashboard. */
+    item.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      window.switchView?.('users',item);
+    },true);
     wrapUserActions();
   }
   function forceSwitch(){
     if(typeof window.switchView!=='function'||window.switchView.__usersPageFix)return;
     const original=window.switchView;
-    const wrapped=function(view,el){if(view==='users'){render();return;}setUsersView(false);return original.apply(this,arguments);};
+    const wrapped=function(view,el){
+      if(view==='users'){
+        setUsersView(true);
+        return original.apply(this,arguments);
+      }
+      setUsersView(false);
+      return original.apply(this,arguments);
+    };
     wrapped.__usersPageFix=true;window.switchView=wrapped;
   }
   function init(){bind();forceSwitch();setTimeout(()=>{bind();forceSwitch();},100);setTimeout(()=>{bind();forceSwitch();},500);}
