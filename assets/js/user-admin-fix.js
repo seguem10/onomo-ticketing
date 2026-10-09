@@ -89,17 +89,9 @@
     item.style.display=isSupport()?'flex':'none';
     if(item.dataset.usersFixBound==='1'){wrapUserActions();return;}
     item.dataset.usersFixBound='1';
-    /* Go through the normal router.  Calling render() directly used to paint
-       the Users screen while the application's lexical currentView stayed on
-       "dashboard".  A later ticket/background refresh then correctly rendered
-       that stale route and appeared to send the user back to the dashboard. */
-    item.addEventListener('click',function(e){
-      e.preventDefault();e.stopImmediatePropagation();
-      /* A dedicated internal route avoids legacy wrappers around switchView.
-         It updates the lexical currentView before rendering the directory, so
-         background ticket sync cannot replace it with the dashboard. */
-      window.openUsersView?.(item);
-    },true);
+    /* The static menu calls openUsersView() directly.  Do not attach a second
+       click handler: legacy wrappers may run in a different order and undo a
+       successful route change during a background ticket refresh. */
     wrapUserActions();
   }
   function forceSwitch(){
