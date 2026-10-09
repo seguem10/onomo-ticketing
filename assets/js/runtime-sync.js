@@ -500,7 +500,12 @@
   const previousUpdate=window.updateTicket;
   if(typeof previousUpdate==='function')window.updateTicket=async function(id,updates){installAuthenticatedSbFetch();const result=await previousUpdate(id,updates);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousCreate=window.createTicket;
-  if(typeof previousCreate==='function')window.createTicket=async function(data){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();const session=await getAuthSession();const payload={...data};if(session?.user)payload.created_by=session.user.id;const result=await previousCreate(payload);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
+  if(typeof previousCreate==='function')window.createTicket=async function(data){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();const session=await getAuthSession();const payload={...data};if(session?.user)payload.created_by=session.user.id;const result=await previousCreate(payload);
+    // This is the definitive authenticated persistence point.  Sending the
+    // server-side e-mail handoff here guarantees a current Supabase session
+    // and a permanent ticket UUID, never an optimistic browser-only ticket.
+    if(result?.id)void window.OnomoNotificationDelivery?.deliver?.('created',result);
+    touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousComment=window.addComment;
   if(typeof previousComment==='function')window.addComment=async function(message){installAuthenticatedSbFetch();const result=await previousComment(message);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousSwitch=window.switchView;

@@ -1609,9 +1609,6 @@ async function createTicket(data){
   // Uploads must use the permanent UUID returned by Supabase, not the
   // optimistic browser id. Storage RLS scopes each attachment path to it.
   const finalTicket=persistedTicket||t;
-  // Notify only after Supabase has accepted the ticket and returned its
-  // permanent UUID, never for a rejected optimistic ticket.
-  if(persistedTicket?.id)void window.OnomoNotificationDelivery?.deliver?.('created',finalTicket);
   return finalTicket;
 }
 
