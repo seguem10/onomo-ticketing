@@ -3931,6 +3931,16 @@ document.addEventListener('click',event=>{
   event.preventDefault();
   switchView('assistant',item);
 });
+/* Register this before optional feature modules.  The Users entry used to be
+   intercepted by legacy navigation wrappers, leaving the internal route on
+   Dashboard.  Capture-phase routing makes the protected users route stable. */
+document.addEventListener('click',event=>{
+  const item=event.target.closest?.('.nav-item[data-view="users"]');
+  if(!item)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  openUsersView(item);
+},true);
 
 window.addEventListener('resize', applyMobileUI);
 
