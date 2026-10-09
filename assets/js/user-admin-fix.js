@@ -95,7 +95,12 @@
        that stale route and appeared to send the user back to the dashboard. */
     item.addEventListener('click',function(e){
       e.preventDefault();e.stopPropagation();
-      window.switchView?.('users',item);
+      /* switchView is the app's lexical router.  Some legacy add-ons replace
+         window.switchView, but cannot update that router's currentView state.
+         Calling the internal router keeps the view stable between sync cycles.
+         renderUsers still checks isSupport(), and database access remains RLS
+         protected. */
+      try{switchView('users',item);}catch(_){window.switchView?.('users',item);}
     },true);
     wrapUserActions();
   }
