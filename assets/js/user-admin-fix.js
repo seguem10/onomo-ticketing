@@ -94,13 +94,11 @@
        "dashboard".  A later ticket/background refresh then correctly rendered
        that stale route and appeared to send the user back to the dashboard. */
     item.addEventListener('click',function(e){
-      e.preventDefault();e.stopPropagation();
-      /* switchView is the app's lexical router.  Some legacy add-ons replace
-         window.switchView, but cannot update that router's currentView state.
-         Calling the internal router keeps the view stable between sync cycles.
-         renderUsers still checks isSupport(), and database access remains RLS
-         protected. */
-      try{switchView('users',item);}catch(_){window.switchView?.('users',item);}
+      e.preventDefault();e.stopImmediatePropagation();
+      /* A dedicated internal route avoids legacy wrappers around switchView.
+         It updates the lexical currentView before rendering the directory, so
+         background ticket sync cannot replace it with the dashboard. */
+      window.openUsersView?.(item);
     },true);
     wrapUserActions();
   }
@@ -110,7 +108,7 @@
     const wrapped=function(view,el){
       if(view==='users'){
         setUsersView(true);
-        return original.apply(this,arguments);
+        return window.openUsersView?.(el);
       }
       setUsersView(false);
       return original.apply(this,arguments);
