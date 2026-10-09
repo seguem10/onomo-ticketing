@@ -41,11 +41,11 @@
     item.style.display=isAdmin()?'flex':'none';
   }
   function loadUsersFix(){
-    if(document.querySelector('script[data-onomo-users-fix]'))return;
-    const s=document.createElement('script');
-    s.src='assets/js/user-admin-fix.js';
-    s.dataset.onomoUsersFix='1';
-    document.body.appendChild(s);
+    /* user-admin-fix.js is loaded once, versioned, by index.html.  Loading it
+       a second time here without its version could revive a browser-cached
+       copy whose click handler bypassed the router and caused the Users page
+       to fall back to Dashboard/Tickets on the next background refresh. */
+    if(document.querySelector('script[src*="user-admin-fix.js"]'))return;
   }
   async function render(){
     if(!isAdmin()){window.showToast?.(t('access_denied','Accès non autorisé.'),'err');return;}
