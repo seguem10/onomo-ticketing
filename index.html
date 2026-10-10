@@ -1734,16 +1734,18 @@ let conversationMode='public';
 let conversationReplyTo=null;
 
 function conversationCopy(){
-  const language=window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
+  // The selector is updated before the dynamic view redraw. Prefer it so a
+  // language switch never leaves the composer one step behind the rest UI.
+  const language=document.getElementById('languageSelector-app')?.value||window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
   const copy={
-    fr:{title:'Conversation du ticket',empty:'Aucun message pour le moment. Démarrez la conversation avec l’équipe IT.',reply:'Répondre',sent:'Envoyé',internal:'Note interne IT — invisible au demandeur',publicMode:'Réponse au demandeur',internalMode:'Note interne IT',cancelReply:'Annuler la réponse',formatting:'Mise en forme du message',bold:'Gras',italic:'Italique',underline:'Souligné',list:'Liste',link:'Lien',placeholder:'Écrivez votre message…',safety:'Ne partagez jamais de mot de passe ou donnée client.',send:'Envoyer',replyTo:'Réponse à',participant:'Participant'},
-    en:{title:'Ticket conversation',empty:'No messages yet. Start the conversation with the IT team.',reply:'Reply',sent:'Sent',internal:'Internal IT note — hidden from the requester',publicMode:'Reply to requester',internalMode:'Internal IT note',cancelReply:'Cancel reply',formatting:'Message formatting',bold:'Bold',italic:'Italic',underline:'Underline',list:'List',link:'Link',placeholder:'Write your message…',safety:'Never share a password or client data.',send:'Send',replyTo:'Reply to',participant:'Participant'},
-    ar:{title:'محادثة التذكرة',empty:'لا توجد رسائل بعد. ابدأ المحادثة مع فريق تقنية المعلومات.',reply:'رد',sent:'تم الإرسال',internal:'ملاحظة داخلية لتقنية المعلومات — مخفية عن مقدم الطلب',publicMode:'رد إلى مقدم الطلب',internalMode:'ملاحظة داخلية لتقنية المعلومات',cancelReply:'إلغاء الرد',formatting:'تنسيق الرسالة',bold:'عريض',italic:'مائل',underline:'تحته خط',list:'قائمة',link:'رابط',placeholder:'اكتب رسالتك…',safety:'لا تشارك أبداً كلمة مرور أو بيانات عميل.',send:'إرسال',replyTo:'رد على',participant:'مشارك'}
+    fr:{title:'Conversation du ticket',empty:'Aucun message pour le moment. Démarrez la conversation avec l’équipe IT.',reply:'Répondre',sent:'Envoyé',internal:'Note interne IT — invisible au demandeur',publicMode:'Réponse au demandeur',internalMode:'Note interne IT',cancelReply:'Annuler la réponse',formatting:'Mise en forme du message',bold:'Gras',italic:'Italique',underline:'Souligné',list:'Liste',link:'Lien',placeholder:'Écrivez votre message…',safety:'Ne partagez jamais de mot de passe ou donnée client.',send:'Envoyer',replyTo:'Réponse à',participant:'Participant',countOne:'message',countMany:'messages'},
+    en:{title:'Ticket conversation',empty:'No messages yet. Start the conversation with the IT team.',reply:'Reply',sent:'Sent',internal:'Internal IT note — hidden from the requester',publicMode:'Reply to requester',internalMode:'Internal IT note',cancelReply:'Cancel reply',formatting:'Message formatting',bold:'Bold',italic:'Italic',underline:'Underline',list:'List',link:'Link',placeholder:'Write your message…',safety:'Never share a password or client data.',send:'Send',replyTo:'Reply to',participant:'Participant',countOne:'message',countMany:'messages'},
+    ar:{title:'محادثة التذكرة',empty:'لا توجد رسائل بعد. ابدأ المحادثة مع فريق تقنية المعلومات.',reply:'رد',sent:'تم الإرسال',internal:'ملاحظة داخلية لتقنية المعلومات — مخفية عن مقدم الطلب',publicMode:'رد إلى مقدم الطلب',internalMode:'ملاحظة داخلية لتقنية المعلومات',cancelReply:'إلغاء الرد',formatting:'تنسيق الرسالة',bold:'عريض',italic:'مائل',underline:'تحته خط',list:'قائمة',link:'رابط',placeholder:'اكتب رسالتك…',safety:'لا تشارك أبداً كلمة مرور أو بيانات عميل.',send:'إرسال',replyTo:'رد على',participant:'مشارك',countOne:'رسالة',countMany:'رسائل'}
   };
   return copy[language]||copy.fr;
 }
 function conversationRoleLabel(role){
-  const language=window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
+  const language=document.getElementById('languageSelector-app')?.value||window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
   const labels={
     fr:{admin:'Administrateur',it_regional:'IT régional',it_hotel:'Technicien IT',direction:'Direction',demandeur:'Demandeur',requester:'Demandeur'},
     en:{admin:'Administrator',it_regional:'Regional IT',it_hotel:'IT Technician',direction:'Management',demandeur:'Requester',requester:'Requester'},
@@ -2116,7 +2118,7 @@ function renderDetail(){
         </div>
         ${controls}
         <section class="conversation-panel" aria-label="${esc(copy.title)}">
-          <div class="conversation-heading"><h3><i class="ti ti-messages"></i> ${esc(copy.title)}</h3><span class="conversation-count">${tcoms.length} ${tcoms.length===1?(window.OnomoI18n?.language==='en'?'message':window.OnomoI18n?.language==='ar'?'رسالة':'message'):(window.OnomoI18n?.language==='ar'?'رسائل':'messages')}</span></div>
+          <div class="conversation-heading"><h3><i class="ti ti-messages"></i> ${esc(copy.title)}</h3><span class="conversation-count">${tcoms.length} ${tcoms.length===1?esc(copy.countOne):esc(copy.countMany)}</span></div>
           <div id="commentList" class="conversation-stream">${comHTML}</div>
           ${canComment?`<div class="conversation-composer">
             <div class="conversation-mode">
