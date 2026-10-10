@@ -300,6 +300,56 @@ a{color:inherit;text-decoration:none}
 .c-input{flex:1;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;color:var(--tx);background:var(--surface);outline:none;transition:border-color .15s}
 .c-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(201,151,42,.12)}
 
+/* Professional ticket conversation — messages remain plain text in the
+   database and are escaped before the small display-only formatting below. */
+.conversation-panel{margin-top:22px;border-top:1px solid var(--border);padding-top:18px}
+.conversation-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.conversation-heading h3{margin:0;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--tx)}
+.conversation-count{font-size:10px;font-weight:700;color:var(--blue-t);background:var(--blue-l);border-radius:999px;padding:4px 9px}
+.conversation-stream{display:grid;gap:10px}
+.conversation-empty{padding:28px 18px;text-align:center;border:1px dashed var(--border2);border-radius:var(--rm);font-size:12px;color:var(--tx3)}
+.conversation-message{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;padding:13px;border:1px solid var(--border);border-radius:var(--rm);background:var(--surface);box-shadow:var(--sh)}
+.conversation-message.is-mine{border-left:3px solid var(--brand)}
+.conversation-message.is-internal{background:linear-gradient(135deg,#fff8e9 0%,var(--surface) 70%);border-color:rgba(217,119,6,.34)}
+.conversation-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--blue-l);color:var(--blue-t);font-size:11px;font-weight:800;letter-spacing:.02em}
+.conversation-message.is-mine .conversation-avatar{background:var(--brand);color:var(--dark)}
+.conversation-message.is-internal .conversation-avatar{background:var(--amber-l);color:var(--amber-t)}
+.conversation-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px}
+.conversation-author{font-size:12px;font-weight:700;color:var(--tx)}
+.conversation-role{display:inline-flex;align-items:center;margin-left:6px;padding:2px 6px;border-radius:4px;background:var(--blue-l);color:var(--blue-t);font-size:9px;font-weight:700}
+.conversation-message.is-internal .conversation-role{background:var(--amber-l);color:var(--amber-t)}
+.conversation-place,.conversation-time{font-size:10px;color:var(--tx3);margin-top:3px}
+.conversation-time{white-space:nowrap;text-align:right}
+.conversation-content{font-size:12px;line-height:1.65;color:var(--tx2);white-space:normal;overflow-wrap:anywhere}
+.conversation-content strong{color:var(--tx)}
+.conversation-content em{text-decoration:none;font-style:italic}
+.conversation-content u{text-underline-offset:2px}
+.conversation-content ul{margin:7px 0 0 18px;padding:0}
+.conversation-actions{display:flex;align-items:center;gap:7px;margin-top:10px}
+.conversation-action{border:0;background:transparent;color:var(--blue);font-size:10px;font-weight:700;padding:3px 0;cursor:pointer}
+.conversation-action:hover{text-decoration:underline}
+.conversation-note-label{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:var(--amber-t);margin:0 0 7px}
+.conversation-composer{margin-top:14px;border:1px solid var(--border);border-radius:var(--rm);background:var(--surface);overflow:hidden;box-shadow:var(--sh)}
+.conversation-mode{display:flex;align-items:center;gap:7px;padding:10px 12px 0}
+.conversation-mode button{border:1px solid transparent;background:transparent;color:var(--tx3);font-size:11px;font-weight:700;padding:6px 9px;border-radius:6px;cursor:pointer}
+.conversation-mode button.active{background:var(--blue-l);border-color:rgba(37,99,235,.18);color:var(--blue-t)}
+.conversation-mode button.internal.active{background:var(--amber-l);border-color:rgba(217,119,6,.22);color:var(--amber-t)}
+.conversation-replying{display:none;align-items:center;justify-content:space-between;gap:8px;margin:9px 12px 0;padding:7px 9px;border-left:3px solid var(--blue);background:var(--blue-l);font-size:10px;color:var(--blue-t)}
+.conversation-replying.show{display:flex}
+.conversation-replying button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:14px;line-height:1}
+.conversation-toolbar{display:flex;align-items:center;gap:2px;padding:9px 12px 6px;border-bottom:1px solid var(--border)}
+.conversation-toolbar button{width:27px;height:27px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:5px;background:transparent;color:var(--tx2);cursor:pointer;font-size:14px}
+.conversation-toolbar button:hover{background:var(--surface2);color:var(--blue)}
+.conversation-editor{display:block;width:100%;min-height:104px;border:0;resize:vertical;outline:0;background:transparent;color:var(--tx);font:inherit;font-size:12px;line-height:1.65;padding:11px 12px}
+.conversation-composer-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-top:1px solid var(--border);background:var(--surface2)}
+.conversation-safety{font-size:10px;color:var(--tx3);display:flex;align-items:center;gap:5px}
+.conversation-safety i{color:var(--amber-t)}
+.conversation-send{min-width:98px}
+@media(max-width:640px){.conversation-message{grid-template-columns:32px minmax(0,1fr);padding:11px}.conversation-avatar{width:32px;height:32px}.conversation-head{display:block}.conversation-time{text-align:left;margin-top:4px}.conversation-role{margin-left:4px}.conversation-toolbar{overflow-x:auto}.conversation-composer-foot{align-items:flex-end}.conversation-safety{max-width:55%}.conversation-heading h3{font-size:12px}}
+html[dir="rtl"] .conversation-message.is-mine{border-left:1px solid var(--border);border-right:3px solid var(--brand)}
+html[dir="rtl"] .conversation-role{margin-left:0;margin-right:6px}
+html[dir="rtl"] .conversation-time{text-align:left}
+
 /* ═══════════════════════════════════════════
    AI BOX
 ═══════════════════════════════════════════ */
@@ -1642,14 +1692,20 @@ async function updateTicket(id,updates){
   return true;
 }
 
-async function addComment(msg){
+async function addComment(msg,options={}){
   if(!msg.trim()||!currentTicket)return;
+  const authId=currentUser?.auth_user_id||null;
+  const clientMessageId=crypto?.randomUUID?.()||null;
   const co={
-    id:"c"+Date.now(),
+    id:"local-c-"+Date.now(),
     ticket_id:currentTicket.id,
     auteur:`${currentUser.prenom} ${currentUser.nom}`.trim()||"Agent",
     message:msg,
-    created_at:new Date().toISOString()
+    created_at:new Date().toISOString(),
+    visibility:options.visibility==='internal'?'internal':'public',
+    reply_to:options.replyTo||null,
+    author_id:authId,
+    client_message_id:clientMessageId
   };
   commentaires.push(co);
   saveCommentaires(commentaires);
@@ -1661,6 +1717,8 @@ async function addComment(msg){
       const {id:localId,...sbData}=co;
       const created=await sbCreateComment(sbData);
       if(!created)throw new Error('Création du commentaire refusée par Supabase');
+      commentaires=commentaires.map(comment=>comment.id===localId?created:comment);
+      saveCommentaires(commentaires);
     }catch(e){
       console.error('Supabase addComment failed:',e);
       commentaires=commentaires.filter(comment=>comment.id!==co.id);
@@ -1671,6 +1729,90 @@ async function addComment(msg){
   }
   return true;
 }
+
+let conversationMode='public';
+let conversationReplyTo=null;
+
+function conversationCopy(){
+  const language=window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
+  const copy={
+    fr:{title:'Conversation du ticket',empty:'Aucun message pour le moment. Démarrez la conversation avec l’équipe IT.',reply:'Répondre',sent:'Envoyé',internal:'Note interne IT — invisible au demandeur',publicMode:'Réponse au demandeur',internalMode:'Note interne IT',cancelReply:'Annuler la réponse',formatting:'Mise en forme du message',bold:'Gras',italic:'Italique',underline:'Souligné',list:'Liste',link:'Lien',placeholder:'Écrivez votre message…',safety:'Ne partagez jamais de mot de passe ou donnée client.',send:'Envoyer',replyTo:'Réponse à',participant:'Participant'},
+    en:{title:'Ticket conversation',empty:'No messages yet. Start the conversation with the IT team.',reply:'Reply',sent:'Sent',internal:'Internal IT note — hidden from the requester',publicMode:'Reply to requester',internalMode:'Internal IT note',cancelReply:'Cancel reply',formatting:'Message formatting',bold:'Bold',italic:'Italic',underline:'Underline',list:'List',link:'Link',placeholder:'Write your message…',safety:'Never share a password or client data.',send:'Send',replyTo:'Reply to',participant:'Participant'},
+    ar:{title:'محادثة التذكرة',empty:'لا توجد رسائل بعد. ابدأ المحادثة مع فريق تقنية المعلومات.',reply:'رد',sent:'تم الإرسال',internal:'ملاحظة داخلية لتقنية المعلومات — مخفية عن مقدم الطلب',publicMode:'رد إلى مقدم الطلب',internalMode:'ملاحظة داخلية لتقنية المعلومات',cancelReply:'إلغاء الرد',formatting:'تنسيق الرسالة',bold:'عريض',italic:'مائل',underline:'تحته خط',list:'قائمة',link:'رابط',placeholder:'اكتب رسالتك…',safety:'لا تشارك أبداً كلمة مرور أو بيانات عميل.',send:'إرسال',replyTo:'رد على',participant:'مشارك'}
+  };
+  return copy[language]||copy.fr;
+}
+function conversationRoleLabel(role){
+  const language=window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
+  const labels={
+    fr:{admin:'Administrateur',it_regional:'IT régional',it_hotel:'Technicien IT',direction:'Direction',demandeur:'Demandeur',requester:'Demandeur'},
+    en:{admin:'Administrator',it_regional:'Regional IT',it_hotel:'IT Technician',direction:'Management',demandeur:'Requester',requester:'Requester'},
+    ar:{admin:'مسؤول',it_regional:'تقنية معلومات إقليمية',it_hotel:'فني تقنية معلومات',direction:'الإدارة',demandeur:'مقدم الطلب',requester:'مقدم الطلب'}
+  };
+  return (labels[language]||labels.fr)[role]||role||conversationCopy().participant;
+}
+function conversationAuthor(comment,ticket){
+  const author=String(comment.auteur||'Participant').trim();
+  const profile=(DEMO_USERS||[]).find(user=>{
+    const full=`${user.prenom||''} ${user.nom||''}`.trim().toLowerCase();
+    return full===author.toLowerCase()||String(user.email||'').toLowerCase()===author.toLowerCase();
+  });
+  const requester=String(ticket.created_by_name||ticket.demandeur||ticket.created_by_email||'').toLowerCase();
+  const isRequester=author.toLowerCase()===requester;
+  return {
+    name:author,
+    role:conversationRoleLabel(profile?.role||(isRequester?'demandeur':'')),
+    hotel:profile?.hotel||(profile?.hotels||[])[0]||ticket.hotel||'ONOMO Hotels',
+    mine:Boolean(comment.author_id&&currentUser?.auth_user_id&&String(comment.author_id)===String(currentUser.auth_user_id))||author.toLowerCase()===`${currentUser?.prenom||''} ${currentUser?.nom||''}`.trim().toLowerCase()
+  };
+}
+function conversationMessageHtml(comment,ticket){
+  const author=conversationAuthor(comment,ticket);
+  const internal=comment.visibility==='internal';
+  const copy=conversationCopy();
+  const timestamp=new Date(comment.created_at).toLocaleString(undefined,{dateStyle:'short',timeStyle:'short'});
+  return `<article class="conversation-message${author.mine?' is-mine':''}${internal?' is-internal':''}" data-comment-id="${esc(comment.id)}">
+    <div class="conversation-avatar" aria-hidden="true">${esc(initials(author.name))}</div>
+    <div>
+      ${internal?`<div class="conversation-note-label"><i class="ti ti-lock"></i> ${esc(copy.internal)}</div>`:''}
+      <div class="conversation-head"><div><div class="conversation-author">${esc(author.name)}<span class="conversation-role">${esc(author.role)}</span></div><div class="conversation-place">${esc(author.hotel)}</div></div><time class="conversation-time">${esc(timestamp)}</time></div>
+      <div class="conversation-content">${formatConversationText(comment.message)}</div>
+      <div class="conversation-actions"><button class="conversation-action" onclick="replyToConversationMessage('${esc(comment.id)}')"><i class="ti ti-arrow-back-up"></i> ${esc(copy.reply)}</button>${author.mine?`<span class="conversation-time"><i class="ti ti-checks"></i> ${esc(copy.sent)}</span>`:''}</div>
+    </div>
+  </article>`;
+}
+function formatConversationText(message){
+  const lines=esc(message).split(/\r?\n/);
+  return lines.map(line=>{
+    const formatted=line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/__(.+?)__/g,'<u>$1</u>').replace(/_(.+?)_/g,'<em>$1</em>');
+    return /^[-•]\s+/.test(line)?`<div style="padding-inline-start:14px">• ${formatted.replace(/^[-•]\s+/,'')}</div>`:formatted||'<br>';
+  }).join('<br>');
+}
+function setConversationMode(mode){
+  if(mode==='internal'&&!canManageTickets(currentUser))return;
+  conversationMode=mode==='internal'?'internal':'public';
+  document.querySelectorAll('[data-conversation-mode]').forEach(button=>button.classList.toggle('active',button.dataset.conversationMode===conversationMode));
+}
+function replyToConversationMessage(commentId){
+  const comment=commentaires.find(item=>String(item.id)===String(commentId));
+  if(!comment)return;
+  conversationReplyTo=comment.id;
+  const target=document.getElementById('conversationReplying');
+  if(target){target.classList.add('show');target.querySelector('span').textContent=`${conversationCopy().replyTo} ${comment.auteur||conversationCopy().participant}`;}
+  document.getElementById('conversationInput')?.focus();
+}
+function cancelConversationReply(){conversationReplyTo=null;document.getElementById('conversationReplying')?.classList.remove('show');}
+function insertConversationFormat(before,after=''){
+  const input=document.getElementById('conversationInput');if(!input)return;
+  const start=input.selectionStart,end=input.selectionEnd,value=input.value;
+  input.value=value.slice(0,start)+before+value.slice(start,end)+after+value.slice(end);
+  input.focus();input.setSelectionRange(start+before.length,end+before.length);
+}
+// The centralized language layer updates static nodes.  The detail view is
+// generated dynamically, so redraw it after a language switch as well.
+window.addEventListener('onomo:languagechange',()=>{
+  setTimeout(()=>{if(currentView==='detail'&&currentTicket)renderDetail();},0);
+});
 
 /* ══════════════════════════════════════════════
    FILTERING & ROUTING
@@ -1933,12 +2075,13 @@ async function openDetail(id){
 function renderDetail(){
   if(!currentTicket)return;
   const t=currentTicket;
+  const copy=conversationCopy();
   const canEdit=canManageTickets(currentUser);
   const identity=[currentUser?.auth_user_id,currentUser?.id,currentUser?.email].filter(Boolean).map(v=>String(v).toLowerCase());
   const canComment=canEdit||identity.includes(String(t.created_by||"").toLowerCase())||identity.includes(String(t.created_by_email||"").toLowerCase());
-  const tcoms=commentaires.filter(c=>c.ticket_id===t.id);
+  const tcoms=commentaires.filter(c=>String(c.ticket_id)===String(t.id)).filter(c=>c.visibility!=='internal'||canManageTickets(currentUser));
   const requester=t.created_by_name||t.demandeur||t.created_by_email||"—";
-  const comHTML=tcoms.length?tcoms.map(c=>`<div class="c-item"><div class="c-av">${initials(c.auteur)}</div><div class="c-body"><div class="c-meta"><span class="c-author">${esc(c.auteur)}</span><span class="c-time">${timeAgo(c.created_at)}</span></div><div class="c-text">${esc(c.message)}</div></div></div>`).join(""):`<div class="detail-empty-line">Aucun commentaire pour le moment.</div>`;
+  const comHTML=tcoms.length?tcoms.map(c=>conversationMessageHtml(c,t)).join(""):`<div class="conversation-empty"><i class="ti ti-messages" style="font-size:22px;display:block;margin-bottom:7px"></i>${esc(copy.empty)}</div>`;
   const assistantControl=`<button class="btn btn-outline btn-sm" onclick="window.ITAssistant?.openTicketAssistant()"><i class="ti ti-sparkles"></i><span data-i18n="assistant_ticket_button">Proposer une solution avec l’IA</span></button>`;
   const controls=canEdit?`<div class="detail-controls"><button class="btn btn-outline btn-sm" onclick="openStatusModal()"><i class="ti ti-edit"></i>Modifier statut / assignation</button>${t.statut==="fermé"?`<button class="btn btn-outline btn-sm" onclick="reopenCurrentTicket()"><i class="ti ti-refresh"></i>Rouvrir</button>`:""}${assistantControl}${settings.aiEnabled?`<button class="btn btn-outline btn-sm" onclick="analyzeDetail()"><i class="ti ti-brain"></i>Analyse IA</button>`:""}</div><div id="detailAIBox"></div>`:`<div class="detail-controls">${assistantControl}</div>`;
 
@@ -1972,10 +2115,26 @@ function renderDetail(){
           </section>
         </div>
         ${controls}
-        <div class="detail-tabbar"><span class="active">Commentaires (${tcoms.length})</span><span>Historique</span></div>
-        <div class="detail-comments-wrap">
-          <div id="commentList">${comHTML}</div>
-          ${canComment?`<div class="c-input-wrap detail-comment-input"><input id="commentInput" class="c-input" placeholder="Ajouter un commentaire..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){submitComment();event.preventDefault();}"><button class="btn btn-gold btn-sm" onclick="submitComment()"><i class="ti ti-send"></i></button></div>`:""}
+        <section class="conversation-panel" aria-label="${esc(copy.title)}">
+          <div class="conversation-heading"><h3><i class="ti ti-messages"></i> ${esc(copy.title)}</h3><span class="conversation-count">${tcoms.length} ${tcoms.length===1?(window.OnomoI18n?.language==='en'?'message':window.OnomoI18n?.language==='ar'?'رسالة':'message'):(window.OnomoI18n?.language==='ar'?'رسائل':'messages')}</span></div>
+          <div id="commentList" class="conversation-stream">${comHTML}</div>
+          ${canComment?`<div class="conversation-composer">
+            <div class="conversation-mode">
+              <button type="button" class="active" data-conversation-mode="public" onclick="setConversationMode('public')"><i class="ti ti-send"></i> ${esc(copy.publicMode)}</button>
+              ${canEdit?`<button type="button" class="internal" data-conversation-mode="internal" onclick="setConversationMode('internal')"><i class="ti ti-lock"></i> ${esc(copy.internalMode)}</button>`:''}
+            </div>
+            <div id="conversationReplying" class="conversation-replying"><span></span><button type="button" aria-label="${esc(copy.cancelReply)}" onclick="cancelConversationReply()">×</button></div>
+            <div class="conversation-toolbar" aria-label="${esc(copy.formatting)}">
+              <button type="button" title="${esc(copy.bold)}" aria-label="${esc(copy.bold)}" onclick="insertConversationFormat('**','**')"><b>B</b></button>
+              <button type="button" title="${esc(copy.italic)}" aria-label="${esc(copy.italic)}" onclick="insertConversationFormat('_','_')"><i>I</i></button>
+              <button type="button" title="${esc(copy.underline)}" aria-label="${esc(copy.underline)}" onclick="insertConversationFormat('__','__')"><u>U</u></button>
+              <button type="button" title="${esc(copy.list)}" aria-label="${esc(copy.list)}" onclick="insertConversationFormat('• ')"><i class="ti ti-list"></i></button>
+              <button type="button" title="${esc(copy.link)}" aria-label="${esc(copy.link)}" onclick="insertConversationFormat('[','](https://)')"><i class="ti ti-link"></i></button>
+            </div>
+            <textarea id="conversationInput" class="conversation-editor" placeholder="${esc(copy.placeholder)}" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){submitComment();event.preventDefault();}"></textarea>
+            <div class="conversation-composer-foot"><span class="conversation-safety"><i class="ti ti-shield-lock"></i> ${esc(copy.safety)}</span><button class="btn btn-gold btn-sm conversation-send" onclick="submitComment()"><i class="ti ti-send"></i> ${esc(copy.send)}</button></div>
+          </div>`:""}
+        </section>
         </div>
         <div class="detail-history-reference">
           <div class="comment-title"><i class="ti ti-history"></i>Historique</div>
@@ -1990,11 +2149,14 @@ function renderDetail(){
 let commentSubmissionPending=false;
 async function submitComment(){
   if(commentSubmissionPending)return;
-  const inp=document.getElementById("commentInput");
+  const inp=document.getElementById("conversationInput");
   const message=inp?.value.trim();if(!message)return;
-  const button=inp?.parentElement?.querySelector("button");commentSubmissionPending=true;
+  const button=document.querySelector('.conversation-send');commentSubmissionPending=true;
   if(button){button.disabled=true;button.setAttribute("aria-busy","true");}
-  try{const added=await addComment(message);if(added&&inp)inp.value="";}
+  try{
+    const added=await addComment(message,{visibility:conversationMode,replyTo:conversationReplyTo});
+    if(added&&inp){inp.value="";cancelConversationReply();}
+  }
   finally{commentSubmissionPending=false;if(button){button.disabled=false;button.removeAttribute("aria-busy");}}
 }
 function openStatusModal(){
