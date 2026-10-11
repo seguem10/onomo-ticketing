@@ -62,8 +62,8 @@ Le demandeur ne peut jamais valider sa propre demande.
   et limitation globale du débit. Une tentative incertaine n'est pas relancée
   automatiquement. Le navigateur déclenche l'envoi après persistance ; ce
   n'est pas encore un worker durable avec reprise si le navigateur ferme.
-- Configuration : le secret `ACCESS_REQUEST_EMAILJS_TEMPLATE_ID` est absent
-  du projet lors de la vérification ; l'envoi reste désactivé sans lui.
+- Configuration : modèle dédié vérifié dans EmailJS et identifiant enregistré
+  sous `ACCESS_REQUEST_EMAILJS_TEMPLATE_ID`. Aucun email de test envoyé.
 - Tests réels multi-comptes et réception des mails : reportés par l'utilisateur.
 
 Aucune attribution de privilèges ni modification de tickets n'a été effectuée pour cette spécification.

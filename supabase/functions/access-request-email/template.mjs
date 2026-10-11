@@ -13,6 +13,7 @@ export function accessEmailParameters(notification,request,recipient){
  if(notification.recipient_id!==recipient.auth_user_id)throw new Error('wrong_recipient');
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.email||''))throw new Error('invalid_email');
  return {
+  name:'ONOMO Desk',
   to_email:recipient.email,
   to_name:[recipient.prenom,recipient.nom].filter(Boolean).join(' ')||'Utilisateur',
   subject:'[ONOMO Desk] Demande d’accès — '+stages[request.stage],
