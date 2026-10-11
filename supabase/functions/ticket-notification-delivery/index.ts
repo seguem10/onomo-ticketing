@@ -1,6 +1,7 @@
 // Server-side email delivery for ticket activity. Browser clients never see
 // the provider secret and may not supply their own recipient list.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { internalRecipients } from "./recipients.mjs";
 
 const URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -31,7 +32,7 @@ Deno.serve(async req => {
   if (!URL || !ANON || !SERVICE) return reply(req, { error: "Service de notification non configuré." }, 503);
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
   if (!token) return reply(req, { error: "Session utilisateur requise." }, 401);
-  let input: { ticket_id?: unknown; event?: unknown };
+  let input: { ticket_id?: unknown; event?: unknown; comment_id?: unknown };
   try { input = await req.json(); } catch (_) { return reply(req, { error: "Données invalides." }, 400); }
   const ticketId = typeof input.ticket_id === "string" ? input.ticket_id : "";
   const event = typeof input.event === "string" ? input.event : "";
@@ -42,6 +43,16 @@ Deno.serve(async req => {
   if (authError || !auth.user) return reply(req, { error: "Session expirée ou invalide." }, 401);
   const { data: ticket, error: ticketError } = await userClient.from("tickets").select("id,numero,titre,hotel,categorie,priorite,statut").eq("id", ticketId).maybeSingle();
   if (ticketError || !ticket) return reply(req, { error: "Ticket introuvable ou accès non autorisé." }, 403);
+  let internal = false;
+  if (event === "comment") {
+    if (typeof input.comment_id !== "string") return reply(req, { error: "Commentaire requis." }, 400);
+    // Read with the caller's RLS, then bind delivery to their persisted comment.
+    const { data: comment, error } = await userClient.from("commentaires")
+      .select("id,ticket_id,author_id,visibility").eq("id", input.comment_id).eq("ticket_id", ticketId).maybeSingle();
+    if (error || !comment || comment.author_id !== auth.user.id || !["public", "internal"].includes(comment.visibility))
+      return reply(req, { error: "Commentaire inaccessible ou auteur non autorisé." }, 403);
+    internal = comment.visibility === "internal";
+  }
   // Rate-limit on the server and bind the attempt to the authenticated caller.
   // The RPC checks ticket RLS first, so a user cannot trigger delivery for a
   // ticket outside their hotel/role scope.
@@ -52,7 +63,13 @@ Deno.serve(async req => {
   const service = createClient(URL, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: recipientRows, error: recipientsError } = await service.rpc("ticket_notification_recipient_ids", { target_ticket: ticketId });
   if (recipientsError) { console.error("ticket notification recipients", recipientsError.message); return reply(req, { error: "Destinataires indisponibles." }, 500); }
-  const ids = [...new Set((recipientRows ?? []).map((row: { recipient_id?: string }) => row.recipient_id).filter((id): id is string => Boolean(id) && id !== auth.user.id))];
+  let ids = [...new Set((recipientRows ?? []).map((row: { recipient_id?: string }) => row.recipient_id).filter((id): id is string => Boolean(id) && id !== auth.user.id))];
+  if (internal && ids.length) {
+    const { data: memberships, error: membershipError } = await service.from("app_user_roles").select("user_id,role_id").in("user_id", ids);
+    const { data: roles, error: rolesError } = await service.from("app_roles").select("id,permissions");
+    if (membershipError || rolesError) return reply(req, { error: "Vérification des destinataires indisponible." }, 503);
+    ids = internalRecipients(ids, memberships ?? [], roles ?? []);
+  }
   if (!ids.length) return reply(req, { email_configured: Boolean(RESEND_KEY), recipients: 0, delivered: 0 });
   const { data: profiles, error: profileError } = await service.from("utilisateurs").select("auth_user_id,email,prenom,nom").in("auth_user_id", ids);
   if (profileError) { console.error("ticket notification profiles", profileError.message); return reply(req, { error: "Profils destinataires indisponibles." }, 500); }

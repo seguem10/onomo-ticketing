@@ -29,7 +29,7 @@
     });
     saveSeen(seen);
   }
-  async function deliver(event,ticket){
+  async function deliver(event,ticket,comment){
     const client=window.OnomoAuth?.getClient?.();
     const config=window.OnomoAuth?.getConfig?.()||window.settings||{};
     if(!client||!config.sbUrl||!ticket?.id)return false;
@@ -37,7 +37,7 @@
       const {data:{session}}=await client.auth.getSession();
       if(!session?.access_token)return false;
       const response=await fetch(`${config.sbUrl}/functions/v1/ticket-notification-delivery`,{
-        method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,apikey:config.sbKey||'', 'Content-Type':'application/json'},body:JSON.stringify({ticket_id:ticket.id,event})
+        method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,apikey:config.sbKey||'', 'Content-Type':'application/json'},body:JSON.stringify({ticket_id:ticket.id,event,comment_id:event==='comment'?comment?.id:undefined})
       });
       if(!response.ok)throw new Error(`notification email ${response.status}`);
       const result=await response.json();

@@ -1736,6 +1736,8 @@ async function addComment(msg,options={}){
       commentaires=commentaires.map(comment=>comment.id===localId?created:comment);
       savedComment=created;
       saveCommentaires(commentaires);
+      // Mail failure must not undo a successfully persisted comment.
+      void window.OnomoNotificationDelivery?.deliver('comment',currentTicket,created);
     }catch(e){
       console.error('Supabase addComment failed:',e);
       commentaires=commentaires.filter(comment=>comment.id!==co.id);
@@ -4703,7 +4705,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/user-admin-fix.js?v=20261009-route-stability-4"></script>
 <script src="assets/js/mfa-auth.js?v=20261008-mfa-resume-1"></script>
 <script src="assets/js/assignment-scope.js?v=20261008-1"></script>
-<script src="assets/js/notification-delivery.js?v=20261002-2"></script>
+<script src="assets/js/notification-delivery.js?v=20261011-comment-1"></script>
 <script src="assets/js/sla-escalation-ui.js?v=20261008-1"></script>
 <script src="assets/js/sla-dashboard.js?v=20261008-1"></script>
 <script src="assets/js/it-assistant.js?v=20261001-4" data-it-assistant-loader="true"></script>
