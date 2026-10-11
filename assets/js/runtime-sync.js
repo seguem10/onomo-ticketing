@@ -32,8 +32,14 @@
           return;
         }
         if(event==='SIGNED_OUT'){
-          if(currentUser)return;
           clearSession();
+          if(currentUser)location.reload();
+          return;
+        }
+        // Auth storage is shared between tabs. Never keep a previous profile
+        // visible while requests use another account's token.
+        if(currentUser&&session?.user&&currentUser.auth_user_id!==session.user.id){
+          location.reload();
           return;
         }
         /* Do not rebuild the application view on token refresh or password update.
@@ -48,7 +54,13 @@
   }
   async function getAuthSession(){
     const client=getAuthClient();if(!client)return null;
-    try{const {data,error}=await client.auth.getSession();if(error)throw error;return data?.session||null;}
+    try{const {data,error}=await client.auth.getSession();if(error)throw error;
+      const session=data?.session||null;
+      if(currentUser&&session?.user&&currentUser.auth_user_id!==session.user.id){
+        location.reload();
+        return null;
+      }
+      return session;}
     catch(error){console.warn('Lecture session Supabase impossible',error);return null;}
   }
   // A small, read-only bridge for modules (AI assistant, ticket analysis) that
@@ -507,7 +519,7 @@
     if(result?.id)void window.OnomoNotificationDelivery?.deliver?.('created',result);
     touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousComment=window.addComment;
-  if(typeof previousComment==='function')window.addComment=async function(message){installAuthenticatedSbFetch();const result=await previousComment(message);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
+  if(typeof previousComment==='function')window.addComment=async function(message,options={}){installAuthenticatedSbFetch();const result=await previousComment(message,options);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousSwitch=window.switchView;
   if(typeof previousSwitch==='function')window.switchView=function(view,element){touch();return previousSwitch(view,element);};
 
