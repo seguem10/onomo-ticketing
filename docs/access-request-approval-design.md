@@ -46,7 +46,9 @@ Le demandeur ne peut jamais valider sa propre demande.
 - Règles de transition : module préparé et testé, non connecté à la production.
 - Tables, contrôles RLS et API de décision : migration appliquée ; vérification
   des accès anonymes, de l'absence de session et des écritures directes effectuée.
-- Interface demandes : à implémenter.
+- Interface demandes : formulaire OPERA/Microsoft 365, liste paginée,
+  détails, justification obligatoire et historique ajoutés. Avertissement de
+  vérification en cours conservé jusqu'aux tests réels.
 - Test complet SQL : non exécuté, car le contrôle de sécurité a refusé une
   attribution temporaire de rôles à un compte réel en production, même sous
   rollback. Préférer des comptes de test dédiés autorisés ou un environnement
