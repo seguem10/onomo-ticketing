@@ -23,6 +23,7 @@
 .ticket-context-sidebar>.detail-info-section,.ticket-context-sidebar>#conversationParticipants{padding:16px!important;border:1px solid var(--border)!important;border-radius:9px;background:var(--surface)}
 .ticket-context-sidebar .detail-info-list>div{gap:8px}.ticket-context-sidebar .detail-info-list strong{overflow-wrap:anywhere}
 .ticket-context-sidebar select{max-width:100%;margin-block:8px;padding:6px;background:var(--surface);color:var(--tx);border:1px solid var(--border);border-radius:5px}
+.ticket-follow-up-hint{font-size:11px;color:var(--tx3);margin:0 0 12px;line-height:1.5}
 .ticket-professional-workspace .detail-reference-columns{grid-template-columns:1fr!important}
 @media(max-width:1050px){.ticket-professional-workspace{grid-template-columns:minmax(0,1fr)!important}.ticket-context-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.ticket-context-sidebar{display:flex}}

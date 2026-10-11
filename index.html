@@ -673,7 +673,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 .language-selector{margin-left:auto;border:1px solid #d0d5dd;border-radius:7px;background:#fff;color:#344054;padding:6px 9px;font:600 11px inherit;cursor:pointer}.login-brand .language-selector{position:fixed;z-index:10;top:30px;right:32px;margin:0;min-width:92px;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(8px)}.login-brand{position:relative}html[dir="rtl"] .sidebar{right:0;left:auto!important}html[dir="rtl"] .main-area{margin-right:260px;margin-left:0}html[dir="rtl"] .topbar,html[dir="rtl"] .content{text-align:right}html[dir="rtl"] .ticket-table th,html[dir="rtl"] .ticket-table td{text-align:right}html[dir="rtl"] .sidebar-overlay{right:260px;left:0}@media(max-width:768px){.login-brand .language-selector{top:16px;right:16px;min-width:82px}html[dir="rtl"] .main-area{margin-right:0}.language-selector{margin-left:0;margin-right:auto}}
 </style>
 <link rel="stylesheet" href="assets/css/onomo-design.css?v=20261001-photo-analysis-1">
-<link rel="stylesheet" href="assets/css/header-account.css?v=20261011-3">
+<link rel="stylesheet" href="assets/css/header-account.css?v=20261011-4">
 </head>
 <body>
 
@@ -1853,9 +1853,13 @@ function getFiltered(){
   return visibleTickets().filter(t=>{
     const q=searchQ.toLowerCase();
     const mq=!q||[t.titre,t.numero,t.hotel,t.categorie,t.assigne_a].some(v=>(v||"").toLowerCase().includes(q));
-    const ms=filterStat==="tous"||t.statut===filterStat;
+    const ms=matchesTicketFilter(t,filterStat);
     return mq&&ms;
   });
+}
+function matchesTicketFilter(ticket,filter){
+  if(filter==='waiting_it'||filter==='waiting_requester')return window.TicketFollowUp?.state(ticket,commentaires,DEMO_USERS)===filter;
+  return filter==='tous'||ticket.statut===filter;
 }
 function getUrgents(){return visibleTickets().filter(t=>t.priorite==="Urgente"&&t.statut!=="résolu"&&t.statut!=="fermé");}
 function getMyTickets(){const name=`${currentUser.prenom} ${currentUser.nom}`.trim();return visibleTickets().filter(t=>t.assigne_a===name);}
@@ -4496,14 +4500,17 @@ renderTicketList = function(list, title){
       && (!advFilters.assigne || t.assigne_a === advFilters.assigne);
     return mq && ma;
   });
-  const filtered = commonFiltered.filter(t => filterStat === 'tous' || t.statut === filterStat);
+  const filtered = commonFiltered.filter(t => matchesTicketFilter(t,filterStat));
+  const followUp=window.TicketFollowUp?.labels();
   const counts = {
     tous: commonFiltered.length,
     nouveau: commonFiltered.filter(t=>t.statut==='nouveau').length,
     en_cours: commonFiltered.filter(t=>t.statut==='en_cours').length,
     en_attente: commonFiltered.filter(t=>t.statut==='en_attente').length,
     résolu: commonFiltered.filter(t=>t.statut==='résolu').length,
-    fermé: commonFiltered.filter(t=>t.statut==='fermé').length
+    fermé: commonFiltered.filter(t=>t.statut==='fermé').length,
+    waiting_it:commonFiltered.filter(t=>matchesTicketFilter(t,'waiting_it')).length,
+    waiting_requester:commonFiltered.filter(t=>matchesTicketFilter(t,'waiting_requester')).length
   };
   const subtitle = currentView === 'urgents'
     ? 'Priorisez les tickets urgents nécessitant une attention immédiate.'
@@ -4524,8 +4531,9 @@ renderTicketList = function(list, title){
     ${urg>0&&currentView!=='urgents'?`<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i><span>${urg} ticket(s) urgent(s) actif(s)</span><strong onclick="switchView('urgents',null)">Voir</strong></div>`:''}
     ${advFiltersBarHTML()}
     <div class="ticket-filter-strip">
-      ${['tous',...STATUTS].map(st=>`<button class="ticket-filter-pill${filterStat===st?' active':''}" onclick="setFilter('${st}')"><span>${st==='tous'?'Tous':STAT_L[st]}</span><b>${counts[st]??0}</b></button>`).join('')}
+      ${['tous',...STATUTS,...(followUp?['waiting_it','waiting_requester']:[])].map(st=>`<button class="ticket-filter-pill${filterStat===st?' active':''}" onclick="setFilter('${st}')"><span>${st==='tous'?'Tous':esc(followUp?.[st]||STAT_L[st])}</span><b>${counts[st]??0}</b></button>`).join('')}
     </div>
+    ${followUp?`<p class="ticket-follow-up-hint">${esc(followUp.hint)}</p>`:''}
     ${viewMode === 'kanban'
       ? renderKanban(filtered)
       : `<div class="card tickets-card">
@@ -4707,5 +4715,6 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/conversation-extras.js?v=20261011-2"></script>
 <script src="assets/js/conversation-reads.js?v=20261011-1"></script>
 <script src="assets/js/header-account.js?v=20261011-1"></script>
+<script src="assets/js/ticket-follow-up.js?v=20261011-1"></script>
 </body>
 </html>
