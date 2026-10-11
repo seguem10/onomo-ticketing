@@ -345,6 +345,14 @@ a{color:inherit;text-decoration:none}
 .conversation-safety{font-size:10px;color:var(--tx3);display:flex;align-items:center;gap:5px}
 .conversation-safety i{color:var(--amber-t)}
 .conversation-send{min-width:98px}
+.ticket-conversation-tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin:12px 0 18px;overflow-x:auto}
+.ticket-conversation-tabs button{border:0;border-bottom:3px solid transparent;background:transparent;color:var(--tx2);padding:12px 14px;white-space:nowrap;font-weight:600;cursor:pointer}
+.ticket-conversation-tabs button.active{border-bottom-color:var(--blue);color:var(--blue)}
+.detail-reference-card [hidden]{display:none!important}
+.conversation-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px 0}
+.conversation-stat{padding:16px;border:1px solid var(--border);border-radius:var(--rm);background:var(--surface2)}
+.conversation-stat span{display:block;color:var(--tx3);font-size:11px;margin-bottom:8px}
+.conversation-stat strong{font-size:15px;color:var(--tx)}
 @media(max-width:640px){.conversation-message{grid-template-columns:32px minmax(0,1fr);padding:11px}.conversation-avatar{width:32px;height:32px}.conversation-head{display:block}.conversation-time{text-align:left;margin-top:4px}.conversation-role{margin-left:4px}.conversation-toolbar{overflow-x:auto}.conversation-composer-foot{align-items:flex-end}.conversation-safety{max-width:55%}.conversation-heading h3{font-size:12px}}
 html[dir="rtl"] .conversation-message.is-mine{border-left:1px solid var(--border);border-right:3px solid var(--brand)}
 html[dir="rtl"] .conversation-role{margin-left:0;margin-right:6px}
@@ -2165,7 +2173,7 @@ async function submitComment(){
     const added=await addComment(message,{visibility:conversationMode,replyTo:conversationReplyTo});
     if(added)await window.TicketConversation?.upload(added);
     if(added&&inp){inp.value="";cancelConversationReply();}
-    if(added){conversationMode='public';renderDetail();}
+    if(added){window.TicketConversation?.clearDraft(currentTicket.id);conversationMode='public';renderDetail();}
   }
   finally{commentSubmissionPending=false;if(button){button.disabled=false;button.removeAttribute("aria-busy");}}
 }
@@ -4680,6 +4688,6 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
 <script src="assets/js/dashboard-polish.js?v=20260925-2"></script>
 <script src="assets/js/ticket-attachments.js?v=20261001-1"></script>
-<script src="assets/js/ticket-conversation.js?v=20261011-1"></script>
+<script src="assets/js/ticket-conversation.js?v=20261011-2"></script>
 </body>
 </html>
