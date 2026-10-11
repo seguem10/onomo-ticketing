@@ -12,5 +12,18 @@
 .header-account-menu{position:absolute;inset-inline-end:0;top:calc(100% + 8px);min-width:190px;padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:9px;box-shadow:var(--sh);z-index:100}
 .header-account-menu button{display:flex;align-items:center;gap:9px;width:100%;padding:10px;border:0;border-radius:5px;background:transparent;color:var(--tx);font:inherit;font-size:12px;text-align:start;cursor:pointer}
 .header-account-menu button:hover{background:var(--surface2)}
+.conversation-quote{margin:8px 0;padding:8px 12px;border-inline-start:3px solid #155eef;background:var(--surface2);border-radius:5px;color:var(--tx2);font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}
+.conversation-signature{display:flex;align-items:start;gap:12px;flex-wrap:wrap;padding:10px 12px;font-size:11px;color:var(--tx2);border-top:1px solid var(--border)}
+.conversation-signature label{display:flex;align-items:center;gap:4px}.conversation-signature summary{cursor:pointer}.conversation-signature textarea{display:block;width:min(320px,65vw);min-height:90px;margin:8px 0;padding:8px;background:var(--surface);color:var(--tx);border:1px solid var(--border);border-radius:5px;font:inherit}
+.ticket-professional-workspace{display:grid!important;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start}
+.ticket-professional-workspace>.detail-toolbar-reference{grid-column:1/-1}
+.ticket-professional-workspace>.detail-reference-card{min-width:0;margin:0!important}
+.ticket-context-sidebar{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ticket-context-sidebar>.detail-info-section,.ticket-context-sidebar>#conversationParticipants{padding:16px!important;border:1px solid var(--border)!important;border-radius:9px;background:var(--surface)}
+.ticket-context-sidebar .detail-info-list>div{gap:8px}.ticket-context-sidebar .detail-info-list strong{overflow-wrap:anywhere}
+.ticket-context-sidebar select{max-width:100%;margin-block:8px;padding:6px;background:var(--surface);color:var(--tx);border:1px solid var(--border);border-radius:5px}
+.ticket-professional-workspace .detail-reference-columns{grid-template-columns:1fr!important}
+@media(max-width:1050px){.ticket-professional-workspace{grid-template-columns:minmax(0,1fr)!important}.ticket-context-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.ticket-context-sidebar{display:flex}}
 @media(max-width:1100px){.header-identity{max-width:135px}.topbar .search-box{max-width:220px}}
 @media(max-width:768px){.header-identity,.header-account summary>.ti{display:none}.header-account{margin-inline-start:0}.header-account summary{padding:2px}.header-avatar{width:30px;height:30px}.topbar .language-selector{margin-inline-start:0}.header-account-menu{min-width:180px}}
