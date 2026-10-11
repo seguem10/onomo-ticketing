@@ -37,6 +37,7 @@
     if(!expectedExtensions[file.type]?.includes(extension))return false;
     try{return await hasExpectedSignature(file);}catch(_){return false;}
   }
+  window.validateTicketAttachment=isAllowedFile;
   window.queueTicketAttachments=function(files){
     const selected=Array.from(files||[]);
     pending=[];
