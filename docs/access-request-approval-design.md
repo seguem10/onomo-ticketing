@@ -53,6 +53,10 @@ Le demandeur ne peut jamais valider sa propre demande.
   attribution temporaire de rôles à un compte réel en production, même sous
   rollback. Préférer des comptes de test dédiés autorisés ou un environnement
   isolé. Le chemin positif et la concurrence restent à vérifier réellement.
-- Notifications et tests réels multi-comptes : à réaliser après intégration.
+- Alertes persistantes : déclencheur serveur par étape, boîte de réception
+  propre au compte et pop-ups (vérification toutes les 30 secondes lorsque la
+  page est visible). Notification navigateur seulement si déjà autorisée ;
+  ce mécanisme n'est pas un push hors ligne.
+- Emails EmailJS et tests réels multi-comptes : restent à réaliser.
 
 Aucune attribution de privilèges ni modification de tickets n'a été effectuée pour cette spécification.

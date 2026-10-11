@@ -3,7 +3,7 @@ const vm=require('node:vm');const fs=require('node:fs');
 const code=fs.readFileSync('assets/js/access-requests.js','utf8');
 function setup(result={data:[],error:null}){
  const host={innerHTML:'',querySelector:()=>null};let oldCalls=0;
- const query={select(){return this},order(){return this},range(){return Promise.resolve(result)}};
+ const query={select(){return this},order(){return this},eq(){return this},is(){return this},limit(){return Promise.resolve({data:[],error:null})},range(){return Promise.resolve(result)}};
  const ctx={currentView:'access-requests',currentUser:{id:'profile',auth_user_id:'actor',role:'it_hotel',hotel:'Airport'},document:{getElementById:id=>id==='mainContent'?host:null,addEventListener(){}},window:{renderView:()=>oldCalls++,OnomoAuth:{getClient:()=>({from:()=>query})}}};
  vm.createContext(ctx);vm.runInContext(code,ctx);return {ctx,host,oldCalls:()=>oldCalls};
 }

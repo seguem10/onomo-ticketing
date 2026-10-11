@@ -67,7 +67,10 @@
    }else{
     const result=await db.from('access_requests').select('*').order('created_at',{ascending:false}).order('id').range(page*50,page*50+49);
     if(result.error)throw result.error;if(!valid(run,user))return;
-    target.innerHTML=header()+`<div style="display:flex;gap:10px;margin-bottom:15px"><button class="btn btn-gold" type="button" data-access-action="new">Nouvelle demande</button><button class="btn btn-outline" type="button" data-access-action="refresh">Actualiser</button></div>
+    const inbox=await db.from('access_request_notifications').select('id,request_id,event_stage,created_at').eq('recipient_id',user).is('read_at',null).order('created_at',{ascending:false}).limit(20);
+    if(inbox.error)throw inbox.error;if(!valid(run,user))return;
+    const alerts=(inbox.data||[]).map(n=>`<div style="padding:10px;border-top:1px solid var(--border)"><button type="button" class="btn btn-outline" data-access-id="${escape(n.request_id)}" data-access-notification="${escape(n.id)}">${escape(window.OnomoAccessNotifications?.message(n)||labels[n.event_stage]||'Mise à jour')}</button> <span>${escape(date(n.created_at))}</span></div>`).join('');
+    target.innerHTML=header()+`<section class="card" style="padding:15px;margin-bottom:15px"><h3>Vos alertes de demandes d’accès</h3>${alerts||'<p>Aucune alerte non lue.</p>'}</section><div style="display:flex;gap:10px;margin-bottom:15px"><button class="btn btn-gold" type="button" data-access-action="new">Nouvelle demande</button><button class="btn btn-outline" type="button" data-access-action="refresh">Actualiser</button></div>
      <section class="card" style="padding:15px;overflow:auto">${result.data.length?`<table style="width:100%;text-align:left"><thead><tr><th>Demande</th><th>Hôtel</th><th>Étape</th><th>Date</th></tr></thead><tbody>${result.data.map(r=>`<tr><td style="padding:12px"><button class="btn btn-outline" type="button" data-access-id="${escape(r.id)}">${escape(r.subject)}</button><div>${escape(r.system_name)}</div></td><td>${escape(r.hotel)}</td><td>${escape(labels[r.stage]||r.stage)}</td><td>${escape(date(r.created_at))}</td></tr>`).join('')}</tbody></table>`:'<p>Aucune demande visible dans votre périmètre.</p>'}</section>
      <div style="display:flex;gap:10px;margin-top:15px"><button type="button" class="btn btn-outline" data-access-action="previous" ${page===0?'disabled':''}>Précédent</button><span>Page ${page+1}</span><button type="button" class="btn btn-outline" data-access-action="next" ${result.data.length<50?'disabled':''}>Suivant</button></div>`;
    }
@@ -101,7 +104,9 @@
  }
  document.addEventListener('click',event=>{
   if(!active())return;const button=event.target.closest('[data-access-action],[data-access-id]');if(!button||!host()?.contains(button)||button.disabled||busy)return;
-  if(button.dataset.accessId){selected=button.dataset.accessId;void render();return;}
+  if(button.dataset.accessId){selected=button.dataset.accessId;
+   if(button.dataset.accessNotification){void client().from('access_request_notifications').update({read_at:new Date().toISOString()}).eq('id',button.dataset.accessNotification).eq('recipient_id',identity()).then(()=>{},()=>{});}
+   void render();return;}
   const action=button.dataset.accessAction;
   if(action==='new'){newForm();return;}
   if(action==='back'){selected=null;page=0;}
