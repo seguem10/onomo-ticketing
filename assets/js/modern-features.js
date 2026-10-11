@@ -9,6 +9,8 @@
     {name:'IT Regional',permissions:['ticket:create','ticket:read:all','ticket:update:all','comment:create','comment:read'],is_system:true},
     {name:'IT Hotel',permissions:['ticket:create','ticket:read:all','ticket:update:all','comment:create','comment:read'],is_system:true},
     {name:'Directeur',permissions:['ticket:read:all','report:read'],is_system:true},
+    {name:'Directeur Hôtel',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true},
+    {name:'RH Régional',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true},
     {name:'Demandeur',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true}
   ];
   const SYSTEM_DEFAULTS=new Map(DEFAULT_ROLES.map(role=>[role.name,role]));
@@ -229,7 +231,11 @@
         }
       }
     }
-    const assigned=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);await originalSubmitUser();const email=document.getElementById('uEmail')?.value.trim().toLowerCase();const user=DEMO_USERS.find(item=>item.email===email);if(user&&assigned.length){user.roles=assigned;user.role=assigned[0];saveUsers(DEMO_USERS);if(sbOK())await sbUpdateUser(user.id,{roles:assigned,role:user.role});}
+    const names={directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',admin:'Administrateur',it_hotel:'IT Hotel',it_regional:'IT Regional',direction:'Directeur',demandeur:'Demandeur'};
+    const assigned=[...new Set([names[role]||role,...Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value)])];
+    if(role==='directeur_hotel'&&!document.getElementById('uHotel')?.value){showToast('Sélectionnez un hôtel','err');return;}
+    if(role==='rh_regional'&&!getSelectedHotels().length){showToast('Sélectionnez les hôtels du RH Régional','err');return;}
+    await originalSubmitUser();const email=document.getElementById('uEmail')?.value.trim().toLowerCase();const user=DEMO_USERS.find(item=>item.email===email);if(user&&assigned.length){user.roles=assigned;user.role=role;saveUsers(DEMO_USERS);if(sbOK())await sbUpdateUser(user.id,{roles:assigned,role:user.role});}
   };
   const originalRoleChange=window.onRoleChange;window.onRoleChange=function(v){if(originalRoleChange)originalRoleChange(v);if(v==='demandeur'||v==='requester'){const wrap=document.getElementById('uHotelWrap');const single=document.getElementById('uHotelSingle');const multi=document.getElementById('uHotelMulti');if(wrap)wrap.style.display='block';if(single)single.style.display='block';if(multi)multi.style.display='none';const label=single?.querySelector('.field-lbl');if(label)label.innerHTML=t('assigned_hotel_requester','Hôtel assigné (Demandeur)');const uh=document.getElementById('uHotel');if(uh&&!uh.options.length){const hotels=HOTELS||[];uh.innerHTML="<option value=''>"+t('select_hotel_option','— Sélectionner un hôtel —')+"</option>";hotels.forEach(h=>{const o=document.createElement('option');o.value=h.nom;o.textContent=h.nom;uh.appendChild(o);});}}};
   // Browser SpeechRecognition accepts one recognition language at a time. This

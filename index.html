@@ -856,6 +856,8 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
         <option value="it_hotel">IT Hôtel</option>
         <option value="it_regional">IT Régional</option>
         <option value="direction">Direction</option>
+        <option value="directeur_hotel">Directeur Hôtel</option>
+        <option value="rh_regional">RH Régional</option>
         <option value="admin">Admin</option>
       </select>
       <div id="uRoleDesc" style="font-size:10px;color:var(--tx3);margin-top:5px;font-style:italic"></div>
@@ -996,7 +998,7 @@ var CATS = DEFAULT_CATS; // sera mis à jour après loadSettings
 const PRIOS  = ["Urgente","Haute","Normale","Basse"];
 const STATUTS= ["nouveau","en_cours","en_attente","résolu","fermé"];
 const STAT_L = {nouveau:"Nouveau",en_cours:"En cours",en_attente:"En attente",résolu:"Résolu",fermé:"Fermé"};
-const ROLE_L = {admin:"Admin",direction:"Direction",it_regional:"IT Régional",it_hotel:"IT Hôtel"};
+const ROLE_L = {admin:"Admin",direction:"Direction",it_regional:"IT Régional",it_hotel:"IT Hôtel",directeur_hotel:"Directeur Hôtel",rh_regional:"RH Régional"};
 const ROLE_DESC = {
   admin:"Accès total au système — gestion complète",
   direction:"Consultation et téléchargement des rapports uniquement",
@@ -1236,7 +1238,7 @@ async function sbSaveUser(u){
       id:u.id, email:u.email, pwd:u.pwd,
       prenom:u.prenom||'', nom:u.nom||'',
       role:u.role, hotel:u.hotel||null,
-      hotels:JSON.stringify(u.hotels||[]),
+      hotels:u.hotels||[],
       must_change_password: u.mustChangePassword===true,
       mfa_enabled: u.mfaEnabled===true,
       mfa_secret: u.mfaSecret||null,
@@ -1411,8 +1413,8 @@ function userHotels(u){
   u = u || currentUser;
   if(!u) return [];
   if(u.role === "admin" || u.role === "direction") return HOTELS.map(h=>h.nom); // tous
-  if(u.role === "it_regional") return u.hotels || [];
-  if(u.role === "it_hotel") return u.hotel ? [u.hotel] : [];
+  if(u.role === "it_regional" || u.role === "rh_regional") return u.hotels || [];
+  if(u.role === "it_hotel" || u.role === "directeur_hotel") return u.hotel ? [u.hotel] : [];
   return [];
 }
 // Peut créer / modifier / clôturer un ticket
@@ -2550,14 +2552,18 @@ function getSelectedHotels(){
 }
 
 function onRoleChange(v){
-  const needHotel = v==="it_hotel"||v==="it_regional";
+  const singleHotel = v==="it_hotel"||v==="directeur_hotel";
+  const multiHotel = v==="it_regional"||v==="rh_regional";
+  const needHotel = singleHotel||multiHotel;
   const wrap = document.getElementById("uHotelWrap");
   const single = document.getElementById("uHotelSingle");
   const multi = document.getElementById("uHotelMulti");
   if(wrap) wrap.style.display = needHotel ? "block" : "none";
-  if(single) single.style.display = v==="it_hotel" ? "block" : "none";
-  if(multi) multi.style.display  = v==="it_regional" ? "block" : "none";
-  if(v==="it_regional") populateHotelCheckboxes([]);
+  if(single) single.style.display = singleHotel ? "block" : "none";
+  if(multi) multi.style.display  = multiHotel ? "block" : "none";
+  if(singleHotel&&single)single.querySelector('.field-lbl').textContent='Hôtel assigné ('+(ROLE_L[v]||v)+')';
+  if(multiHotel&&multi)multi.querySelector('.field-lbl').textContent='Hôtels assignés ('+(ROLE_L[v]||v)+')';
+  if(multiHotel) populateHotelCheckboxes([]);
   const descEl=document.getElementById("uRoleDesc");
   if(descEl) descEl.textContent = ROLE_DESC[v]||"";
 }
@@ -2588,8 +2594,8 @@ function openEditUser(id){
   document.getElementById("uPwd").value="";
   document.getElementById("uRole").value=u.role||"it_hotel";
   const uh=document.getElementById("uHotel");if(uh)uh.value=u.hotel||"";
-  populateHotelCheckboxes(u.hotels||[]);
   onRoleChange(u.role);
+  populateHotelCheckboxes(u.hotels||[]);
   openModal("modalUser");
 }
 
@@ -2644,8 +2650,10 @@ async function submitUser(){
   const email=document.getElementById("uEmail").value.trim().toLowerCase();
   const pwdRaw=document.getElementById("uPwd").value;
   const role=document.getElementById("uRole").value;
-  const hotel=(role==="it_hotel")?(document.getElementById("uHotel").value||null):null;
-  const hotels=(role==="it_regional")?getSelectedHotels():[];
+  const hotel=(["it_hotel","directeur_hotel","demandeur","requester"].includes(role))?(document.getElementById("uHotel").value||null):null;
+  const hotels=(["it_regional","rh_regional"].includes(role))?getSelectedHotels():[];
+  if(role==='directeur_hotel'&&!hotel){showToast('Sélectionnez un hôtel pour le Directeur Hôtel','err');return;}
+  if(role==='rh_regional'&&!hotels.length){showToast('Sélectionnez les hôtels du RH Régional','err');return;}
 
   if(!email){showToast("L'email est requis","err");return;}
 

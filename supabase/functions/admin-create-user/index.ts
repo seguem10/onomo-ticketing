@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const roleNames: Record<string, string> = { admin: "Administrateur", it_regional: "IT Regional", it_hotel: "IT Hotel", direction: "Directeur", demandeur: "Demandeur", requester: "Demandeur" };
+const roleNames: Record<string, string> = { admin: "Administrateur", it_regional: "IT Regional", it_hotel: "IT Hotel", direction: "Directeur", directeur_hotel: "Directeur Hôtel", rh_regional: "RH Régional", demandeur: "Demandeur", requester: "Demandeur" };
 const databaseRoleName = (value: unknown): string | null => {
   if (typeof value !== "string") return null;
   const name = value.trim().slice(0, 120);
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   const prenom = typeof body.prenom === "string" ? body.prenom.trim().slice(0, 100) : "";
   const nom = typeof body.nom === "string" ? body.nom.trim().slice(0, 100) : "";
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-  const requested = Array.isArray(body.roles) ? body.roles : [body.role];
+  const requested = [body.role, ...(Array.isArray(body.roles) ? body.roles : [])];
   const roles = [...new Set(requested.map(databaseRoleName).filter((role): role is string => Boolean(role)))];
   const requestedRole = typeof body.role === "string" ? body.role.trim() : "";
   // Keep the profile's canonical internal role while accepting the legacy
@@ -49,6 +49,13 @@ Deno.serve(async (req) => {
   if (role === "demandeur" && !hotel) return reply(req, { error: "Un hôtel est requis pour le rôle Demandeur." }, 400);
   if (role === "it_regional" && !hotels.length) return reply(req, { error: "Au moins un hôtel est requis pour le rôle IT Régional." }, 400);
   const admin = createClient(URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (roles.includes("Directeur Hôtel") && !hotel) return reply(req, { error: "Un hôtel est requis pour le Directeur Hôtel." }, 400);
+  if (roles.includes("RH Régional") && !hotels.length) return reply(req, { error: "Sélectionnez les hôtels du RH Régional." }, 400);
+  const selectedHotels = [...new Set([...(hotel ? [hotel] : []), ...hotels])];
+  if (selectedHotels.length) {
+    const { data: existingHotels, error: hotelError } = await admin.from("hotels").select("nom").in("nom", selectedHotels);
+    if (hotelError || existingHotels?.length !== selectedHotels.length) return reply(req, { error: "Un hôtel sélectionné est introuvable. Actualisez la liste des hôtels." }, 400);
+  }
   const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password: body.password, email_confirm: true, user_metadata: { prenom, nom } });
   if (createError || !created.user) {
     const duplicate = /already|registered|exists/i.test(createError?.message ?? "");

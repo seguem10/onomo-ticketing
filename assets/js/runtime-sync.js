@@ -616,7 +616,7 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
-  const roleDatabaseName=value=>({admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',demandeur:'Demandeur',requester:'Demandeur'}[value]||value);
+  const roleDatabaseName=value=>({admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',demandeur:'Demandeur',requester:'Demandeur'}[value]||value);
   async function replaceUserRoles(profileId, roleValues){
     if(!profileId||!Array.isArray(roleValues)||!roleValues.length||!window.sbFetch)return;
     const profiles=await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(profileId)}&select=auth_user_id&limit=1`);
@@ -651,10 +651,12 @@
       // null value here created an Auth account that could not later create a
       // correctly scoped ticket.
       const isRequester=role==='demandeur'||role==='requester';
-      const hotel=(role==='it_hotel'||isRequester)?(document.getElementById('uHotel')?.value||null):null;
-      const hotels=role==='it_regional'&&typeof getSelectedHotels==='function'?getSelectedHotels():[];
+      const hotel=(role==='it_hotel'||role==='directeur_hotel'||isRequester)?(document.getElementById('uHotel')?.value||null):null;
+      const hotels=['it_regional','rh_regional'].includes(role)&&typeof getSelectedHotels==='function'?getSelectedHotels():[];
       const roles=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
-      const finalRoles=roles.length?roles:[role];
+      const finalRoles=[...new Set([role,...roles])];
+      if(role==='directeur_hotel'&&!hotel){showToast('Sélectionnez un hôtel pour le Directeur Hôtel','err');return;}
+      if(role==='rh_regional'&&!hotels.length){showToast('Sélectionnez les hôtels du RH Régional','err');return;}
       if(!email){showToast(t('email_required',"L'email est requis"),'err');return;}
       if(!validPassword(password)){showToast(passwordPolicyMessage(),'err');return;}
       if(role==='it_hotel'&&!hotel){showToast(t('select_it_hotel',"Sélectionnez un hôtel pour l'IT Hôtel"),'err');return;}

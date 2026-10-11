@@ -45,6 +45,7 @@
       const id=esc(u.id||''),target=esc(u.auth_user_id||u.id||'');
       const name=[u.prenom,u.nom].filter(Boolean).join(' ')||u.email||t('user','Utilisateur');
       const role=roleValues(u)[0]||u.role||'—';
+      const hotelScope=u.hotel||(Array.isArray(u.hotels)&&u.hotels.length?u.hotels.join(', '):(['admin','direction'].includes(u.role)?t('all_hotels','Tous les hôtels'):'Aucun hôtel assigné'));
       const security=u.mfa_enabled?'MFA obligatoire':t('standard','Standard');
       let actions='';
       if(admin){
@@ -52,7 +53,7 @@
         actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.setRequired(\''+target+'\','+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+ (u.mfa_enabled?'Retirer MFA':'Exiger MFA')+'</button> ';
         if(typeof window.deleteUser==='function')actions+='<button class="btn btn-danger btn-sm" onclick="deleteUser(\''+id+'\')"><i class="ti ti-trash"></i></button>';
       }
-      return '<tr><td style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td style="'+cell+'">'+esc(u.hotel||t('all_hotels','Tous les hôtels'))+'</td>'+(admin?'<td style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
+      return '<tr><td style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td style="'+cell+'">'+esc(hotelScope)+'</td>'+(admin?'<td style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
     }).join('');
     return '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse">'+headings+'<tbody>'+body+'</tbody></table></div>';
   }
