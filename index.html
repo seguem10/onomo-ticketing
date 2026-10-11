@@ -1791,7 +1791,7 @@ function conversationMessageHtml(comment,ticket){
   const copy=conversationCopy();
   const timestamp=new Date(comment.created_at).toLocaleString(undefined,{dateStyle:'short',timeStyle:'short'});
   return `<article class="conversation-message${author.mine?' is-mine':''}${internal?' is-internal':''}" data-comment-id="${esc(comment.id)}">
-    <div class="conversation-avatar" aria-hidden="true">${esc(initials(author.name))}</div>
+    <div class="conversation-avatar" aria-hidden="true" data-photo-user="${esc(comment.author_id||'')}">${esc(initials(author.name))}</div>
     <div>
       ${internal?`<div class="conversation-note-label"><i class="ti ti-lock"></i> ${esc(copy.internal)}</div>`:''}
       <div class="conversation-head"><div><div class="conversation-author">${esc(author.name)}<span class="conversation-role">${esc(author.role)}</span></div><div class="conversation-place">${esc(author.hotel)}</div></div><time class="conversation-time">${esc(timestamp)}</time></div>
@@ -3233,10 +3233,10 @@ function renderMyProfile(){
   const rs=ROLE_STYLES[u.role]||ROLE_STYLES.it;
   const name=`${u.prenom} ${u.nom}`.trim()||u.email;
   document.getElementById("mainContent").innerHTML=`
-    <div style="max-width:480px">
+    <div style="max-width:480px" id="myProfilePage">
       <div class="card" style="padding:20px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-          <div style="width:52px;height:52px;border-radius:50%;background:${rs.bg};color:${rs.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${initials(name)}</div>
+          <div data-photo-user="${esc(u.auth_user_id||'')}" style="width:52px;height:52px;border-radius:50%;background:${rs.bg};color:${rs.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${initials(name)}</div>
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--tx)">${esc(name)}</div>
             <div style="font-size:11px;color:var(--tx3)">${esc(u.email)}</div>
@@ -4716,5 +4716,6 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/conversation-reads.js?v=20261011-1"></script>
 <script src="assets/js/header-account.js?v=20261011-1"></script>
 <script src="assets/js/ticket-follow-up.js?v=20261011-1"></script>
+<script src="assets/js/profile-photos.js?v=20261011-1"></script>
 </body>
 </html>
