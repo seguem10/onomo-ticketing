@@ -1790,7 +1790,7 @@ function conversationMessageHtml(comment,ticket){
       <div class="conversation-head"><div><div class="conversation-author">${esc(author.name)}<span class="conversation-role">${esc(author.role)}</span></div><div class="conversation-place">${esc(author.hotel)}</div></div><time class="conversation-time">${esc(timestamp)}</time></div>
       <div class="conversation-content" data-user-content="true">${formatConversationText(comment.message)}</div>
       <div class="message-files" data-message-files="${esc(comment.id)}"></div>
-      <div class="conversation-actions"><button class="conversation-action" onclick="replyToConversationMessage('${esc(comment.id)}')"><i class="ti ti-arrow-back-up"></i> ${esc(copy.reply)}</button>${author.mine?`<span class="conversation-time"><i class="ti ti-checks"></i> ${esc(copy.sent)}</span>`:''}</div>
+      <div class="conversation-actions"><button class="conversation-action" onclick="replyToConversationMessage('${esc(comment.id)}')"><i class="ti ti-arrow-back-up"></i> ${esc(copy.reply)}</button>${author.mine?`<span class="conversation-time" data-read-status><i class="ti ti-checks"></i> ${esc(copy.sent)}</span>`:''}</div>
     </div>
   </article>`;
 }
@@ -4631,7 +4631,7 @@ ticketTableHTML = function(list){
       const assignee=t.assigne_a||t.assignee_name||"";
       return `<tr onclick="openDetail('${t.id}')">
         <td><span class="t-num">${esc(t.numero)}</span></td>
-        <td><div class="t-title">${esc(t.titre)}</div>${assignee?`<div class="t-sub">Assigné à : ${esc(assignee)}</div>`:""}</td>
+        <td><div class="t-title">${esc(t.titre)}</div>${assignee?`<div class="t-sub">Assigné à : ${esc(assignee)}</div>`:""}<div class="t-sub" data-ticket-message-count="${esc(t.id)}"></div></td>
         <td><span class="requester-cell">${esc(requester)}</span></td>
         <td><span class="hotel-cell">${esc((t.hotel||"").replace("Onomo ",""))}</span></td>
         <td><span class="cat-label"><span class="t-cat-dot" style="background:${CAT_COLORS[t.categorie]||"#64748B"}"></span>${esc(t.categorie)}</span></td>
@@ -4689,5 +4689,6 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/dashboard-polish.js?v=20260925-2"></script>
 <script src="assets/js/ticket-attachments.js?v=20261001-1"></script>
 <script src="assets/js/ticket-conversation.js?v=20261011-2"></script>
+<script src="assets/js/conversation-reads.js?v=20261011-1"></script>
 </body>
 </html>
