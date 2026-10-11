@@ -88,18 +88,25 @@
    event.preventDefault();if(busy||!valid(run,user))return;
    const form=event.currentTarget,fields=new FormData(form);busy=true;toggle(form,true);
    try{const result=await client().rpc('submit_access_request',{hotel_name:fields.get('hotel'),target_system:fields.get('system'),title:fields.get('title'),details:fields.get('details')});
-    if(result.error)throw result.error;if(!valid(run,user))return;selected=result.data;page=0;await render();
+    if(result.error)throw result.error;if(!valid(run,user))return;selected=result.data;page=0;void handoffEmail(result.data,user);await render();
    }catch(error){if(valid(run,user)){form.querySelector('[data-access-error]').textContent=errorText(error);busy=false;toggle(form,false);}}
   });
  }
  function toggle(form,value){form.querySelectorAll('button,input,select,textarea').forEach(el=>el.disabled=value);}
+ async function handoffEmail(requestId,user){
+  try{
+   const result=await client().functions.invoke('access-request-email',{body:{request_id:requestId}});
+   if(identity()!==user)return;
+   if(result.error||result.data?.configured===false||result.data?.failed>0){window.showToast?.('Demande enregistrée. Envoi email non confirmé ; les alertes restent disponibles.','err');}
+  }catch(_){if(identity()===user)window.showToast?.('Demande enregistrée, mais le service email est indisponible.','err');}
+ }
  async function decide(event,request,run,user){
   event.preventDefault();if(busy||!valid(run,user))return;
   const answer=event.submitter?.value;if(!['approve','reject'].includes(answer))return;
   if(!window.confirm(answer==='reject'?'Le refus bloque définitivement cette demande. Confirmer ?':'Confirmer votre accord pour cette étape ?'))return;
   const form=event.currentTarget,reason=new FormData(form).get('reason');busy=true;toggle(form,true);
   try{const result=await client().rpc('decide_access_request',{target_id:request.id,expected_step:request.stage,answer,explanation:reason});
-   if(result.error)throw result.error;if(valid(run,user))await render();
+   if(result.error)throw result.error;if(valid(run,user)){void handoffEmail(request.id,user);await render();}
   }catch(error){if(valid(run,user)){form.querySelector('[data-access-error]').textContent=errorText(error);busy=false;toggle(form,false);}}
  }
  document.addEventListener('click',event=>{

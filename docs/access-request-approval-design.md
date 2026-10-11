@@ -57,6 +57,13 @@ Le demandeur ne peut jamais valider sa propre demande.
   propre au compte et pop-ups (vérification toutes les 30 secondes lorsque la
   page est visible). Notification navigateur seulement si déjà autorisée ;
   ce mécanisme n'est pas un push hors ligne.
-- Emails EmailJS et tests réels multi-comptes : restent à réaliser.
+- Fonction EmailJS `access-request-email` : déployée. Journal privé des
+  tentatives, réservation atomique serveur, revérification du rôle/périmètre
+  et limitation globale du débit. Une tentative incertaine n'est pas relancée
+  automatiquement. Le navigateur déclenche l'envoi après persistance ; ce
+  n'est pas encore un worker durable avec reprise si le navigateur ferme.
+- Configuration : le secret `ACCESS_REQUEST_EMAILJS_TEMPLATE_ID` est absent
+  du projet lors de la vérification ; l'envoi reste désactivé sans lui.
+- Tests réels multi-comptes et réception des mails : reportés par l'utilisateur.
 
 Aucune attribution de privilèges ni modification de tickets n'a été effectuée pour cette spécification.
