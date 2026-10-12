@@ -3,6 +3,27 @@ const SHELL=['./','./index.html','./manifest.webmanifest','./assets/css/app.css'
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
+// Privacy-first push display. Payload text/URLs are never echoed onto a lock
+// screen; the authenticated application is the authority for message details.
+// These handlers do not activate push: opt-in, subscriptions and a server-side
+// sender must be configured separately before this event can be received.
+self.addEventListener('push',event=>{
+ event.waitUntil(self.registration.showNotification('ONOMO Support IT',{
+  body:'Une nouvelle notification est disponible. Connectez-vous pour la consulter.',
+  icon:'/assets/pwa/onomo-hotels.png',badge:'/assets/pwa/onomo-hotels.png',
+  tag:'onomo-private-update',data:{url:self.location.origin+'/'},
+ }));
+});
+self.addEventListener('notificationclick',event=>{
+ event.notification.close();
+ event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(async windows=>{
+  for(const client of windows){
+   try{if(new URL(client.url).origin===self.location.origin&&typeof client.focus==='function')return await client.focus();}catch(_){}
+  }
+  // Never navigate a user's existing ticket/users page or use a payload URL.
+  return self.clients.openWindow(self.location.origin+'/');
+ }));
+});
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   /* Third-party images, fonts and CDNs must be fetched by the browser itself.
