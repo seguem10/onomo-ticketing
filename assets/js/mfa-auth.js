@@ -79,5 +79,19 @@
       window.renderUsers?.();
     }catch(error){window.showToast?.(error?.message||'Impossible de mettre à jour la politique MFA.','err');}
   }
-  window.OnomoMfa={enforce,setRequired};
+  async function reset(targetUserId){
+    const reason=prompt('Motif de réinitialisation MFA (10 à 300 caractères). Ne saisissez aucun secret.');
+    if(reason===null)return;
+    if(reason.trim().length<10||reason.length>300)return window.showToast?.('Indiquez un motif de 10 à 300 caractères.','err');
+    if(!confirm('Avez-vous vérifié l’identité de cet utilisateur par un canal indépendant ? Supprimer son ancien MFA le déconnectera et imposera une nouvelle configuration.'))return;
+    try{
+      const auth=client();if(!auth)throw new Error('Session administrateur requise.');
+      const {data,error}=await auth.functions.invoke('admin-mfa-policy',{body:{action:'reset',target_user_id:targetUserId,reason:reason.trim(),identity_confirmed:true}});
+      if(error){let message;try{message=(await error.context?.json())?.error;}catch(_){}throw new Error(message||'Réinitialisation refusée. Vérifiez votre session MFA administrateur.');}
+      if(data?.error)throw new Error(data.error);
+      window.showToast?.('MFA réinitialisé. Nouvelle configuration obligatoire à la connexion.','ok');
+      void window.renderUsers?.();
+    }catch(error){window.showToast?.(error.message,'err');}
+  }
+  window.OnomoMfa={enforce,setRequired,reset};
 })();

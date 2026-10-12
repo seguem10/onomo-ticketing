@@ -49,6 +49,7 @@
       const security=u.mfa_enabled?'MFA obligatoire':t('standard','Standard');
       let actions='';
       if(admin){
+        actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.reset(\''+target+'\')">Réinitialiser MFA</button> ';
         if(typeof window.openEditUser==='function')actions+='<button class="btn btn-outline btn-sm" onclick="openEditUser(\''+id+'\')"><i class="ti ti-edit"></i>'+t('edit','Modifier')+'</button> ';
         actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.setRequired(\''+target+'\','+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+ (u.mfa_enabled?'Retirer MFA':'Exiger MFA')+'</button> ';
         if(typeof window.deleteUser==='function')actions+='<button class="btn btn-danger btn-sm" onclick="deleteUser(\''+id+'\')"><i class="ti ti-trash"></i></button>';
