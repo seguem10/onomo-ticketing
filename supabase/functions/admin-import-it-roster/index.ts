@@ -4,7 +4,7 @@ const url=Deno.env.get('SUPABASE_URL')||'';
 const anon=Deno.env.get('SUPABASE_ANON_KEY')||Deno.env.get('SUPABASE_PUBLISHABLE_KEY')||'';
 const settings={auth:{persistSession:false,autoRefreshToken:false}};
 Deno.serve(async req=>{
- const headers={'Access-Control-Allow-Origin':'https://onomo-ticketing.vercel.app','Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json','Cache-Control':'no-store'};
+ const headers={'Access-Control-Allow-Origin':'https://onomo-ticketing.vercel.app','Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info,x-retry-count,traceparent,tracestate,baggage','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json','Cache-Control':'no-store'};
  const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers});
  if(req.method==='OPTIONS')return reply({});if(req.method!=='POST')return reply({error:'Méthode interdite'},405);
  try{

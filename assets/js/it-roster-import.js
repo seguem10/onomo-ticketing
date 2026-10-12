@@ -6,8 +6,19 @@
   const client=window.OnomoAuth?.getClient?.();if(!client)return window.showToast?.('Session administrateur requise','err');
   busy=true;
   try{
-   const result=await client.functions.invoke('admin-import-it-roster',{body:{confirm:'IMPORT_IT_20261012'}});
-   if(result.error||result.data?.error)throw new Error(result.data?.error||'Import refusé ou indisponible');
+   const sessionResult=await client.auth.getSession();
+   const token=sessionResult.data?.session?.access_token;
+   if(sessionResult.error||!token)throw new Error('Session absente ou expirée. Reconnectez-vous avec le compte administrateur.');
+   const result=await client.functions.invoke('admin-import-it-roster',{headers:{Authorization:'Bearer '+token},body:{confirm:'IMPORT_IT_20261012'}});
+   if(result.error||result.data?.error){
+    let status=result.error?.context?.status;
+    let message=result.data?.error;
+    if(!message&&result.error?.context?.json){try{const body=await result.error.context.json();message=body.error||body.message;}catch(_){} }
+    if(status===401)message='Session refusée (401). Reconnectez-vous avant de relancer l’import.';
+    else if(status===403)message='Droits administrateur refusés (403). Aucun contournement de sécurité ne sera effectué.';
+    else if(!status&&!message)message='Connexion à la fonction impossible (réseau ou CORS). Import non confirmé ; vérifiez la liste avant de réessayer.';
+    throw new Error(message||'Import indisponible (HTTP '+(status||'inconnu')+'). Vérifiez la liste avant de réessayer.');
+   }
    const data=result.data;let credentials=data.results.filter(r=>r.status==='created').map(r=>r.email+'\t'+r.temporary_password).join('\n');
    // Secrets are never placed in localStorage, sessionStorage, downloads or
    // the DOM until the human administrator explicitly reveals them.
