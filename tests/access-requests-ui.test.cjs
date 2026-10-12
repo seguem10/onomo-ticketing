@@ -26,3 +26,11 @@ test('navigation away ignores a delayed request response',async()=>{
  ctx.currentView='tickets';ctx.window.renderView();host.innerHTML='ticket screen';await pending;
  assert.equal(host.innerHTML,'ticket screen');
 });
+test('mail monitor distinguishes provider acceptance from confirmed receipt',()=>{
+ const {ctx}=setup();const render=ctx.window.OnomoAccessRequests.emailMonitorHtml;
+ const html=render([{request_id:'<script>',event_stage:'it',delivery_status:'sent',provider_status:200,event_at:'2026-10-12'}]);
+ assert.match(html,/Accepté par EmailJS/);assert.match(html,/ne confirme pas la réception/);
+ assert.match(html,/&lt;script&gt;/);assert.doesNotMatch(html,/<script>/);
+ assert.match(render([],true),/Journal indisponible/);
+ assert.match(render([],false),/Aucune alerte email/);
+});

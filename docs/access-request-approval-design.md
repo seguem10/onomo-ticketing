@@ -65,5 +65,8 @@ Le demandeur ne peut jamais valider sa propre demande.
 - Configuration : modèle dédié vérifié dans EmailJS et identifiant enregistré
   sous `ACCESS_REQUEST_EMAILJS_TEMPLATE_ID`. Aucun email de test envoyé.
 - Tests réels multi-comptes et réception des mails : reportés par l'utilisateur.
+- Diagnostic administrateur : consultation des 100 dernières alertes et de
+  leur état fournisseur, sans exposer les adresses email ni permettre de
+  renvoi ou de modification du journal. Acceptation EmailJS ≠ réception.
 
 Aucune attribution de privilèges ni modification de tickets n'a été effectuée pour cette spécification.

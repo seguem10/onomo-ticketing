@@ -24,6 +24,12 @@
   const values=u.role==='admin'?(typeof HOTELS!=='undefined'?HOTELS.map(h=>h.nom):[]):[u.hotel,...(Array.isArray(u.hotels)?u.hotels:[])];
   return [...new Set(values.filter(Boolean))];
  }
+ function isAdmin(){const u=profile();return [u?.role,...(Array.isArray(u?.roles)?u.roles:[])].some(r=>['admin','Administrateur'].includes(r));}
+ function emailMonitorHtml(rows,error){
+  const statuses={sent:'Accepté par EmailJS',failed:'Échec fournisseur',uncertain:'Résultat incertain',sending:'Tentative en cours',not_attempted:'Aucune tentative enregistrée',obsolete:'Étape passée, sans tentative'};
+  const body=error?'<p role="alert">Journal indisponible. La consultation des demandes reste disponible.</p>':rows.length?`<div style="overflow:auto"><table style="width:100%;text-align:left"><thead><tr><th>Demande</th><th>Étape</th><th>Email</th><th>Date</th></tr></thead><tbody>${rows.map(r=>`<tr><td style="padding:10px;overflow-wrap:anywhere">${escape(r.request_id)}</td><td>${escape(labels[r.event_stage]||r.event_stage)}</td><td>${escape(statuses[r.delivery_status]||'État inconnu')}${r.provider_status?' · HTTP '+escape(r.provider_status):''}</td><td>${escape(date(r.attempt_at||r.event_at))}</td></tr>`).join('')}</tbody></table></div>`:'<p>Aucune alerte email enregistrée.</p>';
+  return `<section class="card" style="padding:20px;margin-top:15px"><h3>Suivi EmailJS — administrateur</h3><p>100 dernières alertes. « Accepté par EmailJS » ne confirme pas la réception dans la boîte mail. Aucun renvoi automatique depuis ce journal.</p>${body}</section>`;
+ }
  function canDecide(request){
   const u=profile();if(!u||request.requester_id===identity())return false;
   const roles=[u.role,...(Array.isArray(u.roles)?u.roles:[])].map(r=>roleNames[r]||r);
@@ -41,6 +47,12 @@
   target.innerHTML=header()+'<div role="status">Chargement des demandes…</div>';
   try{
    const db=client();
+   let monitor='';
+   if(isAdmin()){
+    try{const status=await db.rpc('access_email_monitor',{target_request:selected||null});monitor=emailMonitorHtml(status.data||[],status.error);}
+    catch(_){monitor=emailMonitorHtml([],true);}
+    if(!valid(run,user))return;
+   }
    if(selected){
     const [requestResult,historyResult]=await Promise.all([
      db.from('access_requests').select('*').eq('id',selected).single(),
@@ -62,7 +74,7 @@
        <button class="btn btn-danger" type="submit" name="answer" value="reject">Refuser la demande</button></div></form>`:'<p>Votre compte ne peut pas décider à cette étape. Les décisions nécessitent une session MFA et un rôle couvrant cet hôtel.</p>'}
     </section><section class="card" style="padding:20px;margin-top:15px"><h3>Historique des décisions</h3>
      ${historyResult.data.length?historyResult.data.map(d=>`<div style="border-top:1px solid var(--border);padding:12px 0"><strong>${escape(labels[d.step])} · ${d.decision==='approve'?'Accord':'Refus'}</strong>
-      <div>${escape(date(d.created_at))} · Compte ${escape(d.actor_id)}</div><p style="white-space:pre-wrap;overflow-wrap:anywhere">${escape(d.reason)}</p></div>`).join(''):'<p>Aucune décision enregistrée.</p>'}</section>`;
+      <div>${escape(date(d.created_at))} · Compte ${escape(d.actor_id)}</div><p style="white-space:pre-wrap;overflow-wrap:anywhere">${escape(d.reason)}</p></div>`).join(''):'<p>Aucune décision enregistrée.</p>'}</section>${monitor}`;
     target.querySelector('[data-access-form="decision"]')?.addEventListener('submit',event=>decide(event,request,run,user));
    }else{
     const result=await db.from('access_requests').select('*').order('created_at',{ascending:false}).order('id').range(page*50,page*50+49);
@@ -72,7 +84,7 @@
     const alerts=(inbox.data||[]).map(n=>`<div style="padding:10px;border-top:1px solid var(--border)"><button type="button" class="btn btn-outline" data-access-id="${escape(n.request_id)}" data-access-notification="${escape(n.id)}">${escape(window.OnomoAccessNotifications?.message(n)||labels[n.event_stage]||'Mise à jour')}</button> <span>${escape(date(n.created_at))}</span></div>`).join('');
     target.innerHTML=header()+`<section class="card" style="padding:15px;margin-bottom:15px"><h3>Vos alertes de demandes d’accès</h3>${alerts||'<p>Aucune alerte non lue.</p>'}</section><div style="display:flex;gap:10px;margin-bottom:15px"><button class="btn btn-gold" type="button" data-access-action="new">Nouvelle demande</button><button class="btn btn-outline" type="button" data-access-action="refresh">Actualiser</button></div>
      <section class="card" style="padding:15px;overflow:auto">${result.data.length?`<table style="width:100%;text-align:left"><thead><tr><th>Demande</th><th>Hôtel</th><th>Étape</th><th>Date</th></tr></thead><tbody>${result.data.map(r=>`<tr><td style="padding:12px"><button class="btn btn-outline" type="button" data-access-id="${escape(r.id)}">${escape(r.subject)}</button><div>${escape(r.system_name)}</div></td><td>${escape(r.hotel)}</td><td>${escape(labels[r.stage]||r.stage)}</td><td>${escape(date(r.created_at))}</td></tr>`).join('')}</tbody></table>`:'<p>Aucune demande visible dans votre périmètre.</p>'}</section>
-     <div style="display:flex;gap:10px;margin-top:15px"><button type="button" class="btn btn-outline" data-access-action="previous" ${page===0?'disabled':''}>Précédent</button><span>Page ${page+1}</span><button type="button" class="btn btn-outline" data-access-action="next" ${result.data.length<50?'disabled':''}>Suivant</button></div>`;
+     <div style="display:flex;gap:10px;margin-top:15px"><button type="button" class="btn btn-outline" data-access-action="previous" ${page===0?'disabled':''}>Précédent</button><span>Page ${page+1}</span><button type="button" class="btn btn-outline" data-access-action="next" ${result.data.length<50?'disabled':''}>Suivant</button></div>${monitor}`;
    }
   }catch(error){if(valid(run,user))target.innerHTML=header()+`<div class="alert alert-danger" role="alert">${escape(errorText(error))}</div><button type="button" class="btn btn-outline" data-access-action="back">Réessayer</button>`;}
  }
@@ -122,5 +134,5 @@
  });
  const previous=window.renderView;
  window.renderView=function(){if(active()){void render();return;}epoch++;busy=false;return previous.apply(this,arguments);};
- window.OnomoAccessRequests={render,canDecide,escape};
+ window.OnomoAccessRequests={render,canDecide,escape,emailMonitorHtml};
 })();
