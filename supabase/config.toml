@@ -29,3 +29,7 @@ verify_jwt = false
 [functions.sla-escalation-email]
 enabled = true
 verify_jwt = false
+[functions.admin-email-self-test]
+enabled = true
+verify_jwt = true
+

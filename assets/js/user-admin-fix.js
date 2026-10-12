@@ -67,6 +67,20 @@
     const rows=await loadUsers();
     if(list)list.innerHTML=renderRows(rows);
     document.getElementById('usersRefreshBtn')?.addEventListener('click',render);
+    if(isAdmin()){
+      const create=document.getElementById('usersCreateBtn');
+      if(create){const button=document.createElement('button');button.type='button';button.className='btn btn-outline btn-sm';button.textContent='Tester mon email';
+        button.addEventListener('click',async()=>{
+          if(!confirm('Envoyer TEST-NOTIFICATION uniquement à l’adresse de votre compte administrateur connecté ? Aucun ticket ne sera créé.'))return;
+          button.disabled=true;
+          try{const client=window.OnomoAuth?.getClient?.();if(!client)throw new Error('Session requise');
+            const {data,error}=await client.functions.invoke('admin-email-self-test',{body:{}});
+            if(error){let message;try{message=(await error.context?.json())?.error;}catch(_){}throw new Error(message||'Test email non confirmé');}
+            if(data?.error)throw new Error(data.error);
+            window.showToast?.('EmailJS a accepté le test vers '+data.recipient+'. Vérifiez votre boîte mail et les indésirables.','ok');
+          }catch(error){window.showToast?.(error.message,'err');}finally{button.disabled=false;}
+        });create.parentElement.appendChild(button);}
+    }
     if(isAdmin()&&window.OnomoRosterImport){
       const create=document.getElementById('usersCreateBtn');
       if(create){const button=document.createElement('button');button.type='button';button.id='usersRosterImportBtn';button.className='btn btn-outline btn-sm';button.textContent='Importer la liste IT';button.addEventListener('click',()=>window.OnomoRosterImport.run());create.parentElement.appendChild(button);}
