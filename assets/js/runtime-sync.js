@@ -510,7 +510,11 @@
   const previousLogout=window.doLogout;
   if(typeof previousLogout==='function')window.doLogout=async function(){clearSession();if(syncTimer)clearInterval(syncTimer);if(realtimeChannel){try{await realtimeClient?.removeChannel(realtimeChannel);}catch(_){}realtimeChannel=null;}try{await getAuthClient()?.auth.signOut();}catch(error){console.warn('Supabase Auth logout impossible',error);}return previousLogout();};
   const previousUpdate=window.updateTicket;
-  if(typeof previousUpdate==='function')window.updateTicket=async function(id,updates){installAuthenticatedSbFetch();const result=await previousUpdate(id,updates);touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
+  if(typeof previousUpdate==='function')window.updateTicket=async function(id,updates){installAuthenticatedSbFetch();const result=await previousUpdate(id,updates);
+    // Never email an optimistic or rejected update. Assignment and closure
+    // are persisted ticket updates and use the same server recipient rules.
+    if(result===true&&window.sbOK?.())void window.OnomoNotificationDelivery?.deliver?.('updated',{id});
+    touch();channel?.postMessage({type:'tickets-updated'});await syncTickets();return result;};
   const previousCreate=window.createTicket;
   if(typeof previousCreate==='function')window.createTicket=async function(data){installAuthenticatedSbFetch();installAuthenticatedTicketCrud();const session=await getAuthSession();const payload={...data};if(session?.user)payload.created_by=session.user.id;const result=await previousCreate(payload);
     // This is the definitive authenticated persistence point.  Sending the

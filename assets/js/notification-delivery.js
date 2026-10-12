@@ -41,9 +41,9 @@
       });
       if(!response.ok)throw new Error(`notification email ${response.status}`);
       const result=await response.json();
-      if(result.email_configured===false)console.info('[ONOMO NOTIFICATIONS] Email provider is not configured; persistent and popup alerts remain active.');
+      if(result.recipients>0&&(result.email_configured===false||result.delivered<result.recipients)){window.showToast?.('Action enregistrée, mais envoi email non confirmé. Les notifications dans la plateforme restent disponibles.','err');return false;}
       return true;
-    }catch(error){console.warn('[ONOMO NOTIFICATIONS] Email handoff unavailable',error);return false;}
+    }catch(error){console.warn('[ONOMO NOTIFICATIONS] Email handoff unavailable',error);window.showToast?.('Action enregistrée. Le service email n’a pas confirmé l’envoi.','err');return false;}
   }
   function ticketFor(id){return (Array.isArray(window.tickets)?window.tickets:[]).find(ticket=>String(ticket.id)===String(id))||window.currentTicket||null;}
   function install(){
