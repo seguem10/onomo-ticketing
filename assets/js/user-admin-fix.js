@@ -66,6 +66,10 @@
     const rows=await loadUsers();
     if(list)list.innerHTML=renderRows(rows);
     document.getElementById('usersRefreshBtn')?.addEventListener('click',render);
+    if(isAdmin()&&window.OnomoRosterImport){
+      const create=document.getElementById('usersCreateBtn');
+      if(create){const button=document.createElement('button');button.type='button';button.id='usersRosterImportBtn';button.className='btn btn-outline btn-sm';button.textContent='Importer la liste IT';button.addEventListener('click',()=>window.OnomoRosterImport.run());create.parentElement.appendChild(button);}
+    }
     document.getElementById('usersCreateBtn')?.addEventListener('click',()=>{if(typeof window.openModalUser==='function')window.openModalUser();else window.showToast?.(t('user_form_unavailable','Formulaire utilisateur indisponible.'),'err');});
     const search=document.getElementById('searchInput');if(search){search.oninput=()=>{window.searchQ=search.value;loadUsers().then(r=>{const box=document.getElementById('usersPageList');if(box)box.innerHTML=renderRows(r);});};}
     document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-view')==='users'));

@@ -14,6 +14,10 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.admin-import-it-roster]
+enabled = true
+verify_jwt = true
+
 [functions.admin-reset-user-password]
 enabled = true
 verify_jwt = true
