@@ -23,7 +23,8 @@ Deno.serve(async req=>{
    body:JSON.stringify({service_id:serviceId,template_id:templateId,user_id:publicKey,accessToken:Deno.env.get('EMAILJS_PRIVATE_KEY')||undefined,
     template_params:{agent_email:data.user.email,to_email:data.user.email,agent_prenom:'Administrateur',to_name:'Administrateur',name:'ONOMO Desk',email:'it@onomohotel.com',ticket_numero:'TEST-NOTIFICATION',ticket_number:'TEST-NOTIFICATION',ticket_titre:'Test email — aucune action requise',ticket_title:'Test email — aucune action requise',ticket_hotel:'Test uniquement',hotel:'Test uniquement',ticket_priorite:'Test',priority:'Test',status:'Test',subject:'[ONOMO] TEST-NOTIFICATION',event_label:'Test de notification email',app_url:'https://onomo-ticketing.vercel.app/',message_html:'Test de notification ONOMO. Aucun ticket créé et aucune action requise.'}})
   });
-  await service.from('audit_logs').insert({actor_id:data.user.id,action:response.ok?'email_self_test_accepted':'email_self_test_failed',entity_type:'user',entity_id:data.user.id,metadata:{provider:'emailjs',provider_status:response.status}});
+  const audit=await service.from('audit_logs').insert({id:crypto.randomUUID(),user:data.user.id,action:response.ok?'email_self_test_accepted':'email_self_test_failed',detail:JSON.stringify({provider:'emailjs',provider_status:response.status}),timestamp:new Date().toISOString()});
+  if(audit.error)console.error('email self test audit failed',audit.error.code);
   if(!response.ok)return reply({error:'EmailJS a refusé le test',provider_status:response.status},502);
   return reply({ok:true,provider:'emailjs',accepted:true,recipient:data.user.email});
  }catch(_){return reply({error:'Envoi non confirmé. Vérifiez la boîte mail avant de réessayer.'},502);}
