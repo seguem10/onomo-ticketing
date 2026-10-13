@@ -1421,6 +1421,14 @@ function userHotels(u){
   return [];
 }
 // Peut créer / modifier / clôturer un ticket
+function scopedHotelRows(){
+  const allowed=new Set(userHotels(currentUser));
+  return HOTELS.filter(h=>allowed.has(h.nom));
+}
+function scopedTicketRows(rows){
+  const allowed=new Set(userHotels(currentUser));
+  return (Array.isArray(rows)?rows:[]).filter(t=>allowed.has(t.hotel));
+}
 function canManageTickets(u){
   u = u || currentUser;
   return u && (u.role === "admin" || u.role === "it_regional" || u.role === "it_hotel");
@@ -2305,9 +2313,10 @@ function catChartHTML(list){
   return`<div class="chart-wrap">${CATS.map(c=>`<div class="bar-row"><div class="bar-lbl">${esc(c.split("/")[0].trim())}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((counts[c]||0)/max*100)}%;background:${CAT_COLORS[c]}"></div></div><div class="bar-cnt">${counts[c]||0}</div></div>`).join("")}</div>`;
 }
 function hotelChartHTML(list){
-  const counts={};HOTELS.forEach(h=>{counts[h.nom]=list.filter(t=>t.hotel===h.nom).length;});
+  const allowedHotels=scopedHotelRows();
+  const counts={};allowedHotels.forEach(h=>{counts[h.nom]=list.filter(t=>t.hotel===h.nom).length;});
   const max=Math.max(...Object.values(counts),1);
-  return`<div class="chart-wrap">${HOTELS.map(h=>`<div class="bar-row"><div class="bar-lbl">${esc(h.code)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((counts[h.nom]||0)/max*100)}%;background:var(--brand)"></div></div><div class="bar-cnt">${counts[h.nom]||0}</div></div>`).join("")}</div>`;
+  return`<div class="chart-wrap">${allowedHotels.map(h=>`<div class="bar-row"><div class="bar-lbl">${esc(h.code)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((counts[h.nom]||0)/max*100)}%;background:var(--brand)"></div></div><div class="bar-cnt">${counts[h.nom]||0}</div></div>`).join("")}</div>`;
 }
 function prioChartHTML(list){
   const total=list.length||1;
@@ -2323,7 +2332,7 @@ function activityHTML(){
    REPORTS
 ══════════════════════════════════════════════ */
 function renderReportGlobal(){
-  const all=tickets;
+  const all=scopedTicketRows(tickets);
   const open=all.filter(t=>t.statut==="nouveau"||t.statut==="en_cours").length;
   const resolved=all.filter(t=>t.statut==="résolu"||t.statut==="fermé").length;
   const urg=getUrgents().length;
@@ -2355,8 +2364,11 @@ function renderReportGlobal(){
     </div>`;
 }
 function renderReportHotel(){
-  const sel=reportHotel||HOTELS[0]?.nom||"";
-  const ht=tickets.filter(t=>t.hotel===sel);
+  const allowedHotels=scopedHotelRows();
+  const sel=allowedHotels.some(h=>h.nom===reportHotel)?reportHotel:(allowedHotels[0]?.nom||"");
+  reportHotel=sel;
+  if(!sel){document.getElementById('mainContent').innerHTML='<div class="card" style="padding:24px">Aucun hôtel autorisé pour ce compte.</div>';return;}
+  const ht=scopedTicketRows(tickets).filter(t=>t.hotel===sel);
   const open=ht.filter(t=>t.statut==="nouveau"||t.statut==="en_cours").length;
   const resolved=ht.filter(t=>t.statut==="résolu"||t.statut==="fermé").length;
   const urg=ht.filter(t=>t.priorite==="Urgente"&&t.statut!=="résolu").length;
@@ -2365,7 +2377,7 @@ function renderReportHotel(){
   document.getElementById("mainContent").innerHTML=`
     <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <select onchange="reportHotel=this.value;renderReportHotel()" class="field-ctrl" style="max-width:220px">
-        ${HOTELS.map(h=>`<option value="${esc(h.nom)}"${h.nom===sel?" selected":""}>${esc(h.nom)}</option>`).join("")}
+        ${allowedHotels.map(h=>`<option value="${esc(h.nom)}"${h.nom===sel?" selected":""}>${esc(h.nom)}</option>`).join("")}
       </select>
       <button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" onclick="exportPDF('hotel','${sel}')"><i class="ti ti-file-type-pdf"></i>PDF</button>
       <button class="btn btn-sm" style="background:var(--surface2);color:var(--tx2);border:1px solid var(--border)" onclick="exportCSV(tickets.filter(t=>t.hotel==='${sel}'))"><i class="ti ti-download"></i>CSV</button>
@@ -3512,6 +3524,7 @@ function forceChangeDone(){
    PDF EXPORT — via window.print() + CSS print
 ══════════════════════════════════════════════ */
 function exportPDF(type, hotelFilter, agentFilter){
+  if(hotelFilter&&!userHotels(currentUser).includes(hotelFilter)){showToast('Hôtel non autorisé','err');return;}
   // Build print content
   let title = '';
   let data = [];
@@ -3531,6 +3544,7 @@ function exportPDF(type, hotelFilter, agentFilter){
     data = tickets;
   }
 
+  data=scopedTicketRows(data);
   const now = formatAppDate(new Date(), {day:'2-digit',month:'long',year:'numeric'});
   const brandName = settings.brandName || 'DeskHotel';
 
@@ -4347,7 +4361,7 @@ function getFilteredAdv(){
   });
 }
 function advFiltersBarHTML(){
-  const hotelOpts = ['', ...HOTELS.map(h => h.nom)].map(v => `<option value="${esc(v)}"${advFilters.hotel===v?' selected':''}>${v||'Tous les hôtels'}</option>`).join('');
+  const hotelOpts = ['', ...scopedHotelRows().map(h => h.nom)].map(v => `<option value="${esc(v)}"${advFilters.hotel===v?' selected':''}>${v||'Hôtels autorisés'}</option>`).join('');
   const prioOpts = ['', ...PRIOS].map(v => `<option value="${v}"${advFilters.priorite===v?' selected':''}>${v||'Toutes priorités'}</option>`).join('');
   const catOpts = ['', ...CATS].map(v => `<option value="${v}"${advFilters.categorie===v?' selected':''}>${v||'Toutes catégories'}</option>`).join('');
   const agentNames = DEMO_USERS.filter(u => u.role==='it_regional'||u.role==='it_hotel').map(u => `${u.prenom} ${u.nom}`.trim());
@@ -4403,6 +4417,7 @@ function sendPushNotif(title, body){
    EXPORT CSV
 ══════════════════════════════════════════════ */
 function exportCSV(list){
+  list=scopedTicketRows(list);
   const cols = [appText('ticket_number','Numéro'),appText('subject','Titre'),appText('hotel','Hôtel'),appText('category','Catégorie'),appText('priority','Priorité'),appText('status','Statut'),appText('assigned','Assigné à'),appText('created_on','Créé le')];
   const rows = list.map(t => [
     t.numero, `"${(t.titre||'').replace(/"/g,'""')}"`, t.hotel,
