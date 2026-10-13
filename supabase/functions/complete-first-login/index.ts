@@ -81,12 +81,8 @@ Deno.serve(async (request) => {
     .eq("id", profile.id);
   if (profileUpdateError) return response(request, { error: "Mot de passe changé, mais l’activation MFA doit être finalisée par un administrateur." }, 502);
 
-  await admin.from("audit_logs").insert({
-    actor_id: requesterData.user.id,
-    action: "first_login_password_changed_mfa_required",
-    entity_type: "user",
-    entity_id: requesterData.user.id,
-    metadata: { email: profile.email },
-  });
+  const audit=await admin.from("audit_logs").insert(auditRow(requesterData.user.id,"first_login_password_changed_mfa_required",requesterData.user.id,{email:profile.email}));
+  if(audit.error)console.error('first login audit failed',audit.error.code);
   return response(request, { ok: true, mfaRequired: true });
 });
+import {auditRow} from '../_shared/audit-row.mjs';

@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
     return reply(req, { error: "Le mot de passe a été modifié, mais le marquage de première connexion a échoué. Contactez le support." }, 502);
   }
   // Never log the submitted password or a derivative of it.
-  await admin.from("audit_logs").insert({ actor_id: auth.user.id, action: "admin_password_reset", entity_type: "user", entity_id: profile.auth_user_id, metadata: { email: profile.email } });
+  const audit=await admin.from("audit_logs").insert(auditRow(auth.user.id,"admin_password_reset",profile.auth_user_id,{email:profile.email}));
+  if(audit.error)console.error('password reset audit failed',audit.error.code);
   return reply(req, { ok: true, mustChangePassword: true });
 });
+import {auditRow} from '../_shared/audit-row.mjs';

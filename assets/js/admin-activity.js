@@ -52,7 +52,12 @@
     const main=document.getElementById('mainContent');if(!main)return;
     main.innerHTML='<div class="card"><div class="card-hdr"><div><div class="card-title">'+t('activity_log','Journal d’activité')+'</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">'+t('activity_description','Actions des utilisateurs et événements du système')+'</div></div><button class="btn btn-outline btn-sm" onclick="window.renderAdminActivity()"><i class="ti ti-refresh"></i>'+t('refresh','Actualiser')+'</button></div><div id="activityList" style="padding:0 18px 18px"><div style="padding:25px;text-align:center;color:var(--tx3)">'+t('loading','Chargement...')+'</div></div></div>';
     try{
-      const rows=await window.sbFetch(TABLE+'?select=id,actor_name,actor_email,action,entity_type,entity_id,details,created_at&order=created_at.desc&limit=200');
+      const [activity,security]=await Promise.all([
+        window.sbFetch(TABLE+'?select=id,actor_name,actor_email,action,entity_type,entity_id,details,created_at&order=created_at.desc&limit=200'),
+        window.sbFetch('audit_logs?select=id,user,action,detail,timestamp&order=timestamp.desc&limit=200')
+      ]);
+      const rows=[...(Array.isArray(activity)?activity:[]),...(Array.isArray(security)?security:[]).map(r=>({id:r.id,actor_name:r.user,action:'Sécurité · '+r.action,details:{message:r.detail},created_at:r.timestamp}))]
+        .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,200);
       const box=document.getElementById('activityList');
       if(!box)return;
       if(!Array.isArray(rows)||!rows.length){box.innerHTML='<div style="padding:30px;text-align:center;color:var(--tx3)">'+t('no_activity_logged','Aucune activité enregistrée.')+'</div>';return;}

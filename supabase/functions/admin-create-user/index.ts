@@ -71,7 +71,8 @@ Deno.serve(async (req) => {
     if (roleError || !dbRoles || dbRoles.length !== roles.length) throw roleError ?? new Error("Rôle introuvable dans app_roles.");
     const { error: linkError } = await admin.from("app_user_roles").upsert(dbRoles.map(dbRole => ({ user_id: userId, role_id: dbRole.id })), { onConflict: "user_id,role_id" });
     if (linkError) throw linkError;
-    await admin.from("audit_logs").insert({ actor_id: auth.user.id, action: "user_created", entity_type: "user", entity_id: userId, metadata: { email, roles } });
+    const audit=await admin.from("audit_logs").insert(auditRow(auth.user.id,"user_created",userId,{email,roles}));
+    if(audit.error)console.error('user creation audit failed',audit.error.code);
   } catch (error) {
     console.error("Account setup failed", error);
     await admin.auth.admin.deleteUser(userId);
@@ -79,3 +80,4 @@ Deno.serve(async (req) => {
   }
   return reply(req, { id: userId, email, roles, mustChangePassword: true }, 201);
 });
+import {auditRow} from '../_shared/audit-row.mjs';

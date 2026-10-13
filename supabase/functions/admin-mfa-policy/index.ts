@@ -45,7 +45,7 @@ Deno.serve(async req=>{
   const {error:updateProfileError}=await service.from('utilisateurs').update({mfa_enabled:required,mfa_secret:null}).eq('auth_user_id',target);
   if(updateProfileError){console.error('MFA profile update',updateProfileError.message);return reply(req,{error:'La politique MFA Auth a été mise à jour, mais le profil doit être réconcilié.'},502);}
   if(reset){
-    const {error:auditError}=await service.from('audit_logs').insert({actor_id:auth.user.id,action:'mfa_reset_requested',entity_type:'user',entity_id:target,metadata:{reason:input.reason,identity_confirmed:true}});
+    const {error:auditError}=await service.from('audit_logs').insert(auditRow(auth.user.id,'mfa_reset_requested',target,{reason:input.reason,identity_confirmed:true}));
     if(auditError)return reply(req,{error:'Journalisation impossible : aucun facteur MFA supprimé.'},502);
     const factors=targetAuth.user.factors??[];
     if(!factors.some(f=>f.status==='verified'))return reply(req,{error:'Aucun facteur vérifié à réinitialiser. Le MFA reste obligatoire.'},409);
@@ -53,10 +53,12 @@ Deno.serve(async req=>{
       const {error:deleteError}=await service.auth.admin.mfa.deleteFactor({userId:target,id:factor.id});
       if(deleteError)return reply(req,{error:'Réinitialisation partielle. MFA obligatoire conservé ; contactez l’administrateur avant de réessayer.'},502);
     }
-    const {error:completedAuditError}=await service.from('audit_logs').insert({actor_id:auth.user.id,action:'mfa_reset_completed',entity_type:'user',entity_id:target,metadata:{reason:input.reason,factors_removed:factors.length}});
+    const {error:completedAuditError}=await service.from('audit_logs').insert(auditRow(auth.user.id,'mfa_reset_completed',target,{reason:input.reason,factors_removed:factors.length}));
     if(completedAuditError)return reply(req,{error:'MFA réinitialisé mais journal final incomplet. Ne relancez pas.'},502);
     return reply(req,{ok:true,required:true,reenrollment_required:true});
   }
-  await service.from('audit_logs').insert({actor_id:auth.user.id,action:required?'mfa_required':'mfa_requirement_removed',entity_type:'user',entity_id:target,metadata:{target_email:profile.email}});
+  const audit=await service.from('audit_logs').insert(auditRow(auth.user.id,required?'mfa_required':'mfa_requirement_removed',target,{target_email:profile.email}));
+  if(audit.error)console.error('MFA policy audit failed',audit.error.code);
   return reply(req,{ok:true,target_user_id:target,required});
 });
+import {auditRow} from '../_shared/audit-row.mjs';
