@@ -67,9 +67,12 @@
     return permissionLoadPromise;
   }
   const owner=t=>t.created_by===currentUser?.id||t.created_by_email===currentUser?.email;
+  const hiddenItReports=['report-hotel','report-agents','report-anomalies'];
+  const isRestrictedIt=()=>{const roles=userRoles(currentUser);return !roles.includes('Administrateur')&&roles.some(r=>['IT Hotel','IT Regional'].includes(r));};
   function applyAccess(){
     const full=isPower(currentUser), admin=userRoles(currentUser).includes('Administrateur');
     document.querySelectorAll('[data-view="dashboard"],[data-view="urgents"],#sbReportSec,#sbMySec').forEach(el=>el.style.display=full?'':'none');
+    hiddenItReports.forEach(view=>document.querySelectorAll('[data-view="'+view+'"]').forEach(el=>el.style.display=isRestrictedIt()?'none':''));
     document.querySelectorAll('#sbAdminSec').forEach(el=>el.style.display=admin?'':'none');
     document.querySelectorAll('[data-view="settings"]').forEach(el=>el.style.display=admin?'':'none');
     document.querySelectorAll('[data-view="tickets"]').forEach(el=>{const span=el.querySelector('span:not(.nav-badge)');if(span)span.textContent=full?'Tous les tickets':'Mes tickets';});
@@ -132,7 +135,7 @@
   // runtime-sync.js. Do not retain the legacy fixed eight-hour timer here.
   window.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();});
   const deny=()=>showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');
-  const originalSwitch=window.switchView;window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['hotels-admin','settings'];const supportDirectory=userRoles(currentUser).some(role=>['Administrateur','IT Regional','IT Hotel'].includes(role));if((!isPower(currentUser)&&restricted.includes(view))||(!supportDirectory&&view==='users')||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){deny();return;}return originalSwitch(view,el);};
+  const originalSwitch=window.switchView;window.switchView=function(view,el){const restricted=['dashboard','urgents','report-global','report-hotel','report-agents','report-anomalies','report-my'];const adminOnly=['hotels-admin','settings'];const supportDirectory=userRoles(currentUser).some(role=>['Administrateur','IT Regional','IT Hotel'].includes(role));if((isRestrictedIt()&&hiddenItReports.includes(view))||(!isPower(currentUser)&&restricted.includes(view))||(!supportDirectory&&view==='users')||(!userRoles(currentUser).includes('Administrateur')&&adminOnly.includes(view))){deny();return;}return originalSwitch(view,el);};
   const originalSettings=window.renderSettings;window.renderSettings=function(){if(!userRoles(currentUser).includes('Administrateur')){showToast(window.OnomoI18n?.t('access_denied')||'Accès non autorisé.','err');switchView('tickets',document.querySelector('[data-view="tickets"]'));return;}return originalSettings();};
   // Hiding the menu is not sufficient: a non-administrator can call global
   // handlers from DevTools. Guard every system-settings mutator as well.
