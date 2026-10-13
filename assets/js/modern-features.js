@@ -67,12 +67,13 @@
     return permissionLoadPromise;
   }
   const owner=t=>t.created_by===currentUser?.id||t.created_by_email===currentUser?.email;
-  const hiddenItReports=['report-hotel','report-agents','report-anomalies'];
+  const hiddenItReports=['report-global','report-hotel','report-agents','report-anomalies'];
   const isRestrictedIt=()=>{const roles=userRoles(currentUser);return !roles.includes('Administrateur')&&roles.some(r=>['IT Hotel','IT Regional'].includes(r));};
   function applyAccess(){
     const full=isPower(currentUser), admin=userRoles(currentUser).includes('Administrateur');
     document.querySelectorAll('[data-view="dashboard"],[data-view="urgents"],#sbReportSec,#sbMySec').forEach(el=>el.style.display=full?'':'none');
     hiddenItReports.forEach(view=>document.querySelectorAll('[data-view="'+view+'"]').forEach(el=>el.style.display=isRestrictedIt()?'none':''));
+    if(isRestrictedIt())document.getElementById('sbReportSec')?.style.setProperty('display','none');
     document.querySelectorAll('#sbAdminSec').forEach(el=>el.style.display=admin?'':'none');
     document.querySelectorAll('[data-view="settings"]').forEach(el=>el.style.display=admin?'':'none');
     document.querySelectorAll('[data-view="tickets"]').forEach(el=>{const span=el.querySelector('span:not(.nav-badge)');if(span)span.textContent=full?'Tous les tickets':'Mes tickets';});
