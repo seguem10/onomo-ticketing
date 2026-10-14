@@ -8,3 +8,5 @@ Lectures SQL réelles : 26/26 RLS, 4/4 buckets privés, politiques et triggers e
 NOT TESTED : scénarios multi-hôtels avec identifiants fictifs dans recette, appels API actifs, RLS INSERT/UPDATE/DELETE sous autres rôles, Realtime, MFA bout-en-bout, uploads malveillants, restauration, mobile/PWA et FR/EN/AR navigateurs, CI exécutée par GitHub, CodeQL, dépendances CVE, secret scanning complet, WAF, branches protégées.
 MAIL : test précédent échoué chez fournisseur, non relancé.
 Aucun test actif offensif exécuté en production. Aucun PASS global ASVS déclaré.
+
+Contrôles de catalogue supplémentaires PASS : zéro SECURITY DEFINER public exécutable par anon ; zéro politique public pour anon/PUBLIC ; vue exposée identifiée configurée security_invoker=true. Les fonctions privées, grants de schémas et RPC authentifiés restent à auditer exhaustivement.

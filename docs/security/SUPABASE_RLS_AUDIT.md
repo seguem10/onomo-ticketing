@@ -6,3 +6,8 @@ Fichiers : SELECT Storage via ticket/commentaire soumis à RLS ; URL signées cl
 
 Attention : branches propriétaire/assigné à tester après retrait de scope ; update column-level pour demandeur à tester ; helpers SECURITY DEFINER à inventorier intégralement et tester avec rôles fictifs ; tables exposées/vues/grants/Realtimes non intégralement validés. RLS activé ne signifie pas RLS correcte.
 Fonctions privées MFA et scopes examinées ; aucun bypass ajouté. Toutes modifications SQL reportées après fixture et migrations inverses. Aucun changement SQL effectué dans cette tranche.
+
+## Contrôles supplémentaires du 14/10/2026
+
+Requêtes de catalogue exécutées : aucune fonction SECURITY DEFINER du schéma public n'est exécutable par anon ; aucune politique public destinée à anon/PUBLIC ; seule vue public accessible aux rôles anon/authenticated identifiée : ticket_message_counts, avec security_invoker=true. Ces constats portent sur la configuration et ne sont pas des tentatives d'exploitation.
+Docker CLI disponible (29.8.2). La disponibilité du moteur, la reproductibilité du schéma local et les fixtures ne sont pas encore vérifiées ; aucune stack locale démarrée.
