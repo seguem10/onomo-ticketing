@@ -10,3 +10,5 @@
 8. Backups : établir RPO/RTO et test de restauration isolée ; politique de conservation et réponse incidents.
 
 Besoin restant : URL/projet de recette explicitement autorisé ou environnement local reproductible, accès settings GitHub/Vercel, propriétaire sauvegardes. Ne jamais fournir de secret dans le chat.
+
+SEC-06 : correctif minimal SELECT/UPDATE préparé avec rollback et testé sur le PostgreSQL local fictif. Ne pas appliquer en production avant revue des politiques réellement présentes, tests helpers complets et validation explicite. Le rollback restaure le risque connu et ne doit pas être automatisé.

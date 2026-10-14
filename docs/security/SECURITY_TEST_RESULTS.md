@@ -24,3 +24,9 @@ Commande : tests/isolated-rls.sql via docker exec/psql, ON_ERROR_STOP=1. Aucun a
 - FAIL : un ticket B encore assigné à l’IT reste lisible quand le scope de l’IT est limité à A. Reproduction de la branche assigned_to de la politique inspectée.
 
 Le script retourne aussi les FAIL sous forme de lignes ; le code de sortie psql=0 n’est pas un succès global. Correction de politique NON APPLIQUÉE. Les tests UPDATE/Storage/Realtime/Auth et les helpers réels restent NOT TESTED.
+
+### Correction SEC-06 en recette seulement
+
+Migration proposée 20261014101827 exige le scope hôtel sur les branches assigned_to de SELECT et UPDATE, avec USING et WITH CHECK. Politique propriétaire demandeur inchangée.
+Après application locale : 8 assertions PASS (lecture A ; absence B y compris ancien assigné ; UPDATE B=0 ; UPDATE A=1 ; INSERT B refusé ; régional A/B ; admin global ; propriétaire demandeur inchangé). Les assertions SQL lèvent une exception en cas d’échec, ON_ERROR_STOP=1.
+Rollback exécuté : comportement original reproduit, puis correctif réappliqué et 8 assertions PASS à nouveau. Aucun changement production. Storage/Realtime/Auth serveur et handlers complets toujours NOT TESTED.
