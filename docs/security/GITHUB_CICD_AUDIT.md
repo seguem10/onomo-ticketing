@@ -42,3 +42,5 @@ Commit 2dfe782c37be4e141a6c1dca56e82aadccdeb440 :
 PASS porte sur l'exécution et la publication de l'analyse, pas sur l'absence de vulnérabilités. La liste des alertes et leur qualification doivent encore être inspectées.
 
 Avertissement CI : checkout épinglé utilise Node.js 20, exécuté par GitHub sous Node.js 24. Prévoir mise à jour vers SHA officiel compatible après vérification ; l'avertissement n'a pas fait échouer ces jobs.
+
+Mise à jour préparée : checkout v6 épinglé sur d23441a48e516b6c34aea4fa41551a30e30af803 dans regression et CodeQL, SHA du tag officiel vérifié via git ls-remote. persist-credentials:false conservé. Version v6 choisie pour correction ciblée du runtime sans migration supplémentaire vers v7. Référence : https://github.com/actions/checkout . Résultat CI de cette nouvelle version à confirmer ; aucune permission supplémentaire ni déploiement.
