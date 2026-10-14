@@ -2048,7 +2048,7 @@ function ticketTableHTML(list){
     <thead><tr><th>#</th><th>Sujet</th><th>Demandeur</th><th>Hôtel</th><th>Catégorie</th><th>Priorité</th><th>Statut</th><th>Création</th><th>Actions</th></tr></thead>
     <tbody>${list.map(t=>{
       const requester=t.created_by_name||t.demandeur||t.created_by_email||"—";
-      return `<tr onclick="openDetail('${t.id}')">
+      return `<tr data-ticket-id="${esc(t.id)}" onclick="openDetail(this.dataset.ticketId)">
         <td><span class="t-num">${esc(t.numero)}</span></td>
         <td><div class="t-title">${esc(t.titre)}</div></td>
         <td><span class="requester-cell">${esc(requester)}</span></td>
@@ -2057,7 +2057,7 @@ function ticketTableHTML(list){
         <td>${pBadge(t.priorite)}</td>
         <td>${sBadge(t.statut)}</td>
         <td><span class="time-cell">${timeAgo(t.created_at)}</span></td>
-        <td><button class="row-action-btn" onclick="event.stopPropagation();openDetail('${t.id}')" aria-label="Ouvrir le ticket"><i class="ti ti-dots"></i></button></td>
+        <td><button class="row-action-btn" data-ticket-id="${esc(t.id)}" onclick="event.stopPropagation();openDetail(this.dataset.ticketId)" aria-label="Ouvrir le ticket"><i class="ti ti-dots"></i></button></td>
       </tr>`;
     }).join("")}</tbody>
   </table>`;
@@ -2533,14 +2533,14 @@ function renderUsers(){
         const isMe=u.id===currentUser.id;
         const lastLogin=u.lastLogin?`Dernière connexion : ${timeAgo(u.lastLogin)}`:"Jamais connecté";
         return`<div class="user-row">
-          <div class="user-av" style="background:${rs.bg};color:${rs.color}">${initials(name)}</div>
+          <div class="user-av" style="background:${rs.bg};color:${rs.color}">${esc(initials(name))}</div>
           <div class="user-info" style="flex:1">
             <div class="user-name">${esc(name)}${isMe?'<span style="font-size:9px;background:var(--brand-l);color:var(--brand-text);padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:700">VOUS</span>':""}</div>
             <div style="font-size:10px;color:var(--tx3);margin-top:2px">${esc(u.email)} · ${lastLogin}</div>
             <div style="font-size:9px;color:var(--tx3);margin-top:2px;font-style:italic">${esc(ROLE_DESC[u.role]||"")}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span class="role-tag" style="background:${rs.bg};color:${rs.color}">${ROLE_L[u.role]||u.role}</span>
+            <span class="role-tag" style="background:${rs.bg};color:${rs.color}">${esc(ROLE_L[u.role]||u.role)}</span>
             ${u.role==="it_hotel"&&u.hotel?`<span style="font-size:10px;color:var(--tx3);background:var(--surface2);padding:2px 8px;border-radius:10px;border:1px solid var(--border)">${esc(u.hotel.replace("Onomo ",""))}</span>`:""}
             ${u.role==="it_regional"&&(u.hotels||[]).length>0?`<span style="font-size:10px;color:var(--purple-t);background:var(--purple-l);padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.2)">${u.hotels.length} hôtel(s)</span>`:""}
             ${u.mfaEnabled?`<span style="font-size:9px;font-weight:700;background:var(--green-l);color:var(--green-t);padding:2px 7px;border-radius:10px;border:1px solid rgba(5,150,105,.2)"><i class="ti ti-shield-check" style="font-size:10px"></i> MFA</span>`:`<span style="font-size:9px;color:var(--tx3);background:var(--surface2);padding:2px 7px;border-radius:10px;border:1px solid var(--border)">Sans MFA</span>`}
@@ -3264,11 +3264,11 @@ function renderMyProfile(){
     <div style="max-width:480px" id="myProfilePage">
       <div class="card" style="padding:20px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-          <div data-photo-user="${esc(u.auth_user_id||'')}" style="width:52px;height:52px;border-radius:50%;background:${rs.bg};color:${rs.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${initials(name)}</div>
+          <div data-photo-user="${esc(u.auth_user_id||'')}" style="width:52px;height:52px;border-radius:50%;background:${rs.bg};color:${rs.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${esc(initials(name))}</div>
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--tx)">${esc(name)}</div>
             <div style="font-size:11px;color:var(--tx3)">${esc(u.email)}</div>
-            <span class="role-tag" style="background:${rs.bg};color:${rs.color};margin-top:4px;display:inline-block">${ROLE_L[u.role]||u.role}</span>
+            <span class="role-tag" style="background:${rs.bg};color:${rs.color};margin-top:4px;display:inline-block">${esc(ROLE_L[u.role]||u.role)}</span>
           </div>
         </div>
         ${u.hotel?`<div class="alert alert-info" style="margin-bottom:0"><i class="ti ti-building"></i>Hôtel assigné : <strong>${esc(u.hotel)}</strong></div>`:""}
@@ -4286,7 +4286,7 @@ function renderKanban(list){
       </div>
       <div class="kanban-cards">
         ${cards.length === 0 ? '<div style="padding:12px;text-align:center;font-size:10px;color:var(--tx3)">Aucun</div>' :
-          cards.map(t => `<div class="k-card" onclick="openDetail('${t.id}')">
+          cards.map(t => `<div class="k-card" data-ticket-id="${esc(t.id)}" onclick="openDetail(this.dataset.ticketId)">
             <div class="k-card-num">${esc(t.numero)}</div>
             <div class="k-card-title">${esc(t.titre)}</div>
             <div class="k-card-foot">

@@ -11,3 +11,5 @@ Vue GitHub inspectée avec filtre `is:open branch:security/onomo-audit-20261014`
 | 15 | Origine postMessage non vérifiée | Handler SKIP_WAITING du service worker : examiner les contraintes de Client/source/origin et tester les mises à jour PWA avant ajout du contrôle. |
 
 La réussite du workflow signifie que le scan et l'upload fonctionnent ; elle ne signifie pas zéro vulnérabilité. Les classifications initiales ne sont pas des dismissals GitHub. Les 15 alertes restent ouvertes jusqu'à correction vérifiée ou qualification documentée complète.
+
+Correctifs partiels préparés : rôle inconnu échappé dans comptes/profil, initiales échappées dans comptes/profil ; identifiants de tickets déplacés vers des attributs data échappés dans tableau et Kanban au lieu d'interpolation dans JavaScript. Test Kanban avec identifiant contenant quotes et fragments HTML malveillants. Ne pas considérer les six alertes DOM résolues avant nouvelle analyse des chemins complets.
