@@ -32,4 +32,9 @@ Score documentaire indicatif : 35/100, non un taux de sécurité. Accès/configu
 
 ## Livraison et retour arrière
 
+### SEC-06 — Haute, accès résiduel par affectation
+
+Reproduction locale réelle de la politique tickets_read inspectée : après retrait d’hôtel, assigned_to=auth.uid reste une branche indépendante du scope. Un compte IT fictif limité à A lit encore le ticket fictif B auquel il reste assigné. 5 contrôles PASS, 1 FAIL. Ce n’est pas une exploitation production ; helpers Auth simulés et déclencheurs complets absents.
+Correction proposée à préparer : exiger le scope actuel sur la branche d’affectation, revoir aussi UPDATE et le retrait des affectations/scopes. Préserver la règle propriétaire demandeur jusqu’à validation métier. Migration inverse et matrice complète nécessaires avant production.
+
 Correctifs locaux et CI proposés en PR, sans fusion ni production. Réversion du commit de branche rétablit le code précédent ; elle ne reconstitue pas les caches de données purgés. Données métier et Storage inchangés. Aucune migration SQL nouvelle nécessaire dans cette tranche. Toute future migration devra fournir un script inverse, un test isolé et une autorisation de production.

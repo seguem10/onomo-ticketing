@@ -10,3 +10,17 @@ MAIL : test précédent échoué chez fournisseur, non relancé.
 Aucun test actif offensif exécuté en production. Aucun PASS global ASVS déclaré.
 
 Contrôles de catalogue supplémentaires PASS : zéro SECURITY DEFINER public exécutable par anon ; zéro politique public pour anon/PUBLIC ; vue exposée identifiée configurée security_invoker=true. Les fonctions privées, grants de schémas et RPC authentifiés restent à auditer exhaustivement.
+
+## PostgreSQL isolé — exécution réelle
+
+Conteneur `onomo-security-20261014`, PostgreSQL 17.6 Alpine, réseau `none`, aucun port publié. Image digest sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94.
+Commande : tests/isolated-rls.sql via docker exec/psql, ON_ERROR_STOP=1. Aucun accès production. Helpers Auth simulés : ce n’est pas un test JWT/Supabase complet.
+
+- PASS : IT local lit hôtel A.
+- PASS : IT local ne lit pas ticket non assigné B.
+- PASS : INSERT hors hôtel B refusé par RLS.
+- PASS : régional lit les hôtels assignés A/B.
+- PASS : admin lit les trois tickets fictifs.
+- FAIL : un ticket B encore assigné à l’IT reste lisible quand le scope de l’IT est limité à A. Reproduction de la branche assigned_to de la politique inspectée.
+
+Le script retourne aussi les FAIL sous forme de lignes ; le code de sortie psql=0 n’est pas un succès global. Correction de politique NON APPLIQUÉE. Les tests UPDATE/Storage/Realtime/Auth et les helpers réels restent NOT TESTED.
