@@ -40,3 +40,9 @@ Ce test valide Auth local, pas la fonction métier admin-reset-MFA, la configura
 
 `node scripts/test-local-rest.cjs` exécuté sur Auth :65433 et REST :65434, avec fixtures uniquement : huit assertions PASS. IT A ne lit que A ; UUID B ne retourne aucune ligne ; PATCH B ne modifie rien ; PATCH A réussit ; INSERT B et falsification created_by refusés 403 ; IT B ne lit que B ; anonyme refusé.
 Les helpers de permissions sont simplifiés dans tests/local-rest-fixture.sql et les politiques reproduisent le modèle corrigé. Les JWT sont réellement émis et vérifiés par Auth/PostgREST. Ne pas extrapoler ce résultat aux fonctions/trigger/scopes complets de production. Stockage, Realtime, interface mobile et récupération MFA restent NOT TESTED.
+
+## Storage réel local
+
+Service storage-api v1.72.1 sur 127.0.0.1:65435, secrets locaux en environnement, aucun provider S3/externe. Bucket recipe-private et fichier texte fictif, politiques reliées à la fixture tickets.
+`node scripts/test-local-storage.cjs` : sept assertions PASS (upload autorisé ; lecture privée autorisée ; lecture autre hôtel refusée ; lecture anonyme refusée ; création URL signée hors périmètre refusée ; URL autorisée utilisable ; expiration après délai). URL/token/secret non imprimés.
+Ces tests valident le service et le modèle minimal de scope avec Auth réel local ; ils ne valident pas les politiques complètes de production, malware, path traversal, quota, notes internes, suppression ni téléchargement après retrait de droits durant la durée de validité d’un lien déjà signé. Realtime toujours NOT TESTED.
