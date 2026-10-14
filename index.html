@@ -4364,11 +4364,11 @@ function getFilteredAdv(){
   });
 }
 function advFiltersBarHTML(){
-  const hotelOpts = ['', ...scopedHotelRows().map(h => h.nom)].map(v => `<option value="${esc(v)}"${advFilters.hotel===v?' selected':''}>${v||'Hôtels autorisés'}</option>`).join('');
-  const prioOpts = ['', ...PRIOS].map(v => `<option value="${v}"${advFilters.priorite===v?' selected':''}>${v||'Toutes priorités'}</option>`).join('');
-  const catOpts = ['', ...CATS].map(v => `<option value="${v}"${advFilters.categorie===v?' selected':''}>${v||'Toutes catégories'}</option>`).join('');
+  const hotelOpts = ['', ...scopedHotelRows().map(h => h.nom)].map(v => `<option value="${esc(v)}"${advFilters.hotel===v?' selected':''}>${esc(v||'Hôtels autorisés')}</option>`).join('');
+  const prioOpts = ['', ...PRIOS].map(v => `<option value="${esc(v)}"${advFilters.priorite===v?' selected':''}>${esc(v||'Toutes priorités')}</option>`).join('');
+  const catOpts = ['', ...CATS].map(v => `<option value="${esc(v)}"${advFilters.categorie===v?' selected':''}>${esc(v||'Toutes catégories')}</option>`).join('');
   const agentNames = DEMO_USERS.filter(u => u.role==='it_regional'||u.role==='it_hotel').map(u => `${u.prenom} ${u.nom}`.trim());
-  const agentOpts = ['', ...agentNames].map(v => `<option value="${v}"${advFilters.assigne===v?' selected':''}>${v||'Tous les agents'}</option>`).join('');
+  const agentOpts = ['', ...agentNames].map(v => `<option value="${esc(v)}"${advFilters.assigne===v?' selected':''}>${esc(v||'Tous les agents')}</option>`).join('');
   return `<div class="adv-filters${advOpen?' open':''}" id="advFiltersBar">
     <div class="adv-group"><div class="adv-lbl">Hôtel</div><select class="adv-sel" id="afHotel" onchange="applyAdvFilter()">${hotelOpts}</select></div>
     <div class="adv-group"><div class="adv-lbl">Priorité</div><select class="adv-sel" id="afPrio" onchange="applyAdvFilter()">${prioOpts}</select></div>

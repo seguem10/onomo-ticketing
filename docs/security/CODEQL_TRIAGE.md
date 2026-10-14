@@ -1,5 +1,9 @@
 # Qualification initiale CodeQL — 14 octobre 2026
 
+Mise à jour après scan du commit 862b4a3 : workflow terminé success, vue branche inspectée : 10 Open / 6 Closed (16 identifiants cumulés, une alerte stockage recréée). Restent #1, #2, #3, #4, #9, #10, #11, #12, #13, #16. Pas de dismissal manuel.
+
+Chemin #9 vérifié dans Show paths : prénom du formulaire utilisateur -> DEMO_USERS -> agentNames -> options des filtres avancés -> innerHTML. Échappement des attributs value et libellés hôtel/priorité/catégorie/agent ajouté, sélection conservée et testée avec quotes et fragment img malveillant. Nouveau scan requis avant de déclarer #4/#9 résolues.
+
 Vue GitHub inspectée avec filtre `is:open branch:security/onomo-audit-20261014` : 15 alertes ouvertes, 12 High et 3 Medium. `main` n'a pas encore été analysée ; son compteur vide ne constitue pas un résultat sans alertes.
 
 | Alertes | Signal | Qualification initiale / suite |

@@ -1,6 +1,17 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 const html=fs.readFileSync('index.html','utf8');
 
+test('advanced filters escape option labels and values without losing selection',()=>{
+ const hostile='\"><img src=x onerror=alert(1)>';
+ const ctx={scopedHotelRows:()=>[{nom:hostile}],PRIOS:[hostile],CATS:[hostile],DEMO_USERS:[{role:'it_hotel',prenom:hostile,nom:'Name'}],advFilters:{hotel:hostile,priorite:hostile,categorie:hostile,assigne:hostile+' Name'},advOpen:true};
+ vm.createContext(ctx);vm.runInContext(html.split('\n').find(l=>l.startsWith('function esc(')),ctx);
+ vm.runInContext(html.slice(html.indexOf('function advFiltersBarHTML(){')).match(/^[\s\S]*?\r?\n\}/)[0],ctx);
+ const result=ctx.advFiltersBarHTML();assert.equal(result.includes('<img'),false);
+ assert.equal((result.match(/ selected/g)||[]).length,4);
+ assert.ok(result.includes('value="'+ctx.esc(hostile)+'" selected'));
+ assert.ok(result.includes(ctx.esc(hostile+' Name')+'</option>'));
+});
+
 test('agent report escapes names, initials, translated role labels and hotels',()=>{
  const host={innerHTML:''};const ctx={DEMO_USERS:[{role:'it_hotel',prenom:'<img>',nom:'&',hotel:'<svg>'}],tickets:[],ROLE_STYLES:{it_hotel:{bg:'blue',color:'white'}},ROLE_L:{it_hotel:'<script>role</script>'},document:{getElementById:()=>host}};
  vm.createContext(ctx);
