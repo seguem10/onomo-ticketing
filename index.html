@@ -1084,14 +1084,14 @@ function loadTickets(){
   const defaults=DEMO_TICKETS_DATA();
   saveTickets(defaults);return defaults;
 }
-function saveTickets(list){try{localStorage.setItem("dh_tickets",JSON.stringify(list));}catch(e){}}
+function saveTickets(list){try{if(typeof settings!=='undefined'&&settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_tickets');return;}localStorage.setItem("dh_tickets",JSON.stringify(list));}catch(e){}}
 
 // ══ COMMENTS — persistés dans localStorage ══
 function loadCommentaires(){
   try{const raw=localStorage.getItem("dh_comments");if(raw)return JSON.parse(raw)||[];}catch(e){}
   return [];
 }
-function saveCommentaires(list){try{localStorage.setItem("dh_comments",JSON.stringify(list));}catch(e){}}
+function saveCommentaires(list){try{if(typeof settings!=='undefined'&&settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_comments');return;}localStorage.setItem("dh_comments",JSON.stringify(list));}catch(e){}}
 
 function DEMO_TICKETS_DATA(){return[];} // Système vide par défaut
 
@@ -2379,8 +2379,8 @@ function renderReportHotel(){
       <select onchange="reportHotel=this.value;renderReportHotel()" class="field-ctrl" style="max-width:220px">
         ${allowedHotels.map(h=>`<option value="${esc(h.nom)}"${h.nom===sel?" selected":""}>${esc(h.nom)}</option>`).join("")}
       </select>
-      <button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" onclick="exportPDF('hotel','${sel}')"><i class="ti ti-file-type-pdf"></i>PDF</button>
-      <button class="btn btn-sm" style="background:var(--surface2);color:var(--tx2);border:1px solid var(--border)" onclick="exportCSV(tickets.filter(t=>t.hotel==='${sel}'))"><i class="ti ti-download"></i>CSV</button>
+      <button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" data-report-hotel="${esc(sel)}" onclick="exportPDF('hotel',this.dataset.reportHotel)"><i class="ti ti-file-type-pdf"></i>PDF</button>
+      <button class="btn btn-sm" style="background:var(--surface2);color:var(--tx2);border:1px solid var(--border)" data-report-hotel="${esc(sel)}" onclick="exportCSV(tickets.filter(t=>t.hotel===this.dataset.reportHotel))"><i class="ti ti-download"></i>CSV</button>
     </div>
     <div class="kpi-row">
       <div class="kpi-card"><div class="kpi-lbl">Total tickets</div><div class="kpi-val">${ht.length}</div></div>
