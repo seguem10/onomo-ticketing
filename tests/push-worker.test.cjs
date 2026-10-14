@@ -1,10 +1,19 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const code=fs.readFileSync('service-worker.js','utf8');
 function setup(windows=[]){
- const listeners={},shown=[],opened=[];
+ const listeners={},shown=[],opened=[];let activated=0;
  const ctx={URL,self:{location:{origin:'https://onomo-ticketing.vercel.app'},addEventListener:(name,fn)=>listeners[name]=fn,registration:{showNotification:async(...args)=>shown.push(args)},clients:{matchAll:async()=>windows,openWindow:async url=>opened.push(url)}}};
- vm.createContext(ctx);vm.runInContext(code,ctx);return {listeners,shown,opened};
+ ctx.self.skipWaiting=()=>activated++;
+ vm.createContext(ctx);vm.runInContext(code,ctx);return {listeners,shown,opened,activated:()=>activated};
 }
+
+test('PWA update messages require the exact application origin and known command',()=>{
+ const {listeners,activated}=setup();
+ for(const origin of ['',undefined,'null','https://evil.example','https://onomo-ticketing.vercel.app.evil.example'])listeners.message({origin,data:{type:'SKIP_WAITING'}});
+ assert.equal(activated(),0);
+ listeners.message({origin:'https://onomo-ticketing.vercel.app',data:{type:'OTHER'}});assert.equal(activated(),0);
+ listeners.message({origin:'https://onomo-ticketing.vercel.app',data:{type:'SKIP_WAITING'}});assert.equal(activated(),1);
+});
 test('push ignores sensitive text and untrusted links in payload',async()=>{
  const {listeners,shown}=setup();let promise;
  listeners.push({data:{json:()=>({body:'PRIVATE HR CONTENT',url:'https://evil.example/'})},waitUntil:p=>promise=p});await promise;

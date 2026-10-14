@@ -13,3 +13,5 @@ Vue GitHub inspectée avec filtre `is:open branch:security/onomo-audit-20261014`
 La réussite du workflow signifie que le scan et l'upload fonctionnent ; elle ne signifie pas zéro vulnérabilité. Les classifications initiales ne sont pas des dismissals GitHub. Les 15 alertes restent ouvertes jusqu'à correction vérifiée ou qualification documentée complète.
 
 Correctifs partiels préparés : rôle inconnu échappé dans comptes/profil, initiales échappées dans comptes/profil ; identifiants de tickets déplacés vers des attributs data échappés dans tableau et Kanban au lieu d'interpolation dans JavaScript. Test Kanban avec identifiant contenant quotes et fragments HTML malveillants. Ne pas considérer les six alertes DOM résolues avant nouvelle analyse des chemins complets.
+
+Handler de mise à jour PWA : vérification exacte event.origin === self.location.origin avant SKIP_WAITING. Test des origines absentes, null, tierces, suffixes trompeurs et du chemin positif même origine. Référence : https://developer.mozilla.org/en-US/docs/Web/API/ExtendableMessageEvent/origin . Test navigateur de mise à jour PWA encore NON TESTÉ ; aucun déploiement production.
