@@ -1,6 +1,17 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 const html=fs.readFileSync('index.html','utf8');
 
+test('agent report escapes names, initials, translated role labels and hotels',()=>{
+ const host={innerHTML:''};const ctx={DEMO_USERS:[{role:'it_hotel',prenom:'<img>',nom:'&',hotel:'<svg>'}],tickets:[],ROLE_STYLES:{it_hotel:{bg:'blue',color:'white'}},ROLE_L:{it_hotel:'<script>role</script>'},document:{getElementById:()=>host}};
+ vm.createContext(ctx);
+ for(const name of ['esc','initials'])vm.runInContext(html.split('\n').find(l=>l.startsWith('function '+name+'(')),ctx);
+ const start=html.indexOf('function renderReportAgents(){');
+ vm.runInContext(html.slice(start,html.indexOf('function renderReportMy(){',start)),ctx);ctx.renderReportAgents();
+ assert.ok(host.innerHTML.includes('&lt;&amp;'));
+ assert.ok(host.innerHTML.includes('&lt;script&gt;role&lt;/script&gt;'));
+ assert.equal(host.innerHTML.includes('<img>'),false);assert.equal(host.innerHTML.includes('<svg>'),false);
+});
+
 test('hotel administration isolates malicious IDs in escaped data attributes',()=>{
  const host={innerHTML:''};const id="x');alert(1);//\"";
  const ctx={HOTELS:[{id,nom:'<img src=x>',code:'"',ville:'<svg>',pays:'&'}],tickets:[],document:{getElementById:()=>host}};
