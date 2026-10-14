@@ -35,3 +35,8 @@ Rollback exécuté : comportement original reproduit, puis correctif réappliqu�
 
 DB/Auth/REST démarrés avec ports 127.0.0.1 uniquement, santé Auth/REST HTTP 200. Commande `node scripts/test-local-auth.cjs` exécutée : six assertions PASS (inscription fictive auto-confirmée localement ; mauvais mot de passe refusé ; login réussi ; identité authentifiée ; véritable enrollment/challenge/verify TOTP et token AAL2 ; refresh après logout global refusé). Aucun email réel ni secret imprimé.
 Ce test valide Auth local, pas la fonction métier admin-reset-MFA, la configuration cloud, le schéma métier, Storage ou Realtime. Ces scénarios restent NOT TESTED.
+
+## REST avec sessions Auth réelles locales
+
+`node scripts/test-local-rest.cjs` exécuté sur Auth :65433 et REST :65434, avec fixtures uniquement : huit assertions PASS. IT A ne lit que A ; UUID B ne retourne aucune ligne ; PATCH B ne modifie rien ; PATCH A réussit ; INSERT B et falsification created_by refusés 403 ; IT B ne lit que B ; anonyme refusé.
+Les helpers de permissions sont simplifiés dans tests/local-rest-fixture.sql et les politiques reproduisent le modèle corrigé. Les JWT sont réellement émis et vérifiés par Auth/PostgREST. Ne pas extrapoler ce résultat aux fonctions/trigger/scopes complets de production. Stockage, Realtime, interface mobile et récupération MFA restent NOT TESTED.
