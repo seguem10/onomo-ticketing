@@ -1,5 +1,15 @@
 # Qualification initiale CodeQL — 14 octobre 2026
 
+## Dernier résultat confirmé
+
+Commit 6be44b31284e5ea624aefa54d2375743403fa033 : Security checks run 38600948180 et CodeQL run 38600948167 completed/success. Vue branche GitHub inspectée : 8 Open / 8 Closed. Les alertes DOM #4 à #9 et origine PWA #15 ne figurent plus parmi les alertes ouvertes. Ceci est un résultat statique, pas une preuve d'absence universelle de XSS.
+
+Restent #1/#12/#13/#16 (stockage navigateur), #10/#11 (assertions de test HTML), #2/#3 (tokens fictifs envoyés aux services de recette locale). Aucun dismissal manuel effectué.
+
+Stockage : gardes du mode connecté confirmées par tests ; branche démonstration conserve les anciennes fonctions. #12 concerne le marqueur tab-scoped id/at ; #13 la restauration locale complète hors configuration Supabase. Supprimer les fonctions démo ou changer la persistance Auth SDK nécessiterait une décision de compatibilité métier, pas une modification pour faire disparaître le compteur.
+
+Test ciblé ajouté : les fonctions réelles writeSession/purgeConnectedBrowserCache en mode connecté ne stockent que id/at en sessionStorage, purgent les anciens caches métier et le marqueur persistant, et n'écrivent rien sans utilisateur. Profil d'essai contenant email/pwd/mfaSecret : aucun de ces champs dans le marqueur. Test simulé VM, pas un audit complet du stockage navigateur ni des tokens Auth SDK. Le mode démo conserve un risque résiduel si des données réelles lui sont fournies ; ne pas l'utiliser avec données réelles.
+
 Mise à jour après scan du commit 862b4a3 : workflow terminé success, vue branche inspectée : 10 Open / 6 Closed (16 identifiants cumulés, une alerte stockage recréée). Restent #1, #2, #3, #4, #9, #10, #11, #12, #13, #16. Pas de dismissal manuel.
 
 Chemin #9 vérifié dans Show paths : prénom du formulaire utilisateur -> DEMO_USERS -> agentNames -> options des filtres avancés -> innerHTML. Échappement des attributs value et libellés hôtel/priorité/catégorie/agent ajouté, sélection conservée et testée avec quotes et fragment img malveillant. Nouveau scan requis avant de déclarer #4/#9 résolues.

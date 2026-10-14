@@ -1,6 +1,19 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 const html=fs.readFileSync('index.html','utf8');
 
+test('connected UI session stores only a tab-scoped marker and purges legacy business caches',()=>{
+ const runtime=fs.readFileSync('assets/js/runtime-sync.js','utf8');
+ const persistent=new Map(['dh_tickets','dh_comments','dh_users','dh_hotels','session','activity'].map(k=>[k,'private']));const tab=new Map();
+ const ctx={currentUser:{id:'user',email:'private@example.com',pwd:'secret',mfaSecret:'private'},hasAuthConfiguration:()=>true,SESSION_KEY:'session',ACTIVITY_KEY:'activity',localStorage:{removeItem:k=>persistent.delete(k),setItem:(k,v)=>persistent.set(k,v)},sessionStorage:{removeItem:k=>tab.delete(k),setItem:(k,v)=>tab.set(k,v)}};
+ vm.createContext(ctx);
+ const start=runtime.indexOf("  const LOCAL_DATA_KEYS=");const end=runtime.indexOf('  const clearSession=',start);
+ vm.runInContext(runtime.slice(start,end)+'\nwriteSession();purgeConnectedBrowserCache();',ctx);
+ assert.equal(persistent.size,0);const marker=JSON.parse(tab.get('session'));
+ assert.deepEqual(Object.keys(marker).sort(),['at','id']);assert.equal(marker.id,'user');
+ assert.equal(JSON.stringify(marker).includes('private'),false);assert.equal(JSON.stringify(marker).includes('secret'),false);
+ ctx.currentUser=null;tab.clear();vm.runInContext('writeSession();',ctx);assert.equal(tab.size,0);
+});
+
 test('advanced filters escape option labels and values without losing selection',()=>{
  const hostile='\"><img src=x onerror=alert(1)>';
  const ctx={scopedHotelRows:()=>[{nom:hostile}],PRIOS:[hostile],CATS:[hostile],DEMO_USERS:[{role:'it_hotel',prenom:hostile,nom:'Name'}],advFilters:{hotel:hostile,priorite:hostile,categorie:hostile,assigne:hostile+' Name'},advOpen:true};
