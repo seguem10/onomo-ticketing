@@ -46,3 +46,8 @@ Les helpers de permissions sont simplifiés dans tests/local-rest-fixture.sql et
 Service storage-api v1.72.1 sur 127.0.0.1:65435, secrets locaux en environnement, aucun provider S3/externe. Bucket recipe-private et fichier texte fictif, politiques reliées à la fixture tickets.
 `node scripts/test-local-storage.cjs` : sept assertions PASS (upload autorisé ; lecture privée autorisée ; lecture autre hôtel refusée ; lecture anonyme refusée ; création URL signée hors périmètre refusée ; URL autorisée utilisable ; expiration après délai). URL/token/secret non imprimés.
 Ces tests valident le service et le modèle minimal de scope avec Auth réel local ; ils ne valident pas les politiques complètes de production, malware, path traversal, quota, notes internes, suppression ni téléchargement après retrait de droits durant la durée de validité d’un lien déjà signé. Realtime toujours NOT TESTED.
+
+## Realtime réel local
+
+Realtime v2.130.0 démarré sur 127.0.0.1:65436, tenant local realtime-dev, clés locales non imprimées. `node scripts/test-local-realtime.cjs` : quatre contrôles PASS (deux subscriptions Auth prêtes ; A reçoit UPDATE A ; B reçoit UPDATE B ; aucun événement croisé A/B avec contrôles positifs). Publication limitée à recipe_tickets.
+Le client WS utilise le module existant du conteneur Storage et des tokens fictifs sur stdin. Le test utilise le service réel mais les helpers et tables sont ceux de la fixture minimale. Sessions expirées/révocation en cours d’abonnement, changements de droits en direct, messages internes, INSERT/DELETE, broadcast/presence privés et limites de charge restent NOT TESTED. Aucun test Realtime production.

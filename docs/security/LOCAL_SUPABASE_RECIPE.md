@@ -7,6 +7,8 @@ Ports inspectés : tous trois sur 127.0.0.1 ; DB/Auth healthy ; Auth et REST hea
 
 Les paragraphes suivants décrivent la tentative CLI initiale, non opérationnelle.
 
+Services ajoutés : Storage sur localhost :65435 et Realtime sur localhost :65436. Tests réels exécutés : Storage 7 assertions PASS, Realtime 4 contrôles PASS. Voir SECURITY_TEST_RESULTS pour limites. La stack complète métier n’est pas reconstruite ; ne pas la présenter comme une validation intégrale production.
+
 Répertoire distinct : `../onomo-security-local`, project_id `onomo-security-local`. Aucun `supabase link` et aucun secret de production.
 Réseau Docker dédié `onomo-security-local-net`, interne et host_binding_ipv4=127.0.0.1. Le conteneur PostgreSQL synthétique précédent reste distinct et sans port.
 
