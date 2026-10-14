@@ -2,6 +2,7 @@
 // An administrator can require MFA, but never sees or creates a user's TOTP
 // secret. Enrollment and verification stay between Supabase Auth and the user.
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
+import {authenticatedAssurance} from './assurance.mjs';
 
 const URL=Deno.env.get("SUPABASE_URL")??"";
 const ANON=Deno.env.get("SUPABASE_PUBLISHABLE_KEY")??Deno.env.get("SUPABASE_ANON_KEY")??"";
@@ -31,8 +32,10 @@ Deno.serve(async req=>{
     const reason=typeof input.reason==='string'?input.reason.trim():'';
     if(reason.length<10||reason.length>300||input.identity_confirmed!==true)return reply(req,{error:'Vérifiez l’identité et indiquez un motif de 10 à 300 caractères.'},400);
     if(target===auth.user.id)return reply(req,{error:'Un autre administrateur doit réinitialiser votre MFA.'},403);
-    const {data:assurance,error:assuranceError}=await requester.auth.mfa.getAuthenticatorAssuranceLevel(token);
-    if(assuranceError||assurance?.currentLevel!=='aal2')return reply(req,{error:'L’administrateur doit valider son propre MFA avant cette opération.'},403);
+    // getUser(token) above authenticated this exact JWT; is_admin() also
+    // applies database authorization. Never trust a client-supplied MFA flag.
+    const assurance={currentLevel:authenticatedAssurance(token,auth.user.id)};
+    if(assurance.currentLevel!=='aal2')return reply(req,{error:'L’administrateur doit valider son propre MFA avant cette opération.'},403);
   }
   const service=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}});
   const {data:profile,error:profileError}=await service.from('utilisateurs').select('id,auth_user_id,email').eq('auth_user_id',target).maybeSingle();
