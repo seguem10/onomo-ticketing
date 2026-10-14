@@ -30,3 +30,8 @@ Le script retourne aussi les FAIL sous forme de lignes ; le code de sortie psql=
 Migration proposée 20261014101827 exige le scope hôtel sur les branches assigned_to de SELECT et UPDATE, avec USING et WITH CHECK. Politique propriétaire demandeur inchangée.
 Après application locale : 8 assertions PASS (lecture A ; absence B y compris ancien assigné ; UPDATE B=0 ; UPDATE A=1 ; INSERT B refusé ; régional A/B ; admin global ; propriétaire demandeur inchangé). Les assertions SQL lèvent une exception en cas d’échec, ON_ERROR_STOP=1.
 Rollback exécuté : comportement original reproduit, puis correctif réappliqué et 8 assertions PASS à nouveau. Aucun changement production. Storage/Realtime/Auth serveur et handlers complets toujours NOT TESTED.
+
+## Auth réel local via Compose
+
+DB/Auth/REST démarrés avec ports 127.0.0.1 uniquement, santé Auth/REST HTTP 200. Commande `node scripts/test-local-auth.cjs` exécutée : six assertions PASS (inscription fictive auto-confirmée localement ; mauvais mot de passe refusé ; login réussi ; identité authentifiée ; véritable enrollment/challenge/verify TOTP et token AAL2 ; refresh après logout global refusé). Aucun email réel ni secret imprimé.
+Ce test valide Auth local, pas la fonction métier admin-reset-MFA, la configuration cloud, le schéma métier, Storage ou Realtime. Ces scénarios restent NOT TESTED.
