@@ -1,6 +1,19 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 const html=fs.readFileSync('index.html','utf8');
 
+test('hotel administration isolates malicious IDs in escaped data attributes',()=>{
+ const host={innerHTML:''};const id="x');alert(1);//\"";
+ const ctx={HOTELS:[{id,nom:'<img src=x>',code:'"',ville:'<svg>',pays:'&'}],tickets:[],document:{getElementById:()=>host}};
+ vm.createContext(ctx);vm.runInContext(html.split('\n').find(l=>l.startsWith('function esc(')),ctx);
+ const start=html.indexOf('function renderHotelsAdmin(){');
+ vm.runInContext(html.slice(start,html.indexOf('function openAddHotel(){',start)),ctx);ctx.renderHotelsAdmin();
+ assert.ok(host.innerHTML.includes('data-hotel-id="'+ctx.esc(id)+'"'));
+ assert.ok(host.innerHTML.includes('onclick="openEditHotel(this.dataset.hotelId)"'));
+ assert.ok(host.innerHTML.includes('onclick="deleteHotel(this.dataset.hotelId)"'));
+ assert.equal(host.innerHTML.includes('<img src=x>'),false);
+ for(const action of ['openEditUser','disableMFA','openMFASetup','askDeleteUser'])assert.ok(html.includes(action+'(this.dataset.userId)'));
+});
+
 test('kanban treats malicious ticket IDs and text as data, never handler code',()=>{
  const ctx={STAT_L:{nouveau:'New'},pBadge:()=>'',slaHTML:()=>''};vm.createContext(ctx);
  vm.runInContext(html.split('\n').find(l=>l.startsWith('function esc(')),ctx);
