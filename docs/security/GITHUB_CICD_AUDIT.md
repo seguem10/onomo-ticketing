@@ -31,3 +31,14 @@ SHA CodeQL v4 vérifié via git ls-remote du dépôt officiel : f3c49fd1ef3281ab
 Résultats CodeQL : NON TESTÉS tant que les jobs ne sont pas terminés. Ce scan ne valide pas RLS, MFA ou autorisations métier à l'exécution. Aucun check CodeQL rendu obligatoire avant validation de son fonctionnement.
 
 Inventaire initial : 7 fonctions importent supabase-js avec @2 flottant, 4 avec @2.49.8 ; aucun lockfile trouvé. Audit CVE et verrouillage compatibles restent à effectuer, sans upgrade arbitraire du système.
+
+## Résultats CI vérifiés
+
+Commit 2dfe782c37be4e141a6c1dca56e82aadccdeb440 :
+- Security checks run 38590559215 : completed/success.
+- CodeQL run 38590559199 : completed/success ; jobs JavaScript/TypeScript et Actions réussis.
+- Log JavaScript/TypeScript : résultats SARIF téléversés avec succès, traitement terminé.
+
+PASS porte sur l'exécution et la publication de l'analyse, pas sur l'absence de vulnérabilités. La liste des alertes et leur qualification doivent encore être inspectées.
+
+Avertissement CI : checkout épinglé utilise Node.js 20, exécuté par GitHub sous Node.js 24. Prévoir mise à jour vers SHA officiel compatible après vérification ; l'avertissement n'a pas fait échouer ces jobs.

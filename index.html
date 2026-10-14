@@ -1040,6 +1040,7 @@ function checkPwd(plain, stored){
 
 function loadUsers(){
   try{
+    if(settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_users');return DEFAULT_USERS;}
     const raw=localStorage.getItem("dh_users");
     if(raw){const u=JSON.parse(raw);if(u&&u.length>0)return u;}
   }catch(e){}
@@ -1049,10 +1050,10 @@ function loadUsers(){
   return defaults;
 }
 function saveUsers(list){
-  try{localStorage.setItem("dh_users",JSON.stringify(list));}catch(e){}
+  try{if(settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_users');return;}localStorage.setItem("dh_users",JSON.stringify(list));}catch(e){}
   // Supabase sync handled explicitly via sbSaveUser/sbDeleteUser
 }
-let DEMO_USERS=loadUsers();
+let DEMO_USERS=[];
 // ══ HOTELS — persistés dans localStorage ══
 const DEFAULT_HOTELS = []; // Aucun hôtel par défaut — à créer via Administration
 function loadHotels(){
@@ -1131,6 +1132,8 @@ var EMAILJS_PUBLIC_KEY  = "";
 var APP_URL = window.location.origin + window.location.pathname; // URL auto
 
 let settings = loadSettings();
+// Configuration must be available before deciding whether disk profiles are safe.
+DEMO_USERS = loadUsers();
 
 function loadSettings(){
   try{
