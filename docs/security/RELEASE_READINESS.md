@@ -1,4 +1,21 @@
-# État avant publication — 14 octobre 2026
+# État avant publication — mise à jour 16 octobre 2026
+
+## Contrôle de publication du 15 octobre
+
+Complément du 16 octobre : l'utilisateur confirme sur Chrome la réinitialisation MFA du compte dédié et l'obligation de nouvelle configuration ; preuve déclarative, non observation indépendante du parcours complet. Dans le navigateur intégré, erreur console reproduite `prompt() is not supported` avant l'appel serveur. Correctif local : dialogue HTML intégré. Recette navigateur isolée avec API simulée et connexions réseau bloquées : ouverture, motif trop court après trim refusé, confirmation d'identité obligatoire, annulation sans appel, envoi simulé valide et retour du focus PASS. Pas de réinitialisation réelle pendant cette recette. Ce correctif UI n'est pas publié.
+
+L'utilisateur a donné son accord pour poursuivre après demande d'autorisation de publication. Aucun merge, migration cloud ou déploiement effectué : prérequis opérationnels toujours incomplets. Ne pas confondre autorisation et validation technique.
+
+- Commit exact : c491f16c4494fc42fc1f9d3cc5e441ad2035dd23, branche sécurité poussée, PR #46 brouillon.
+- CI confirmée completed/success : Security checks 38760004491 et CodeQL 38760004411. Réussite de l'analyse, pas absence d'alertes.
+- 50 tests de régression locaux PASS, syntaxe validée, scan limité 199 fichiers suivis : zéro candidat, sans garantie sur historique/secrets.
+- Recette reconstruite Auth/REST/Storage avec vrais JWT : preuves détaillées dans SCHEMA_RECIPE_PREREQUISITES.md. SEC-06/08/09 appliqués seulement localement. Isolement hôtels, assignation résiduelle, notes internes, MFA et liens signés testés dans les limites documentées.
+- Retours arrière SQL ciblés fournis ; ils réintroduisent les risques corrigés. Ce ne sont pas des sauvegardes.
+- Sauvegarde : export DB chiffré et restauration SQL isolée avec propriétaires/ACL réussis ; copie portable externe et complément Storage (3 objets) vérifiés cryptographiquement. Voir MANUAL_BACKUP_VERIFICATION.md pour les limites, notamment cohérence non atomique et absence de reprise applicative complète.
+- BLOQUANT avant publication : parcours navigateur authentifié complet et reset MFA administrateur AAL2 non validés ; revue indépendante non obtenue ; reprise applicative complète non démontrée.
+- Réserve : liens déjà signés restent valables jusqu'à expiration ; 60 secondes demandées par UI, plafond serveur non garanti.
+
+Les sections historiques ci-dessous décrivent l'état du 14 octobre et ne remplacent pas cette mise à jour. Aucun contrôle non exécuté n'est promu PASS.
 
 Décision actuelle : NE PAS FUSIONNER / NE PAS DÉPLOYER automatiquement. PR brouillon #46, branche security/onomo-audit-20261014. Une CI verte n'est pas une validation de sécurité complète.
 
