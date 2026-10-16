@@ -29,9 +29,10 @@
         const remote=isAdmin()
           ?await window.sbFetch('utilisateurs?select=id,auth_user_id,email,prenom,nom,role,hotel,hotels,must_change_password,mfa_enabled,created_at&order=created_at.desc&limit=500')
           :await window.sbFetch('rpc/get_support_directory',{method:'POST',body:'{}',prefer:'return=representation'});
-        if(Array.isArray(remote)&&remote.length)rows=remote;
+        // Connected mode must never fall back to a previous account's list.
+        rows=Array.isArray(remote)?remote:[];
       }
-    }catch(_){ }
+    }catch(_){ rows=[]; }
     return rows;
   }
   function renderRows(rows){
