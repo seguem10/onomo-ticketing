@@ -1040,6 +1040,7 @@ function checkPwd(plain, stored){
 
 function loadUsers(){
   try{
+    if(settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_users');return DEFAULT_USERS;}
     const raw=localStorage.getItem("dh_users");
     if(raw){const u=JSON.parse(raw);if(u&&u.length>0)return u;}
   }catch(e){}
@@ -1049,10 +1050,10 @@ function loadUsers(){
   return defaults;
 }
 function saveUsers(list){
-  try{localStorage.setItem("dh_users",JSON.stringify(list));}catch(e){}
+  try{if(settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_users');return;}localStorage.setItem("dh_users",JSON.stringify(list));}catch(e){}
   // Supabase sync handled explicitly via sbSaveUser/sbDeleteUser
 }
-let DEMO_USERS=loadUsers();
+let DEMO_USERS=[];
 // ══ HOTELS — persistés dans localStorage ══
 const DEFAULT_HOTELS = []; // Aucun hôtel par défaut — à créer via Administration
 function loadHotels(){
@@ -1084,14 +1085,14 @@ function loadTickets(){
   const defaults=DEMO_TICKETS_DATA();
   saveTickets(defaults);return defaults;
 }
-function saveTickets(list){try{localStorage.setItem("dh_tickets",JSON.stringify(list));}catch(e){}}
+function saveTickets(list){try{if(typeof settings!=='undefined'&&settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_tickets');return;}localStorage.setItem("dh_tickets",JSON.stringify(list));}catch(e){}}
 
 // ══ COMMENTS — persistés dans localStorage ══
 function loadCommentaires(){
   try{const raw=localStorage.getItem("dh_comments");if(raw)return JSON.parse(raw)||[];}catch(e){}
   return [];
 }
-function saveCommentaires(list){try{localStorage.setItem("dh_comments",JSON.stringify(list));}catch(e){}}
+function saveCommentaires(list){try{if(typeof settings!=='undefined'&&settings.sbUrl&&settings.sbKey){localStorage.removeItem('dh_comments');return;}localStorage.setItem("dh_comments",JSON.stringify(list));}catch(e){}}
 
 function DEMO_TICKETS_DATA(){return[];} // Système vide par défaut
 
@@ -1131,6 +1132,8 @@ var EMAILJS_PUBLIC_KEY  = "";
 var APP_URL = window.location.origin + window.location.pathname; // URL auto
 
 let settings = loadSettings();
+// Configuration must be available before deciding whether disk profiles are safe.
+DEMO_USERS = loadUsers();
 
 function loadSettings(){
   try{
@@ -2045,7 +2048,7 @@ function ticketTableHTML(list){
     <thead><tr><th>#</th><th>Sujet</th><th>Demandeur</th><th>Hôtel</th><th>Catégorie</th><th>Priorité</th><th>Statut</th><th>Création</th><th>Actions</th></tr></thead>
     <tbody>${list.map(t=>{
       const requester=t.created_by_name||t.demandeur||t.created_by_email||"—";
-      return `<tr onclick="openDetail('${t.id}')">
+      return `<tr data-ticket-id="${esc(t.id)}" onclick="openDetail(this.dataset.ticketId)">
         <td><span class="t-num">${esc(t.numero)}</span></td>
         <td><div class="t-title">${esc(t.titre)}</div></td>
         <td><span class="requester-cell">${esc(requester)}</span></td>
@@ -2054,7 +2057,7 @@ function ticketTableHTML(list){
         <td>${pBadge(t.priorite)}</td>
         <td>${sBadge(t.statut)}</td>
         <td><span class="time-cell">${timeAgo(t.created_at)}</span></td>
-        <td><button class="row-action-btn" onclick="event.stopPropagation();openDetail('${t.id}')" aria-label="Ouvrir le ticket"><i class="ti ti-dots"></i></button></td>
+        <td><button class="row-action-btn" data-ticket-id="${esc(t.id)}" onclick="event.stopPropagation();openDetail(this.dataset.ticketId)" aria-label="Ouvrir le ticket"><i class="ti ti-dots"></i></button></td>
       </tr>`;
     }).join("")}</tbody>
   </table>`;
@@ -2379,8 +2382,8 @@ function renderReportHotel(){
       <select onchange="reportHotel=this.value;renderReportHotel()" class="field-ctrl" style="max-width:220px">
         ${allowedHotels.map(h=>`<option value="${esc(h.nom)}"${h.nom===sel?" selected":""}>${esc(h.nom)}</option>`).join("")}
       </select>
-      <button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" onclick="exportPDF('hotel','${sel}')"><i class="ti ti-file-type-pdf"></i>PDF</button>
-      <button class="btn btn-sm" style="background:var(--surface2);color:var(--tx2);border:1px solid var(--border)" onclick="exportCSV(tickets.filter(t=>t.hotel==='${sel}'))"><i class="ti ti-download"></i>CSV</button>
+      <button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" data-report-hotel="${esc(sel)}" onclick="exportPDF('hotel',this.dataset.reportHotel)"><i class="ti ti-file-type-pdf"></i>PDF</button>
+      <button class="btn btn-sm" style="background:var(--surface2);color:var(--tx2);border:1px solid var(--border)" data-report-hotel="${esc(sel)}" onclick="exportCSV(tickets.filter(t=>t.hotel===this.dataset.reportHotel))"><i class="ti ti-download"></i>CSV</button>
     </div>
     <div class="kpi-row">
       <div class="kpi-card"><div class="kpi-lbl">Total tickets</div><div class="kpi-val">${ht.length}</div></div>
@@ -2476,7 +2479,7 @@ function renderReportAgents(){
           const rate=at.length?Math.round(res/at.length*100):0;
           const rCol=rate>70?"var(--green)":rate>40?"var(--amber)":"var(--red)";
           const rs=ROLE_STYLES[u.role]||ROLE_STYLES.it;
-          return`<tr><td><div class="assignee-cell"><div class="mini-av" style="background:${rs.bg};color:${rs.color}">${initials(name)}</div><div><div style="font-weight:500">${esc(name)}</div><div style="font-size:10px;color:var(--tx3)">${ROLE_L[u.role]}</div></div></div></td><td style="font-size:11px;color:var(--tx2)">${esc(u.hotel||"—")}</td><td style="font-weight:600">${at.length}</td><td style="color:var(--green);font-weight:600">${res}</td><td style="color:var(--amber);font-weight:600">${op}</td><td><span style="font-weight:700;color:${rCol}">${rate}%</span></td></tr>`;
+          return`<tr><td><div class="assignee-cell"><div class="mini-av" style="background:${rs.bg};color:${rs.color}">${esc(initials(name))}</div><div><div style="font-weight:500">${esc(name)}</div><div style="font-size:10px;color:var(--tx3)">${esc(ROLE_L[u.role])}</div></div></div></td><td style="font-size:11px;color:var(--tx2)">${esc(u.hotel||"—")}</td><td style="font-weight:600">${at.length}</td><td style="color:var(--green);font-weight:600">${res}</td><td style="color:var(--amber);font-weight:600">${op}</td><td><span style="font-weight:700;color:${rCol}">${rate}%</span></td></tr>`;
         }).join("")}</tbody>
       </table>
     </div>`;
@@ -2530,20 +2533,20 @@ function renderUsers(){
         const isMe=u.id===currentUser.id;
         const lastLogin=u.lastLogin?`Dernière connexion : ${timeAgo(u.lastLogin)}`:"Jamais connecté";
         return`<div class="user-row">
-          <div class="user-av" style="background:${rs.bg};color:${rs.color}">${initials(name)}</div>
+          <div class="user-av" style="background:${rs.bg};color:${rs.color}">${esc(initials(name))}</div>
           <div class="user-info" style="flex:1">
             <div class="user-name">${esc(name)}${isMe?'<span style="font-size:9px;background:var(--brand-l);color:var(--brand-text);padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:700">VOUS</span>':""}</div>
             <div style="font-size:10px;color:var(--tx3);margin-top:2px">${esc(u.email)} · ${lastLogin}</div>
             <div style="font-size:9px;color:var(--tx3);margin-top:2px;font-style:italic">${esc(ROLE_DESC[u.role]||"")}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span class="role-tag" style="background:${rs.bg};color:${rs.color}">${ROLE_L[u.role]||u.role}</span>
+            <span class="role-tag" style="background:${rs.bg};color:${rs.color}">${esc(ROLE_L[u.role]||u.role)}</span>
             ${u.role==="it_hotel"&&u.hotel?`<span style="font-size:10px;color:var(--tx3);background:var(--surface2);padding:2px 8px;border-radius:10px;border:1px solid var(--border)">${esc(u.hotel.replace("Onomo ",""))}</span>`:""}
             ${u.role==="it_regional"&&(u.hotels||[]).length>0?`<span style="font-size:10px;color:var(--purple-t);background:var(--purple-l);padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.2)">${u.hotels.length} hôtel(s)</span>`:""}
             ${u.mfaEnabled?`<span style="font-size:9px;font-weight:700;background:var(--green-l);color:var(--green-t);padding:2px 7px;border-radius:10px;border:1px solid rgba(5,150,105,.2)"><i class="ti ti-shield-check" style="font-size:10px"></i> MFA</span>`:`<span style="font-size:9px;color:var(--tx3);background:var(--surface2);padding:2px 7px;border-radius:10px;border:1px solid var(--border)">Sans MFA</span>`}
-            <button class="btn btn-outline btn-sm" onclick="openEditUser('${u.id}')"><i class="ti ti-edit"></i></button>
-            ${u.mfaEnabled?`<button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" onclick="disableMFA('${u.id}')"><i class="ti ti-shield-off"></i></button>`:`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple-t);border:1px solid rgba(124,58,237,.2)" onclick="openMFASetup('${u.id}')"><i class="ti ti-shield-check"></i>MFA</button>`}
-            ${!isMe?`<button class="btn btn-danger btn-sm" onclick="askDeleteUser('${u.id}')"><i class="ti ti-trash"></i></button>`:""}
+            <button class="btn btn-outline btn-sm" data-user-id="${esc(u.id)}" onclick="openEditUser(this.dataset.userId)"><i class="ti ti-edit"></i></button>
+            ${u.mfaEnabled?`<button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" data-user-id="${esc(u.id)}" onclick="disableMFA(this.dataset.userId)"><i class="ti ti-shield-off"></i></button>`:`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple-t);border:1px solid rgba(124,58,237,.2)" data-user-id="${esc(u.id)}" onclick="openMFASetup(this.dataset.userId)"><i class="ti ti-shield-check"></i>MFA</button>`}
+            ${!isMe?`<button class="btn btn-danger btn-sm" data-user-id="${esc(u.id)}" onclick="askDeleteUser(this.dataset.userId)"><i class="ti ti-trash"></i></button>`:""}
           </div>
         </div>`;
       }).join("")}
@@ -2763,8 +2766,8 @@ function renderHotelsAdmin(){
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-size:11px;color:var(--tx3)">${tickets.filter(t=>t.hotel===h.nom).length} tickets</span>
-          <button class="btn btn-outline btn-sm" onclick="openEditHotel('${h.id}')"><i class="ti ti-edit"></i></button>
-          <button class="btn btn-danger btn-sm" onclick="deleteHotel('${h.id}')"><i class="ti ti-trash"></i></button>
+          <button class="btn btn-outline btn-sm" data-hotel-id="${esc(h.id)}" onclick="openEditHotel(this.dataset.hotelId)"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-danger btn-sm" data-hotel-id="${esc(h.id)}" onclick="deleteHotel(this.dataset.hotelId)"><i class="ti ti-trash"></i></button>
         </div>
       </div>`).join("")}
     </div>`;
@@ -3261,11 +3264,11 @@ function renderMyProfile(){
     <div style="max-width:480px" id="myProfilePage">
       <div class="card" style="padding:20px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-          <div data-photo-user="${esc(u.auth_user_id||'')}" style="width:52px;height:52px;border-radius:50%;background:${rs.bg};color:${rs.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${initials(name)}</div>
+          <div data-photo-user="${esc(u.auth_user_id||'')}" style="width:52px;height:52px;border-radius:50%;background:${rs.bg};color:${rs.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${esc(initials(name))}</div>
           <div>
             <div style="font-size:16px;font-weight:700;color:var(--tx)">${esc(name)}</div>
             <div style="font-size:11px;color:var(--tx3)">${esc(u.email)}</div>
-            <span class="role-tag" style="background:${rs.bg};color:${rs.color};margin-top:4px;display:inline-block">${ROLE_L[u.role]||u.role}</span>
+            <span class="role-tag" style="background:${rs.bg};color:${rs.color};margin-top:4px;display:inline-block">${esc(ROLE_L[u.role]||u.role)}</span>
           </div>
         </div>
         ${u.hotel?`<div class="alert alert-info" style="margin-bottom:0"><i class="ti ti-building"></i>Hôtel assigné : <strong>${esc(u.hotel)}</strong></div>`:""}
@@ -4283,7 +4286,7 @@ function renderKanban(list){
       </div>
       <div class="kanban-cards">
         ${cards.length === 0 ? '<div style="padding:12px;text-align:center;font-size:10px;color:var(--tx3)">Aucun</div>' :
-          cards.map(t => `<div class="k-card" onclick="openDetail('${t.id}')">
+          cards.map(t => `<div class="k-card" data-ticket-id="${esc(t.id)}" onclick="openDetail(this.dataset.ticketId)">
             <div class="k-card-num">${esc(t.numero)}</div>
             <div class="k-card-title">${esc(t.titre)}</div>
             <div class="k-card-foot">
@@ -4361,11 +4364,11 @@ function getFilteredAdv(){
   });
 }
 function advFiltersBarHTML(){
-  const hotelOpts = ['', ...scopedHotelRows().map(h => h.nom)].map(v => `<option value="${esc(v)}"${advFilters.hotel===v?' selected':''}>${v||'Hôtels autorisés'}</option>`).join('');
-  const prioOpts = ['', ...PRIOS].map(v => `<option value="${v}"${advFilters.priorite===v?' selected':''}>${v||'Toutes priorités'}</option>`).join('');
-  const catOpts = ['', ...CATS].map(v => `<option value="${v}"${advFilters.categorie===v?' selected':''}>${v||'Toutes catégories'}</option>`).join('');
+  const hotelOpts = ['', ...scopedHotelRows().map(h => h.nom)].map(v => `<option value="${esc(v)}"${advFilters.hotel===v?' selected':''}>${esc(v||'Hôtels autorisés')}</option>`).join('');
+  const prioOpts = ['', ...PRIOS].map(v => `<option value="${esc(v)}"${advFilters.priorite===v?' selected':''}>${esc(v||'Toutes priorités')}</option>`).join('');
+  const catOpts = ['', ...CATS].map(v => `<option value="${esc(v)}"${advFilters.categorie===v?' selected':''}>${esc(v||'Toutes catégories')}</option>`).join('');
   const agentNames = DEMO_USERS.filter(u => u.role==='it_regional'||u.role==='it_hotel').map(u => `${u.prenom} ${u.nom}`.trim());
-  const agentOpts = ['', ...agentNames].map(v => `<option value="${v}"${advFilters.assigne===v?' selected':''}>${v||'Tous les agents'}</option>`).join('');
+  const agentOpts = ['', ...agentNames].map(v => `<option value="${esc(v)}"${advFilters.assigne===v?' selected':''}>${esc(v||'Tous les agents')}</option>`).join('');
   return `<div class="adv-filters${advOpen?' open':''}" id="advFiltersBar">
     <div class="adv-group"><div class="adv-lbl">Hôtel</div><select class="adv-sel" id="afHotel" onchange="applyAdvFilter()">${hotelOpts}</select></div>
     <div class="adv-group"><div class="adv-lbl">Priorité</div><select class="adv-sel" id="afPrio" onchange="applyAdvFilter()">${prioOpts}</select></div>

@@ -80,10 +80,9 @@
     }catch(error){window.showToast?.(error?.message||'Impossible de mettre à jour la politique MFA.','err');}
   }
   async function reset(targetUserId){
-    const reason=prompt('Motif de réinitialisation MFA (10 à 300 caractères). Ne saisissez aucun secret.');
+    const reason=await requestResetReason();
     if(reason===null)return;
     if(reason.trim().length<10||reason.length>300)return window.showToast?.('Indiquez un motif de 10 à 300 caractères.','err');
-    if(!confirm('Avez-vous vérifié l’identité de cet utilisateur par un canal indépendant ? Supprimer son ancien MFA le déconnectera et imposera une nouvelle configuration.'))return;
     try{
       const auth=client();if(!auth)throw new Error('Session administrateur requise.');
       const {data,error}=await auth.functions.invoke('admin-mfa-policy',{body:{action:'reset',target_user_id:targetUserId,reason:reason.trim(),identity_confirmed:true}});
@@ -92,6 +91,29 @@
       window.showToast?.('MFA réinitialisé. Nouvelle configuration obligatoire à la connexion.','ok');
       void window.renderUsers?.();
     }catch(error){window.showToast?.(error.message,'err');}
+  }
+  function requestResetReason(){
+    if(document.getElementById('mfaResetDialog'))return Promise.resolve(null);
+    const previousFocus=document.activeElement;
+    return new Promise(resolve=>{
+      const dialog=document.createElement('dialog');dialog.id='mfaResetDialog';
+      dialog.setAttribute('aria-labelledby','mfaResetTitle');
+      dialog.style.cssText='max-width:480px;width:calc(100% - 32px);border:1px solid var(--border);border-radius:12px;padding:24px;background:var(--surface,#fff);color:var(--tx,#111);margin:auto';
+      dialog.innerHTML='<form><h2 id="mfaResetTitle">Réinitialiser le MFA</h2><p>Cette opération supprime les facteurs actuels et impose une nouvelle configuration. Ne saisissez aucun secret.</p><label for="mfaResetReason">Motif (10 à 300 caractères)</label><textarea id="mfaResetReason" minlength="10" maxlength="300" required style="display:block;width:100%;box-sizing:border-box;margin:12px 0" rows="3"></textarea><label><input id="mfaResetIdentity" type="checkbox" required> J’ai vérifié l’identité de cet utilisateur par un canal indépendant.</label><div style="display:flex;gap:12px;margin-top:20px"><button type="button" id="mfaResetCancel" class="btn btn-outline">Annuler</button><button type="submit" class="btn btn-gold">Confirmer la réinitialisation</button></div></form>';
+      const finish=value=>{dialog.remove();previousFocus?.focus?.();resolve(value);};
+      dialog.querySelector('#mfaResetCancel').addEventListener('click',()=>finish(null));
+      dialog.addEventListener('cancel',event=>{event.preventDefault();finish(null);});
+      dialog.querySelector('form').addEventListener('submit',event=>{
+        event.preventDefault();
+        const field=dialog.querySelector('#mfaResetReason');
+        const reason=field.value.trim();
+        field.setCustomValidity(reason.length<10?'Indiquez un motif de 10 à 300 caractères.':'');
+        if(!dialog.querySelector('form').reportValidity())return;
+        finish(reason);
+      });
+      dialog.querySelector('#mfaResetReason').addEventListener('input',event=>event.target.setCustomValidity(''));
+      document.body.appendChild(dialog);dialog.showModal();dialog.querySelector('textarea').focus();
+    });
   }
   window.OnomoMfa={enforce,setRequired,reset};
 })();

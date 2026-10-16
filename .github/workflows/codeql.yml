@@ -1,0 +1,32 @@
+name: CodeQL
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, security/onomo-audit-20261014]
+permissions:
+  contents: read
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@f3c49fd1ef3281abc41069b3dd22807a60c963f6 # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@f3c49fd1ef3281abc41069b3dd22807a60c963f6 # v4
+        with:
+          category: /language:${{ matrix.language }}

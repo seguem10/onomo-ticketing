@@ -1,0 +1,10 @@
+const fs=require('node:fs');const path=require('node:path');const crypto=require('node:crypto');const {execFileSync,spawnSync}=require('node:child_process');
+const inspect=name=>JSON.parse(execFileSync('docker',['inspect',name],{encoding:'utf8'}))[0];const vars=c=>Object.fromEntries(c.Config.Env.map(x=>{const at=x.indexOf('=');return [x.slice(0,at),x.slice(at+1)];}));
+const auth=vars(inspect('onomo-recipe-auth')),db=vars(inspect('onomo-recipe-db'));
+const file=path.resolve(__dirname,'../../onomo-security-local/compose.auth-recipe.json'),config=JSON.parse(fs.readFileSync(file,'utf8'));
+config.services.realtime={image:'public.ecr.aws/supabase/realtime:v2.130.0',container_name:'realtime-dev.onomo-recipe-realtime',ports:['127.0.0.1:65436:4000'],environment:{PORT:'4000',DB_HOST:'db',DB_PORT:'5432',DB_USER:'supabase_admin',DB_PASSWORD:'${RECIPE_DB_PASSWORD}',DB_NAME:'postgres',DB_AFTER_CONNECT_QUERY:'SET search_path TO _realtime',DB_ENC_KEY:'${RECIPE_REALTIME_ENC}',API_JWT_SECRET:'${RECIPE_JWT_SECRET}',SECRET_KEY_BASE:'${RECIPE_REALTIME_SECRET}',METRICS_JWT_SECRET:'${RECIPE_JWT_SECRET}',ERL_AFLAGS:'-proto_dist inet_tcp',ERL_FLAGS:'+S 2:2',DNS_NODES:"''",RLIMIT_NOFILE:'10000',APP_NAME:'realtime',SEED_SELF_HOST:'true',RUN_JANITOR:'true',DISABLE_HEALTHCHECK_LOGGING:'true'}};
+fs.writeFileSync(file,JSON.stringify(config,null,2));
+const result=spawnSync('docker',['compose','-f',file,'up','-d','--no-deps','realtime'],{encoding:'utf8',env:{...process.env,RECIPE_DB_PASSWORD:db.POSTGRES_PASSWORD,RECIPE_JWT_SECRET:auth.GOTRUE_JWT_SECRET,RECIPE_REALTIME_ENC:crypto.randomBytes(8).toString('hex'),RECIPE_REALTIME_SECRET:crypto.randomBytes(48).toString('hex'),RECIPE_ANON_KEY:'unused-for-this-service',RECIPE_SERVICE_KEY:'unused-for-this-service'}});
+if(result.status!==0){console.error('Local Realtime startup failed; sensitive output suppressed');process.exit(1);}
+for(const bindings of Object.values(inspect('realtime-dev.onomo-recipe-realtime').HostConfig.PortBindings||{}))for(const b of bindings)if(b.HostIp!=='127.0.0.1')throw new Error('Realtime not loopback');
+console.log('Realtime started on 127.0.0.1:65436; health and subscriptions still to test.');
