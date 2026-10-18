@@ -22,6 +22,11 @@
     window.__onomoUsersView=!!active;
   }
   const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+  function emailTestAcceptedMessage(data){
+    if(data?.ok!==true||data?.accepted!==true||typeof data.recipient!=='string'||!data.recipient.trim())throw new Error('Test email non confirmé');
+    const provider=data.provider==='microsoft365'?'Microsoft 365':data.provider==='emailjs'?'EmailJS':'Le service email';
+    return provider+' a accepté le test vers '+data.recipient+'. La réception reste à confirmer : vérifiez votre boîte mail et les indésirables.';
+  }
   async function loadUsers(){
     let rows=getUsers().slice();
     try{
@@ -78,7 +83,7 @@
             const {data,error}=await client.functions.invoke('admin-email-self-test',{body:{}});
             if(error){let message;try{message=(await error.context?.json())?.error;}catch(_){}throw new Error(message||'Test email non confirmé');}
             if(data?.error)throw new Error(data.error);
-            window.showToast?.('EmailJS a accepté le test vers '+data.recipient+'. Vérifiez votre boîte mail et les indésirables.','ok');
+            window.showToast?.(emailTestAcceptedMessage(data),'ok');
           }catch(error){window.showToast?.(error.message,'err');}finally{button.disabled=false;}
         });create.parentElement.appendChild(button);}
     }
