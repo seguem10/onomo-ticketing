@@ -2935,166 +2935,22 @@ function renderSettings(){
       <!-- Fonctionnalités -->
       <div class="settings-section">
         <div class="settings-title"><i class="ti ti-toggle-right"></i>Fonctionnalités</div>
-        <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Analyse IA des tickets</div><div class="setting-desc">Utilise Claude (Anthropic) via une Edge Function Supabase pour suggérer priorité, catégorie et actions. <strong>Avant d'activer :</strong> déployez <code>supabase/functions/ai-ticket-analysis</code> et configurez le secret <code>ANTHROPIC_API_KEY</code> (voir le fichier de la fonction pour les instructions).</div></div><button class="toggle${settings.aiEnabled?" on":""}" id="tAI" onclick="toggleSetting('aiEnabled','tAI')"></button></div>
+        <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Analyse IA des tickets</div><div class="setting-desc">Aide à analyser les demandes et à suggérer leur catégorie et leur priorité.</div></div><button class="toggle${settings.aiEnabled?" on":""}" id="tAI" onclick="toggleSetting('aiEnabled','tAI')"></button></div>
         <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Notifications email</div><div class="setting-desc">Envoyer un email à l'agent lors d'une assignation</div></div><button class="toggle${settings.emailNotify?" on":""}" id="tEmail" onclick="toggleSetting('emailNotify','tEmail')"></button></div>
         <div class="setting-row"><div class="setting-info"><div class="setting-lbl">Auto-assignation</div><div class="setting-desc">Assigner automatiquement les tickets à l'agent disponible de l'hôtel</div></div><button class="toggle${settings.autoAssign?" on":""}" id="tAuto" onclick="toggleSetting('autoAssign','tAuto')"></button></div>
       </div>
-      <!-- E-mail delivery — admin uniquement -->
-      ${currentUser.role==="admin" ? `
       <div class="settings-section">
-        <div class="settings-title"><i class="ti ti-mail"></i>Notifications e-mail sécurisées</div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.8">
-          Les notifications sont envoyées uniquement par la fonction sécurisée Supabase. Les identifiants EmailJS, Resend ou SMTP sont conservés dans les secrets serveur et ne sont jamais affichés dans le navigateur.
+        <div class="settings-title"><i class="ti ti-database"></i>Services de l’application</div>
+        <div class="alert ${sbConnected?'alert-info':'alert-warn'}">
+          <i class="ti ti-${sbConnected?'circle-check':'info-circle'}"></i>
+          ${sbConnected?'Connexion aux données configurée':'Connexion aux données non configurée'}
         </div>
-        <div style="font-size:11px;color:var(--tx2)">
-          La configuration du fournisseur est gérée dans <strong>Supabase → Edge Functions → Secrets</strong>.
+        <div class="setting-desc" style="margin-top:10px">
+          La configuration technique est gérée lors du déploiement, pas depuis cette page.
+          Les notifications e-mail sont prises en charge côté serveur.
         </div>
       </div>
-      ` : ""}
-      <!-- Supabase + Stockage — admin uniquement -->
-      ${currentUser.role==="admin" ? `
-      <div class="settings-section">
-        <div class="settings-title"><i class="ti ti-database"></i>Base de données — Supabase</div>
-        ${sbConnected
-          ?`<div class="alert alert-info" style="margin-bottom:10px"><i class="ti ti-circle-check"></i>Supabase configuré — données persistées</div>`
-          :`<div class="alert alert-warn"><i class="ti ti-info-circle"></i>Mode démo — données non persistées. Configurez Supabase pour activer la persistence.</div>`}
-        <div style="background:var(--amber-l);border:1px solid rgba(217,119,6,.25);border-radius:var(--r);padding:12px;margin-bottom:14px;font-size:11px;color:var(--amber-t);line-height:1.8">
-          <strong>⚠ Pour un accès universel (tous appareils) :</strong><br>
-          Les clés ci-dessous sont sauvegardées dans ce navigateur uniquement.<br>
-          Pour que <strong>tous les appareils</strong> (téléphone, autres PC) se connectent automatiquement,<br>
-          il faut éditer le fichier <strong>index.html</strong> directement et remplir les deux lignes :<br>
-          <code style="background:rgba(0,0,0,0.1);padding:2px 6px;border-radius:3px;font-size:10px">const SUPABASE_URL = "https://xxxx.supabase.co";</code><br>
-          <code style="background:rgba(0,0,0,0.1);padding:2px 6px;border-radius:3px;font-size:10px">const SUPABASE_KEY = "sb_publishable_...";</code><br>
-          Ces lignes sont au début du JavaScript dans le fichier (vers la ligne 880).
-        </div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.8">
-          <strong style="color:var(--tx)">Où trouver ces infos dans Supabase :</strong><br>
-          1. <strong>app.supabase.com</strong> → projet <strong>ticketing-hotel</strong> → bouton <strong>Connect / Copy</strong> → <strong>Project URL</strong><br>
-          2. <strong>Settings → API → Publishable key</strong> → copier <strong>sb_publishable_...</strong>
-        </div>
-        <div class="form-g" style="margin-top:12px">
-          <label class="field-lbl">URL du projet Supabase</label>
-          <input id="sSbUrl" class="field-ctrl" value="${esc(settings.sbUrl)}" placeholder="https://aljnwqrjplqvehctsdqj.supabase.co">
-          <div style="font-size:10px;color:var(--tx3);margin-top:3px">Format : https://xxxxxxxxxxxx.supabase.co</div>
-        </div>
-        <div class="form-g">
-          <label class="field-lbl">Clé API (Publishable key ou anon key)</label>
-          <input id="sSbKey" class="field-ctrl" value="${esc(settings.sbKey)}" placeholder="sb_publishable_... ou eyJhbGci...">
-          <div style="font-size:10px;color:var(--tx3);margin-top:3px">Prendre la <strong>Publishable key</strong> (sb_publishable_...) dans Settings → API</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-gold btn-sm" onclick="saveSbConfig()"><i class="ti ti-plug"></i>Sauvegarder</button>
-          <button class="btn btn-outline btn-sm" id="sbTestBtn" onclick="testSupabaseConnection()"><i class="ti ti-wifi"></i>Tester la connexion</button>
-          <span id="sbTestResult" style="font-size:11px"></span>
-        </div>
-        <hr class="divider">
-        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--tx)">SQL d'initialisation — à exécuter une seule fois dans Supabase SQL Editor</div>
-        <div class="code-box">-- ══════════════════════════════════════════
--- TICKETS
--- ══════════════════════════════════════════
-create table if not exists tickets (
-  id uuid default gen_random_uuid() primary key,
-  numero text unique not null,
-  titre text not null,
-  description text,
-  hotel text not null,
-  categorie text not null,
-  priorite text not null,
-  statut text default 'nouveau',
-  role_source text,
-  assigne_a text,
-  created_at timestamptz default now()
-);
--- ══════════════════════════════════════════
--- COMMENTAIRES
--- ══════════════════════════════════════════
-create table if not exists commentaires (
-  id uuid default gen_random_uuid() primary key,
-  ticket_id uuid references tickets(id) on delete cascade,
-  auteur text not null,
-  message text not null,
-  created_at timestamptz default now()
-);
--- ══════════════════════════════════════════
--- UTILISATEURS (comptes IT + admin)
--- ══════════════════════════════════════════
-create table if not exists utilisateurs (
-  id text primary key,
-  email text unique not null,
-  pwd text not null,
-  prenom text,
-  nom text,
-  role text not null default 'it_hotel',
-  hotel text,
-  hotels jsonb default '[]',
-  must_change_password boolean default true,
-  mfa_enabled boolean default false,
-  mfa_secret text,
-  last_login timestamptz,
-  created_at timestamptz default now()
-);
--- ══════════════════════════════════════════
--- HOTELS
--- ══════════════════════════════════════════
-create table if not exists hotels (
-  id text primary key,
-  nom text unique not null,
-  ville text,
-  pays text,
-  code text,
-  email text,
-  created_at timestamptz default now()
-);
--- ══════════════════════════════════════════
--- RLS — accès public (fichier HTML servi localement)
--- ══════════════════════════════════════════
-alter table tickets enable row level security;
-create policy "allow_all" on tickets for all using (true) with check (true);
-alter table commentaires enable row level security;
-create policy "allow_all" on commentaires for all using (true) with check (true);
-alter table utilisateurs enable row level security;
-create policy "allow_all" on utilisateurs for all using (true) with check (true);
-alter table hotels enable row level security;
-create policy "allow_all" on hotels for all using (true) with check (true);</div>
-      </div>
-      <!-- Stockage local info — admin uniquement -->
-      <div class="settings-section">
-        <div class="settings-title"><i class="ti ti-device-floppy"></i>Stockage local (mode NAS)</div>
-        <div style="font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.7">
-          Sans Supabase, toutes les données sont stockées dans le <strong>localStorage</strong> du navigateur du NAS ou du serveur qui héberge la page.<br>
-          Pour un vrai déploiement multi-utilisateurs sur NAS, servez ce fichier avec <strong>Nginx ou Apache</strong> — chaque utilisateur conserve ses propres données en local.
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-          <div class="kpi-card"><div class="kpi-lbl">Tickets</div><div class="kpi-val" id="stTickets">—</div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Utilisateurs</div><div class="kpi-val" id="stUsers">—</div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Commentaires</div><div class="kpi-val" id="stComments">—</div></div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-outline btn-sm" onclick="exportAllData()"><i class="ti ti-download"></i>Exporter sauvegarde JSON</button>
-          <label class="btn btn-outline btn-sm" style="cursor:pointer"><i class="ti ti-upload"></i>Importer sauvegarde <input type="file" accept=".json" style="display:none" onchange="importData(this)"></label>
-          ${currentUser.role==="admin"?`
-          <button class="btn btn-sm" style="background:var(--amber-l);color:var(--amber-t);border:1px solid rgba(217,119,6,.2)" onclick="resetAllData()"><i class="ti ti-refresh"></i>Réinitialiser les tickets</button>
-          <button class="btn btn-danger btn-sm" onclick="resetEverything()"><i class="ti ti-trash"></i>Tout effacer</button>`:""}
-        </div>
-      </div>
-      ` : `
-      <div class="settings-section">
-        <div style="display:flex;align-items:center;gap:10px;padding:6px 0">
-          <i class="ti ti-database" style="font-size:18px;color:var(--tx3)"></i>
-          <div>
-            <div style="font-size:12px;font-weight:500;color:var(--tx)">Base de données</div>
-            <div style="font-size:11px;color:var(--tx3);margin-top:2px">${sbOK()?'<span style="color:var(--green-t)"><i class="ti ti-circle-check"></i> Supabase connecté</span>':'Non configuré'}</div>
-          </div>
-        </div>
-      </div>
-      `}
     </div>`;
-  // Fill storage stats
-  setTimeout(()=>{
-    const st=document.getElementById("stTickets");if(st)st.textContent=tickets.length;
-    const su=document.getElementById("stUsers");if(su)su.textContent=DEMO_USERS.length;
-    const sc=document.getElementById("stComments");if(sc)sc.textContent=commentaires.length;
-  },50);
 }
 function selectColor(color,el){
   settings.brandColor=color;
@@ -3245,12 +3101,6 @@ function toggleSetting(key,btnId){
   settings[key]=!settings[key];
   const btn=document.getElementById(btnId);if(btn){btn.classList.toggle("on",settings[key]);}
   saveSettings();showToast(settings[key]?"Activé":"Désactivé","ok");
-}
-function saveSbConfig(){
-  settings.sbUrl=(document.getElementById("sSbUrl")?.value||"").trim().replace(/\/$/,"");
-  settings.sbKey=(document.getElementById("sSbKey")?.value||"").trim();
-  saveSettings();
-  showToast("Configuration sauvegardée — cliquez Tester pour vérifier","ok");
 }
 
 /* ══════════════════════════════════════════════
