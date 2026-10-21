@@ -11,8 +11,8 @@ test('CSP permits only exact inline bytes and reviewed script CDN path', () => {
   assert.equal(src, 'script-src ' + scriptSources(html));
   assert.ok(!src.includes("'unsafe-inline'"));
   assert.ok(!src.includes("'unsafe-eval'"));
-  assert.ok(src.includes(supabaseScript));
-  assert.ok(!src.split(' ').includes('https://cdn.jsdelivr.net'));
+  const remoteSources=src.split(' ').filter(token=>/^https?:\/\//.test(token)).map(token=>new URL(token).href);
+  assert.deepEqual(remoteSources,[new URL(supabaseScript).href]);
   assert.equal(harden(policy, html), policy);
   assert.ok(policy.includes("script-src-attr 'unsafe-inline'"), 'known legacy handler exception remains explicit');
 });
@@ -22,4 +22,5 @@ test('changing inline script changes the hash, injected scripts are not implicit
   assert.throws(() => scriptSources('<script src="https://cdn.jsdelivr.net/npm/unreviewed/index.js"></script>'));
   assert.equal(scriptSources('<script>x()</script><!-- <script>evil()</script> -->'), scriptSources('<script>x()</script>'));
   assert.notEqual(scriptSources('<script>const html=`<!-- preserve -->`;</script>'), scriptSources('<script>const html=``;</script>'));
+  assert.equal(scriptSources('<script>x()</script\t\n bar>'),scriptSources('<script>x()</script>'));
 });

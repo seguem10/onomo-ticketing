@@ -9,7 +9,7 @@ function scriptSources(html) {
   const hashes = [];
   // Match complete scripts before looking for the next HTML comment. Comments
   // inside JavaScript template strings are part of the hash, not HTML comments.
-  for (const match of normalized.matchAll(/<!--[\s\S]*?-->|<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
+  for (const match of normalized.matchAll(/<!--[\s\S]*?-->|<script\b([^>]*)>([\s\S]*?)<\/script(?:[\t\n\f\r /][^>]*)?>/gi)) {
     if (match[1] === undefined) continue;
     const attrs = match[1];
     if (/\bsrc\s*=/i.test(attrs)) {
