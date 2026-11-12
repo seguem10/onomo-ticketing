@@ -1,7 +1,7 @@
 /* PWA update coordinator: one root worker, immediate activation and one safe reload per build. */
 (function(){
   'use strict';
-  const BUILD='20261112-login-fixes-1';
+  const BUILD='20261112-sw-load-1';
   const RELOAD_KEY='onomo_pwa_reloaded_build';
 
   const hideInstallPrompt=()=>{
@@ -18,7 +18,7 @@
     return refreshing;
   }
 
-  async function doRefreshWorker(){
+  async function doRefreshWorker(attempt=0){
     try{
       const registrations=await navigator.serviceWorker.getRegistrations();
       /* Old releases used onomo-sw.js. It has the same scope and can retain
@@ -39,7 +39,17 @@
         const worker=registration.installing;
         worker?.addEventListener('statechange',()=>{if(worker.state==='installed')activateWaiting();});
       });
-    }catch(error){console.warn('Mise à jour PWA indisponible',error);}
+    }catch(error){
+      /* Chrome rejects with InvalidStateError when the update job races the
+         page load or another tab's update. It is transient: retry once later
+         and stay quiet, since the worker keeps serving the current build. */
+      if(error?.name==='InvalidStateError'){
+        if(attempt<1){await new Promise(resolve=>setTimeout(resolve,5000));return doRefreshWorker(attempt+1);}
+        console.debug('Mise à jour PWA reportée',error);
+        return;
+      }
+      console.warn('Mise à jour PWA indisponible',error);
+    }
   }
 
   function reloadAfterWorkerChange(){
@@ -62,5 +72,7 @@
   }
 
   window.OnomoPwaUpdate={refresh:refreshWorker,build:BUILD};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+  // Register after the page has fully loaded so the worker update does not
+  // compete with the initial navigation (recommended by the SW lifecycle docs).
+  if(document.readyState==='complete')start();else window.addEventListener('load',start,{once:true});
 })();
