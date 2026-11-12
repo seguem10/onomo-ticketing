@@ -1,7 +1,7 @@
 /* PWA update coordinator: one root worker, immediate activation and one safe reload per build. */
 (function(){
   'use strict';
-  const BUILD='20260925-8';
+  const BUILD='20261112-login-fixes-1';
   const RELOAD_KEY='onomo_pwa_reloaded_build';
 
   const hideInstallPrompt=()=>{
@@ -9,20 +9,30 @@
     if(installed)document.getElementById('pwaInstallBar')?.classList.remove('show');
   };
 
-  async function refreshWorker(){
-    if(!('serviceWorker' in navigator))return;
+  let refreshing=null;
+  function refreshWorker(){
+    if(!('serviceWorker' in navigator))return Promise.resolve();
+    /* Overlapping refreshes (load + visibilitychange) made update() run while
+       another registration step was in progress, which throws InvalidStateError. */
+    if(!refreshing)refreshing=doRefreshWorker().finally(()=>{refreshing=null;});
+    return refreshing;
+  }
+
+  async function doRefreshWorker(){
     try{
       const registrations=await navigator.serviceWorker.getRegistrations();
+      /* Old releases used onomo-sw.js. It has the same scope and can retain
+         obsolete assets, so retire it explicitly before installing the sole
+         canonical worker. */
       await Promise.all(registrations.map(registration=>{
         const scriptUrl=registration.active?.scriptURL||registration.waiting?.scriptURL||registration.installing?.scriptURL||'';
-        /* Old releases used onomo-sw.js. It has the same scope and can retain
-           obsolete assets, so retire it explicitly before installing the sole
-           canonical worker. */
-        if(scriptUrl.includes('/onomo-sw.js'))return registration.unregister();
-        return registration.update();
+        return scriptUrl.includes('/onomo-sw.js')?registration.unregister().catch(()=>false):null;
       }));
 
+      // register() already checks for a new worker version; only call update()
+      // on an idle, active registration to avoid InvalidStateError.
       const registration=await navigator.serviceWorker.register('/service-worker.js',{scope:'/',updateViaCache:'none'});
+      if(registration.active&&!registration.installing)await registration.update().catch(()=>{});
       const activateWaiting=()=>registration.waiting?.postMessage({type:'SKIP_WAITING'});
       activateWaiting();
       registration.addEventListener('updatefound',()=>{

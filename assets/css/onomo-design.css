@@ -5063,9 +5063,10 @@ html[dir="rtl"] #loginScreen .login-logo{
 html[dir="rtl"] #loginScreen .login-tagline{
   text-align:right!important;
 }
-html[dir="rtl"] #loginScreen .pwd-wrap button{
+html[dir="rtl"] #loginScreen .pwd-wrap button,
+html[dir="rtl"] #loginScreen .input-wrap .eye-btn{
   right:auto!important;
-  left:10px!important;
+  left:13px!important;
 }
 html[dir="rtl"] #loginScreen .form-ctrl{
   padding-right:12px!important;
