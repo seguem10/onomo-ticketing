@@ -184,7 +184,8 @@
   /* Supabase is the only source of truth in production.  Keep no ticket,
      comment or profile copy in persistent browser storage: shared hotel
      workstations must not expose a previous user's data after logout. */
-  const LOCAL_DATA_KEYS=['dh_tickets','dh_comments','dh_users','dh_hotels'];
+  // Includes legacy profile-bearing keys from older builds (shared hotel PCs).
+  const LOCAL_DATA_KEYS=['dh_tickets','dh_comments','dh_users','dh_hotels','dh_user','dh_current_user','currentUser'];
   const purgeConnectedBrowserCache=()=>{
     if(!hasAuthConfiguration())return;
     try{
@@ -462,10 +463,23 @@
     }catch(error){console.warn('Restauration locale impossible',error);}
   }
 
+  /* Supabase returns English technical messages; map the known cases to the
+     user's language and never show a raw provider message on the login page. */
+  function loginErrorMessage(error){
+    const code=String(error?.code||''),text=String(error?.message||'').toLowerCase();
+    if(code==='no_profile')return t('login_no_profile','Aucun profil n’est lié à ce compte. Contactez l’administrateur.');
+    if(code==='invalid_credentials'||text.includes('invalid login credentials'))return t('invalid_credentials','Email ou mot de passe incorrect.');
+    if(code==='email_not_confirmed'||text.includes('email not confirmed'))return t('email_not_confirmed','Votre adresse email n’est pas encore confirmée.');
+    if(error?.name==='TypeError'||text.includes('failed to fetch')||text.includes('network'))return t('login_network_error','Connexion au serveur impossible. Vérifiez votre réseau puis réessayez.');
+    return t('invalid_credentials','Email ou mot de passe incorrect.');
+  }
+
   const previousLogin=window.doLogin;
   if(typeof previousLogin==='function'){
     window.doLogin=async function(){
       const email=document.getElementById('loginEmail')?.value.trim().toLowerCase(),pwd=document.getElementById('loginPwd')?.value||'';
+      const showLoginError=text=>{const err=document.getElementById('loginErr'),msg=document.getElementById('loginErrMsg');if(err&&msg){msg.textContent=text;err.classList.add('show');}};
+      if(!email||!pwd){showLoginError(t('login_required','Veuillez saisir votre email et votre mot de passe.'));return false;}
       const client=await waitForAuthClient();
       if(client&&email&&pwd){
         releaseLegacyLoginLock(email);
@@ -490,17 +504,15 @@
               touch();
               return true;
             }
-            throw new Error('Aucun profil utilisateurs lié à ce compte Supabase.');
+            const noProfile=new Error('Aucun profil utilisateurs lié à ce compte Supabase.');noProfile.code='no_profile';throw noProfile;
           }
         }catch(error){
           console.warn('Supabase Auth login échoué:',error.message||error);
-          const err=document.getElementById('loginErr'),msg=document.getElementById('loginErrMsg');
-          if(err&&msg){msg.textContent=error.message||'Connexion Supabase impossible.';err.classList.add('show');}
+          showLoginError(loginErrorMessage(error));
           return false;
         }
       }
-      const err=document.getElementById('loginErr'),msg=document.getElementById('loginErrMsg');
-      if(err&&msg){msg.textContent=t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.');err.classList.add('show');}
+      showLoginError(t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.'));
       return false;
     };
   }
