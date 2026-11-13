@@ -124,19 +124,10 @@
     }
     return client;
   }
-  function releaseLegacyLoginLock(email){
-    /* Older builds counted every temporary SDK/network failure as a bad
-       password and stored a device-only lock. Once the real Supabase client
-       is available, that stale browser marker must never block an account. */
-    try{
-      const all=JSON.parse(localStorage.getItem('onomo_login_guard')||'{}');
-      if(!all||typeof all!=='object')return;
-      const key=String(email||'').trim().toLowerCase();
-      if(key&&Object.prototype.hasOwnProperty.call(all,key)){
-        delete all[key];
-        localStorage.setItem('onomo_login_guard',JSON.stringify(all));
-      }
-    }catch(_){ }
+  function releaseLegacyLoginLock(){
+    /* Older builds stored a device-only attempt counter. Login throttling is
+       now enforced by Supabase Auth rate limits, so drop the stale marker. */
+    try{localStorage.removeItem('onomo_login_guard');}catch(_){ }
   }
 
   /* The original shell predates Supabase Auth and falls back to browser data
@@ -482,7 +473,7 @@
       if(!email||!pwd){showLoginError(t('login_required','Veuillez saisir votre email et votre mot de passe.'));return false;}
       const client=await waitForAuthClient();
       if(client&&email&&pwd){
-        releaseLegacyLoginLock(email);
+        releaseLegacyLoginLock();
         try{
           const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
           if(error)throw error;
