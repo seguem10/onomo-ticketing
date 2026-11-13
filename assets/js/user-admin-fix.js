@@ -23,9 +23,9 @@
   }
   const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
   function emailTestAcceptedMessage(data){
-    if(data?.ok!==true||data?.accepted!==true||typeof data.recipient!=='string'||!data.recipient.trim())throw new Error('Test email non confirmé');
-    const provider=data.provider==='microsoft365'?'Microsoft 365':data.provider==='emailjs'?'EmailJS':'Le service email';
-    return provider+' a accepté le test vers '+data.recipient+'. La réception reste à confirmer : vérifiez votre boîte mail et les indésirables.';
+    if(data?.ok!==true||data?.accepted!==true||typeof data.recipient!=='string'||!data.recipient.trim())throw new Error(t('email_test_unconfirmed','Test email non confirmé'));
+    const provider=data.provider==='microsoft365'?'Microsoft 365':data.provider==='emailjs'?'EmailJS':t('email_service','Le service email');
+    return t('email_test_accepted','{provider} a accepté le test vers {recipient}. La réception reste à confirmer : vérifiez votre boîte mail et les indésirables.').replace('{provider}',provider).replace('{recipient}',data.recipient);
   }
   async function loadUsers(){
     let rows=getUsers().slice();
@@ -51,13 +51,13 @@
       const id=esc(u.id||''),target=esc(u.auth_user_id||u.id||'');
       const name=[u.prenom,u.nom].filter(Boolean).join(' ')||u.email||t('user','Utilisateur');
       const role=roleValues(u)[0]||u.role||'—';
-      const hotelScope=u.hotel||(Array.isArray(u.hotels)&&u.hotels.length?u.hotels.join(', '):(['admin','direction'].includes(u.role)?t('all_hotels','Tous les hôtels'):'Aucun hôtel assigné'));
-      const security=u.mfa_enabled?'MFA obligatoire':t('standard','Standard');
+      const hotelScope=u.hotel||(Array.isArray(u.hotels)&&u.hotels.length?u.hotels.join(', '):(['admin','direction'].includes(u.role)?t('all_hotels','Tous les hôtels'):t('no_hotel_assigned_short','Aucun hôtel assigné')));
+      const security=u.mfa_enabled?t('mfa_required','MFA obligatoire'):t('standard','Standard');
       let actions='';
       if(admin){
-        actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.reset(\''+target+'\')">Réinitialiser MFA</button> ';
+        actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.reset(\''+target+'\')">'+t('reset_mfa','Réinitialiser MFA')+'</button> ';
         if(typeof window.openEditUser==='function')actions+='<button class="btn btn-outline btn-sm" onclick="openEditUser(\''+id+'\')"><i class="ti ti-edit"></i>'+t('edit','Modifier')+'</button> ';
-        actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.setRequired(\''+target+'\','+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+ (u.mfa_enabled?'Retirer MFA':'Exiger MFA')+'</button> ';
+        actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.setRequired(\''+target+'\','+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+ (u.mfa_enabled?t('remove_mfa','Retirer MFA'):t('require_mfa','Exiger MFA'))+'</button> ';
         if(typeof window.deleteUser==='function')actions+='<button class="btn btn-danger btn-sm" onclick="deleteUser(\''+id+'\')"><i class="ti ti-trash"></i></button>';
       }
       return '<tr><td data-label="'+esc(t('user','Utilisateur'))+'" style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td data-label="'+esc(t('role','Rôle'))+'" style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td data-label="'+esc(t('hotel','Hôtel'))+'" style="'+cell+'">'+esc(hotelScope)+'</td>'+(admin?'<td data-label="'+esc(t('account_security','Sécurité'))+'" style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td class="user-actions" style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
@@ -75,13 +75,13 @@
     document.getElementById('usersRefreshBtn')?.addEventListener('click',render);
     if(isAdmin()){
       const create=document.getElementById('usersCreateBtn');
-      if(create){const button=document.createElement('button');button.type='button';button.className='btn btn-outline btn-sm';button.textContent='Tester mon email';
+      if(create){const button=document.createElement('button');button.type='button';button.className='btn btn-outline btn-sm';button.textContent=t('test_my_email','Tester mon email');
         button.addEventListener('click',async()=>{
-          if(!confirm('Envoyer TEST-NOTIFICATION uniquement à l’adresse de votre compte administrateur connecté ? Aucun ticket ne sera créé.'))return;
+          if(!confirm(t('email_test_confirm','Envoyer TEST-NOTIFICATION uniquement à l’adresse de votre compte administrateur connecté ? Aucun ticket ne sera créé.')))return;
           button.disabled=true;
-          try{const client=window.OnomoAuth?.getClient?.();if(!client)throw new Error('Session requise');
+          try{const client=window.OnomoAuth?.getClient?.();if(!client)throw new Error(t('session_required','Session requise'));
             const {data,error}=await client.functions.invoke('admin-email-self-test',{body:{}});
-            if(error){let message;try{message=(await error.context?.json())?.error;}catch(_){}throw new Error(message||'Test email non confirmé');}
+            if(error){let message;try{message=(await error.context?.json())?.error;}catch(_){}throw new Error(message||t('email_test_unconfirmed','Test email non confirmé'));}
             if(data?.error)throw new Error(data.error);
             window.showToast?.(emailTestAcceptedMessage(data),'ok');
           }catch(error){window.showToast?.(error.message,'err');}finally{button.disabled=false;}
@@ -89,7 +89,7 @@
     }
     if(isAdmin()&&window.OnomoRosterImport){
       const create=document.getElementById('usersCreateBtn');
-      if(create){const button=document.createElement('button');button.type='button';button.id='usersRosterImportBtn';button.className='btn btn-outline btn-sm';button.textContent='Importer la liste IT';button.addEventListener('click',()=>window.OnomoRosterImport.run());create.parentElement.appendChild(button);}
+      if(create){const button=document.createElement('button');button.type='button';button.id='usersRosterImportBtn';button.className='btn btn-outline btn-sm';button.textContent=t('import_it_roster','Importer la liste IT');button.addEventListener('click',()=>window.OnomoRosterImport.run());create.parentElement.appendChild(button);}
     }
     document.getElementById('usersCreateBtn')?.addEventListener('click',()=>{if(typeof window.openModalUser==='function')window.openModalUser();else window.showToast?.(t('user_form_unavailable','Formulaire utilisateur indisponible.'),'err');});
     const search=document.getElementById('searchInput');if(search){search.oninput=()=>{window.searchQ=search.value;loadUsers().then(r=>{const box=document.getElementById('usersPageList');if(box)box.innerHTML=renderRows(r);});};}
