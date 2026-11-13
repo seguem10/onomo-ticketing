@@ -129,9 +129,8 @@
   }
   window.addEventListener('hashchange',applyHashRoute);
   const originalInit=window.initSession;window.initSession=function(){effectivePermissions=null;originalInit();applyAccess();void loadMyPermissions();if(!isPower(currentUser))switchView('tickets',document.querySelector('[data-view="tickets"]'));setTimeout(applyHashRoute,0);};
-  const loginGuard={key:'onomo_login_guard',maxAttempts:5,lockMinutes:15,read(){try{return JSON.parse(localStorage.getItem(this.key)||'{}')}catch(_){return{}}},write(value){localStorage.setItem(this.key,JSON.stringify(value))},locked(email){const entry=this.read()[email];return entry?.until&&Date.now()<entry.until},failure(email){const all=this.read(),entry=all[email]||{count:0};entry.count++;if(entry.count>=this.maxAttempts){entry.until=Date.now()+this.lockMinutes*60000;entry.count=0;}all[email]=entry;this.write(all);return entry.until},success(email){const all=this.read();delete all[email];this.write(all)}};
-  const originalLogin=window.doLogin;window.doLogin=async function(){const email=document.getElementById('loginEmail')?.value.trim().toLowerCase();if(loginGuard.locked(email)){const err=document.getElementById('loginErr');document.getElementById('loginErrMsg').textContent=window.OnomoI18n?.t('login_locked')||'Trop de tentatives. Réessayez dans quelques minutes.';err?.classList.add('show');return;}await originalLogin();const failed=document.getElementById('loginErr')?.classList.contains('show');if(failed&&email&&document.getElementById('loginPwd')?.value)loginGuard.failure(email);else if(currentUser){loginGuard.success(email);sessionStorage.setItem('onomo_session_started',String(Date.now()));}};
-  const originalLogout=window.doLogout;window.doLogout=function(){sessionStorage.removeItem('onomo_session_started');return originalLogout();};
+  /* Login throttling is enforced server-side by Supabase Auth rate limits;
+     the former browser-only attempt counter was never reached and was removed. */
   // The authoritative 15-minute, user-activity-based timeout lives in
   // runtime-sync.js. Do not retain the legacy fixed eight-hour timer here.
   window.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();});
