@@ -33,3 +33,7 @@ verify_jwt = false
 enabled = true
 verify_jwt = true
 
+
+[functions.admin-delete-user]
+enabled = true
+verify_jwt = true
