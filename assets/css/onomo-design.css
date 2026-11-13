@@ -6109,6 +6109,7 @@ html[dir="rtl"] .kanban-col-hdr{
 @media (max-width:899px){
   .report-section .ticket-table td{text-align:left!important}
   .report-section .ticket-table td[data-label]::before{display:block!important;margin-bottom:3px}
+  .report-section .ticket-table .assignee-cell{justify-content:flex-start!important}
   html[dir="rtl"] .report-section .ticket-table td,
   html[dir="rtl"] .report-section .ticket-table td[data-label]::before{text-align:right!important}
 }
