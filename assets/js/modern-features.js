@@ -172,6 +172,8 @@
     if(!userRoles(currentUser).includes('Administrateur'))return;
     if(refresh)loadRolesFromSupabase().then(()=>window.renderRoleManager(false));
     const list=roles();
+    // Rendered outside switchView: set the top bar title explicitly.
+    const title=document.getElementById('topbarTitle');if(title)title.textContent=t('roles','Rôles et permissions');
     document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-hdr"><div class="card-title">${t('roles','Rôles et permissions')}</div><button class="btn btn-gold" onclick="addCustomRole()"><i class="ti ti-plus"></i>${t('new_role','Nouveau rôle')}</button></div><div class="user-list">${list.map((role,index)=>`<div class="user-row"><div class="user-info"><div class="user-name">${esc(role.name)}</div><div class="user-email">${esc(role.permissions.join(', ')||t('no_permission','Aucune permission'))}</div></div>${role.is_system?'<span class="role-tag">'+t('system_role','Système')+'</span>':`<button class="btn btn-danger btn-sm" onclick="removeCustomRole(${index})"><i class="ti ti-trash"></i></button>`}</div>`).join('')}</div></div>`;
   };
   window.addCustomRole=async function(){

@@ -50,6 +50,8 @@
   async function render(){
     if(!isAdmin()){window.showToast?.(t('access_denied','Accès non autorisé.'),'err');return;}
     const main=document.getElementById('mainContent');if(!main)return;
+    // This view is rendered outside switchView, so it must set its own title.
+    const title=document.getElementById('topbarTitle');if(title)title.textContent=t('activity_log','Journal d’activité');
     main.innerHTML='<div class="card"><div class="card-hdr"><div><div class="card-title">'+t('activity_log','Journal d’activité')+'</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">'+t('activity_description','Actions des utilisateurs et événements du système')+'</div></div><button class="btn btn-outline btn-sm" onclick="window.renderAdminActivity()"><i class="ti ti-refresh"></i>'+t('refresh','Actualiser')+'</button></div><div id="activityList" style="padding:0 18px 18px"><div style="padding:25px;text-align:center;color:var(--tx3)">'+t('loading','Chargement...')+'</div></div></div>';
     try{
       const [activity,security]=await Promise.all([
