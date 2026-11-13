@@ -60,9 +60,9 @@
         actions+='<button class="btn btn-outline btn-sm" onclick="window.OnomoMfa?.setRequired(\''+target+'\','+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+ (u.mfa_enabled?'Retirer MFA':'Exiger MFA')+'</button> ';
         if(typeof window.deleteUser==='function')actions+='<button class="btn btn-danger btn-sm" onclick="deleteUser(\''+id+'\')"><i class="ti ti-trash"></i></button>';
       }
-      return '<tr><td style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td style="'+cell+'">'+esc(hotelScope)+'</td>'+(admin?'<td style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
+      return '<tr><td data-label="'+esc(t('user','Utilisateur'))+'" style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td data-label="'+esc(t('role','Rôle'))+'" style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td data-label="'+esc(t('hotel','Hôtel'))+'" style="'+cell+'">'+esc(hotelScope)+'</td>'+(admin?'<td data-label="'+esc(t('account_security','Sécurité'))+'" style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td class="user-actions" style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
     }).join('');
-    return '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse">'+headings+'<tbody>'+body+'</tbody></table></div>';
+    return '<div style="overflow:auto"><table class="onomo-users-table" style="width:100%;border-collapse:collapse">'+headings+'<tbody>'+body+'</tbody></table></div>';
   }
   async function render(){
     if(!isSupport()){window.showToast?.(t('access_denied','Accès non autorisé.'),'err');return;}

@@ -6089,3 +6089,27 @@ html[dir="rtl"] .kanban-col-hdr{
 .assistant-photo-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;grid-column:2/3}.assistant-photo-button{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--border);border-radius:9px;padding:8px 10px;color:var(--tx2);font-size:12px;font-weight:700;cursor:pointer}.assistant-photo-button:hover{border-color:var(--brand);color:var(--brand)}.assistant-photo-button input{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}.assistant-photo-controls>span{font-size:11px;color:var(--tx3)}.assistant-photo-tray{display:flex;flex-wrap:wrap;gap:7px;width:100%}.assistant-photo-item{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;padding:4px 6px;max-width:220px;font-size:11px;color:var(--tx2);background:var(--card)}.assistant-photo-item img{width:30px;height:30px;object-fit:cover;border-radius:5px}.assistant-photo-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.assistant-photo-item button{border:0;background:transparent;color:var(--tx3);cursor:pointer}.assistant-photo-saved{background:#f8f4e9;color:#8a5b00;text-decoration:none}.assistant-photo-saved:hover{border-color:var(--brand);color:var(--brand)}.assistant-photo-saved[aria-disabled="true"]{opacity:.62;pointer-events:none}
 @media(max-width:768px){.assistant-photo-controls{grid-column:auto}}
 .assistant-photo-analysis{display:flex;flex-basis:100%;align-items:center;flex-wrap:wrap;gap:8px;margin-top:2px}.assistant-photo-analysis .btn{min-height:34px;padding:7px 10px;font-size:12px}.assistant-photo-analysis small{color:var(--tx3);font-size:11px;line-height:1.35;max-width:500px}
+
+/* Users table: stacked cards on narrow screens so the Actions buttons stay
+   visible without horizontal scrolling. Labels come from td[data-label]. */
+@media (max-width:760px){
+  .onomo-users-table thead{display:none}
+  .onomo-users-table,.onomo-users-table tbody,.onomo-users-table tr,.onomo-users-table td{display:block;width:100%}
+  .onomo-users-table tr{padding:10px 0;border-bottom:1px solid var(--border)}
+  .onomo-users-table td{border:0!important;padding:3px 4px!important;text-align:left!important;white-space:normal!important}
+  .onomo-users-table td[data-label]::before{content:attr(data-label);display:block;font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px}
+  .onomo-users-table td:first-child::before{display:none}
+  .onomo-users-table td.user-actions{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px!important}
+  html[dir="rtl"] .onomo-users-table td{text-align:right!important}
+}
+
+/* Report tables (e.g. "Rapport par agent") reuse the mobile ticket-card
+   layout, whose right-aligned values suit ticket rows but not metric cards:
+   stack each label above its value and align both to the start. */
+@media (max-width:899px){
+  .report-section .ticket-table td{text-align:left!important}
+  .report-section .ticket-table td[data-label]::before{display:block!important;margin-bottom:3px}
+  .report-section .ticket-table .assignee-cell{justify-content:flex-start!important}
+  html[dir="rtl"] .report-section .ticket-table td,
+  html[dir="rtl"] .report-section .ticket-table td[data-label]::before{text-align:right!important}
+}
