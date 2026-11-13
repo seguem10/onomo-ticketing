@@ -616,6 +616,17 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
+  async function deleteUserByAdmin(profileId){
+    const client=getAuthClient();if(!client)throw new Error(t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.'));
+    const {data,error}=await client.functions.invoke('admin-delete-user',{body:{profile_id:profileId}});
+    if(error){
+      let detail='';
+      try{const response=error.context;const payload=response?.clone?await response.clone().json():null;if(payload&&typeof payload.error==='string')detail=payload.error;}catch(_){ }
+      throw new Error(detail||t('user_delete_failed','La suppression a échoué. Vérifiez que votre session administrateur est active puis réessayez.'));
+    }
+    if(data?.error)throw new Error(data.error);
+    return data;
+  }
   async function completeFirstLogin(password){
     const client=getAuthClient();if(!client)throw new Error('Supabase Auth indisponible');
     const {data,error}=await client.functions.invoke('complete-first-login',{body:{password}});
@@ -632,7 +643,7 @@
     const roles=[...new Set(roleValues.map(roleDatabaseName).filter(Boolean))];
     await window.sbFetch('rpc/replace_user_roles',{method:'POST',body:JSON.stringify({target_user_id:targetUserId,role_names:roles}),prefer:'return=minimal'});
   }
-  window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,completeFirstLogin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
+  window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,deleteUser:deleteUserByAdmin,completeFirstLogin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
     const s=cfg()||{};
     return {sbUrl:s.sbUrl||'',sbKey:s.sbKey||''};
   },restore:restoreSession,resumeAfterMfa};
