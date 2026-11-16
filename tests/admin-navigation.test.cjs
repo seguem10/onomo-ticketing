@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 
 const html=fs.readFileSync('index.html','utf8');
-const fn=html.match(/function adminNavigationAccess\(user\)\{.*\}\n/)[0];
+const fn=html.match(/function adminNavigationAccess\(user\)\{.*\}(?=\r?\n)/)[0];
 const adminNavigationAccess=new Function(`${fn};return adminNavigationAccess;`)();
 
 test('administrators are recognised by alias or by role label',()=>{
