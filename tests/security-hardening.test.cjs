@@ -1,5 +1,6 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
-const html=fs.readFileSync('index.html','utf8');
+// Normalise Windows line endings so code extraction works on any checkout.
+const html=fs.readFileSync('index.html','utf8').replace(/\r\n/g,'\n');
 
 test('connected UI session stores only a tab-scoped marker and purges legacy business caches',()=>{
  const runtime=fs.readFileSync('assets/js/runtime-sync.js','utf8');
