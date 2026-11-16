@@ -1489,6 +1489,7 @@ function doLogout(){
 /* ══════════════════════════════════════════════
    SESSION
 ══════════════════════════════════════════════ */
+function adminNavigationAccess(user){const values=[user?.role,...(Array.isArray(user?.roles)?user.roles:[])].filter(Boolean).map(value=>String(value).trim().toLowerCase());const admin=values.some(value=>['admin','administrateur','administrator'].includes(value));return {admin,support:admin||values.some(value=>['it regional','it_regional','it hotel','it_hotel'].includes(value))};}
 function initSession(){
   applyBrand();
   applyLogoToUI();
@@ -1512,7 +1513,11 @@ function initSession(){
   const isStaff=currentUser.role==="it_regional"||currentUser.role==="it_hotel";
   document.getElementById("sbReportSec").style.display=isDir?"block":"none";
   document.getElementById("sbMySec").style.display=isStaff?"block":"none";
-  document.getElementById("sbAdminSec").style.display=currentUser.role==="admin"?"block":"none";
+  // Profiles may store role labels ("Administrateur") instead of the old aliases.
+  const navAccess=adminNavigationAccess(currentUser);
+  document.getElementById("sbAdminSec").style.display=navAccess.admin?"block":"none";
+  const usersNav=document.querySelector('[data-view="users"]');
+  if(usersNav)usersNav.style.display=navAccess.support?"flex":"none";
   // Masquer tous les points d'entrée "Nouveau ticket" pour les comptes en lecture seule (direction)
   document.querySelectorAll('[data-requires-write="true"]').forEach(el=>{el.style.display=isReadOnly()?"none":"";});
   const btnNew=document.getElementById("btnNewTicket");
@@ -1912,10 +1917,7 @@ const VIEW_TITLES={
   roles:"Rôles et permissions","activity-log":"Journal d’activité"
 };
 function openUsersView(el){
-  const values=[currentUser?.role,...(Array.isArray(currentUser?.roles)?currentUser.roles:[])]
-    .filter(Boolean).map(value=>String(value).trim().toLowerCase());
-  const allowed=values.some(value=>['admin','administrateur','administrator','it_hotel','it hotel','it_regional','it regional'].includes(value));
-  if(!allowed){showToast("Accès non autorisé.","err");return;}
+  if(!adminNavigationAccess(currentUser).support){showToast("Accès non autorisé.","err");return;}
   currentView='users';filterStat='tous';searchQ='';
   const si=document.getElementById('searchInput');if(si)si.value='';
   document.querySelectorAll('.nav-item').forEach(item=>item.classList.remove('active'));
@@ -4607,7 +4609,6 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/i18n.js?v=20261116-audit-labels-1"></script>
 <script src="assets/js/modern-features.js?v=20261116-rh-1"></script>
 <script src="assets/js/runtime-sync.js?v=20261113-admin-delete-1"></script>
-<script src="assets/js/admin-navigation-fix.js?v=20261007-1"></script>
 <script src="assets/js/user-admin-fix.js?v=20261113-users-i18n-1"></script>
 <script src="assets/js/mfa-auth.js?v=20261116-mfa-race-1"></script>
 <script src="assets/js/assignment-scope.js?v=20261008-1"></script>
