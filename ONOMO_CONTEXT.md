@@ -24,7 +24,7 @@
 - assets/js/runtime-sync.js : synchronisation Supabase / session
 - assets/js/modern-features.js : fonctionnalités utilisateurs
 - assets/js/assignment-scope.js : liste des IT assignables (y compris pour le Demandeur)
-- assets/js/user-save-fix.js : sauvegarde utilisateurs
+- index.html (renderUsers, saveUserEdit) : page Utilisateurs et sauvegarde des modifications
 - assets/js/requester-it-list-fix.js : liste des IT pour Demandeur
 - index.html (renderMyProfile) : page Mon profil
 - assets/js/runtime-sync.js (changeMyPassword) : changement de mot de passe

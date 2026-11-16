@@ -1927,6 +1927,8 @@ function openUsersView(el){
 }
 window.openUsersView=openUsersView;
 function switchView(v,el){
+  // The users page has its own access check (support directory included).
+  if(v==="users")return openUsersView(el);
   currentView=v;filterStat="tous";searchQ="";
   const si=document.getElementById("searchInput");if(si)si.value="";
   document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
@@ -1937,7 +1939,7 @@ function switchView(v,el){
   // Keep the mobile bottom bar in sync, also when the page is opened from the menu.
   if(typeof updateMobileNav==="function")updateMobileNav();
 }
-function onSearch(v){searchQ=v;if(["dashboard","tickets","urgents","my-tickets"].includes(currentView))renderView();}
+function onSearch(v){searchQ=v;if(currentView==="users"){void refreshUsersList();return;}if(["dashboard","tickets","urgents","my-tickets"].includes(currentView))renderView();}
 function setFilter(s){filterStat=s;renderView();}
 let itAssistantLoader=null;
 function ensureITAssistant(){
@@ -2530,42 +2532,104 @@ function renderReportMy(){
 /* ══════════════════════════════════════════════
    ADMIN — USERS
 ══════════════════════════════════════════════ */
-function renderUsers(){
-  const mc = document.getElementById("mainContent");
-  mc.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--tx)">Gestion des comptes</div>
-        <div style="font-size:11px;color:var(--tx3);margin-top:2px">${DEMO_USERS.length} utilisateur(s) — stockage local</div>
-      </div>
-      <button class="btn btn-gold" onclick="openModalUser()"><i class="ti ti-user-plus"></i>Ajouter un compte</button>
-    </div>
-    <div class="card">
-      <div class="card-hdr"><div class="card-title"><i class="ti ti-users"></i>Comptes enregistrés</div></div>
-      ${DEMO_USERS.map(u=>{
-        const rs=ROLE_STYLES[u.role]||ROLE_STYLES.it;
-        const name=`${u.prenom} ${u.nom}`.trim();
-        const isMe=u.id===currentUser.id;
-        const lastLogin=u.lastLogin?`Dernière connexion : ${timeAgo(u.lastLogin)}`:"Jamais connecté";
-        return`<div class="user-row">
-          <div class="user-av" style="background:${rs.bg};color:${rs.color}">${esc(initials(name))}</div>
-          <div class="user-info" style="flex:1">
-            <div class="user-name">${esc(name)}${isMe?'<span style="font-size:9px;background:var(--brand-l);color:var(--brand-text);padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:700">VOUS</span>':""}</div>
-            <div style="font-size:10px;color:var(--tx3);margin-top:2px">${esc(u.email)} · ${lastLogin}</div>
-            <div style="font-size:9px;color:var(--tx3);margin-top:2px;font-style:italic">${esc(ROLE_DESC[u.role]||"")}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span class="role-tag" style="background:${rs.bg};color:${rs.color}">${esc(ROLE_L[u.role]||u.role)}</span>
-            ${u.role==="it_hotel"&&u.hotel?`<span style="font-size:10px;color:var(--tx3);background:var(--surface2);padding:2px 8px;border-radius:10px;border:1px solid var(--border)">${esc(u.hotel.replace("Onomo ",""))}</span>`:""}
-            ${u.role==="it_regional"&&(u.hotels||[]).length>0?`<span style="font-size:10px;color:var(--purple-t);background:var(--purple-l);padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.2)">${u.hotels.length} hôtel(s)</span>`:""}
-            ${u.mfaEnabled?`<span style="font-size:9px;font-weight:700;background:var(--green-l);color:var(--green-t);padding:2px 7px;border-radius:10px;border:1px solid rgba(5,150,105,.2)"><i class="ti ti-shield-check" style="font-size:10px"></i> MFA</span>`:`<span style="font-size:9px;color:var(--tx3);background:var(--surface2);padding:2px 7px;border-radius:10px;border:1px solid var(--border)">Sans MFA</span>`}
-            <button class="btn btn-outline btn-sm" data-user-id="${esc(u.id)}" onclick="openEditUser(this.dataset.userId)"><i class="ti ti-edit"></i></button>
-            ${u.mfaEnabled?`<button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" data-user-id="${esc(u.id)}" onclick="disableMFA(this.dataset.userId)"><i class="ti ti-shield-off"></i></button>`:`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple-t);border:1px solid rgba(124,58,237,.2)" data-user-id="${esc(u.id)}" onclick="openMFASetup(this.dataset.userId)"><i class="ti ti-shield-check"></i>MFA</button>`}
-            ${!isMe?`<button class="btn btn-danger btn-sm" data-user-id="${esc(u.id)}" onclick="askDeleteUser(this.dataset.userId)"><i class="ti ti-trash"></i></button>`:""}
-          </div>
-        </div>`;
-      }).join("")}
-    </div>`;
+/* Administrators manage accounts here; IT staff see the support directory
+   that the server scopes to their hotels. */
+function usersRoleValues(u){
+  const raw=[u?.role,u?.role_name,u?.user_role].concat(Array.isArray(u?.roles)?u.roles:[]).filter(Boolean);
+  return raw.flatMap(v=>v&&typeof v==='object'?[v.name,v.role,v.value].filter(Boolean):[v]).map(v=>String(v).toLowerCase().trim());
+}
+function usersIsAdmin(){
+  const u=currentUser||null;
+  return !!(u&&(u.is_admin===true||u.isAdmin===true||usersRoleValues(u).some(r=>['admin','administrateur','administrator','admin système'].includes(r))));
+}
+function usersIsSupport(){
+  return usersIsAdmin()||usersRoleValues(currentUser||{}).some(r=>['it_regional','it regional','it_hotel','it hotel'].includes(r));
+}
+function emailTestAcceptedMessage(data){
+  if(data?.ok!==true||data?.accepted!==true||typeof data.recipient!=='string'||!data.recipient.trim())throw new Error(appText('email_test_unconfirmed','Test email non confirmé'));
+  const provider=data.provider==='microsoft365'?'Microsoft 365':data.provider==='emailjs'?'EmailJS':appText('email_service','Le service email');
+  return appText('email_test_accepted','{provider} a accepté le test vers {recipient}. La réception reste à confirmer : vérifiez votre boîte mail et les indésirables.',{provider,recipient:data.recipient});
+}
+async function loadUsersPage(){
+  let rows=Array.isArray(DEMO_USERS)?DEMO_USERS.slice():[];
+  try{
+    if(typeof window.sbOK==='function'&&window.sbOK()&&typeof window.sbFetch==='function'){
+      const remote=usersIsAdmin()
+        ?await window.sbFetch('utilisateurs?select=id,auth_user_id,email,prenom,nom,role,hotel,hotels,must_change_password,mfa_enabled,created_at&order=created_at.desc&limit=500')
+        :await window.sbFetch('rpc/get_support_directory',{method:'POST',body:'{}',prefer:'return=representation'});
+      // Connected mode must never fall back to a previous account's list.
+      rows=Array.isArray(remote)?remote:[];
+    }
+  }catch(_){ rows=[]; }
+  return rows;
+}
+function usersTableHtml(rows){
+  const t=appText;
+  const q=String(searchQ||'').toLowerCase().trim();
+  const filtered=q?rows.filter(u=>[u.prenom,u.nom,u.email,u.role,u.hotel].join(' ').toLowerCase().includes(q)):rows;
+  if(!filtered.length)return '<div style="padding:35px;text-align:center;color:var(--tx3)">'+t('no_user_found','Aucun utilisateur trouvé.')+'</div>';
+  const admin=usersIsAdmin();
+  const cell='padding:11px 10px;border-bottom:1px solid var(--border)';
+  const headings='<thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('user','Utilisateur')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('role','Rôle')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('hotel','Hôtel')+'</th>'+(admin?'<th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('account_security','Sécurité')+'</th><th style="text-align:right;padding:10px;border-bottom:1px solid var(--border)">'+t('actions','Actions')+'</th>':'')+'</tr></thead>';
+  const body=filtered.map(u=>{
+    const id=esc(u.id||''),target=esc(u.auth_user_id||u.id||'');
+    const name=[u.prenom,u.nom].filter(Boolean).join(' ')||u.email||t('user','Utilisateur');
+    const role=usersRoleValues(u)[0]||u.role||'—';
+    const hotelScope=u.hotel||(Array.isArray(u.hotels)&&u.hotels.length?u.hotels.join(', '):(['admin','direction'].includes(u.role)?t('all_hotels','Tous les hôtels'):t('no_hotel_assigned_short','Aucun hôtel assigné')));
+    const security=u.mfa_enabled?t('mfa_required','MFA obligatoire'):t('standard','Standard');
+    let actions='';
+    if(admin){
+      // IDs travel in escaped data attributes, never inside the inline script.
+      const ids='data-user-id="'+id+'" data-auth-user-id="'+target+'"';
+      actions+='<button class="btn btn-outline btn-sm" '+ids+' onclick="window.OnomoMfa?.reset(this.dataset.authUserId)">'+t('reset_mfa','Réinitialiser MFA')+'</button> ';
+      actions+='<button class="btn btn-outline btn-sm" '+ids+' onclick="openEditUser(this.dataset.userId)"><i class="ti ti-edit"></i>'+t('edit','Modifier')+'</button> ';
+      actions+='<button class="btn btn-outline btn-sm" '+ids+' onclick="window.OnomoMfa?.setRequired(this.dataset.authUserId,'+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+(u.mfa_enabled?t('remove_mfa','Retirer MFA'):t('require_mfa','Exiger MFA'))+'</button> ';
+      actions+='<button class="btn btn-danger btn-sm" '+ids+' onclick="askDeleteUser(this.dataset.userId)"><i class="ti ti-trash"></i></button>';
+    }
+    return '<tr><td data-label="'+esc(t('user','Utilisateur'))+'" style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td data-label="'+esc(t('role','Rôle'))+'" style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td data-label="'+esc(t('hotel','Hôtel'))+'" style="'+cell+'">'+esc(hotelScope)+'</td>'+(admin?'<td data-label="'+esc(t('account_security','Sécurité'))+'" style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td class="user-actions" style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
+  }).join('');
+  return '<div style="overflow:auto"><table class="onomo-users-table" style="width:100%;border-collapse:collapse">'+headings+'<tbody>'+body+'</tbody></table></div>';
+}
+async function refreshUsersList(){
+  const rows=await loadUsersPage();
+  const list=document.getElementById('usersPageList');
+  if(list)list.innerHTML=usersTableHtml(rows);
+}
+async function sendAdminEmailSelfTest(button){
+  if(!confirm(appText('email_test_confirm','Envoyer TEST-NOTIFICATION uniquement à l’adresse de votre compte administrateur connecté ? Aucun ticket ne sera créé.')))return;
+  button.disabled=true;
+  try{
+    const client=window.OnomoAuth?.getClient?.();if(!client)throw new Error(appText('session_required','Session requise'));
+    const {data,error}=await client.functions.invoke('admin-email-self-test',{body:{}});
+    if(error){let message;try{message=(await error.context?.json())?.error;}catch(_){}throw new Error(message||appText('email_test_unconfirmed','Test email non confirmé'));}
+    if(data?.error)throw new Error(data.error);
+    showToast(emailTestAcceptedMessage(data),'ok');
+  }catch(error){showToast(error.message,'err');}finally{button.disabled=false;}
+}
+async function renderUsers(){
+  const t=appText;
+  if(!usersIsSupport()){showToast(t('access_denied','Accès non autorisé.'),'err');return;}
+  const main=document.getElementById('mainContent');if(!main)return;
+  const admin=usersIsAdmin();
+  main.innerHTML='<div class="card"><div class="card-hdr"><div><div class="card-title">'+t('users','Utilisateurs')+'</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">'+(admin?t('user_management_description','Gestion des comptes, rôles et hôtels assignés'):'Annuaire des équipes IT, IT régional et administrateurs')+'</div></div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" id="usersRefreshBtn"><i class="ti ti-refresh"></i>'+t('refresh','Actualiser')+'</button>'+(admin?'<button class="btn btn-gold btn-sm" id="usersCreateBtn"><i class="ti ti-user-plus"></i>'+t('new_user','Nouvel utilisateur')+'</button>':'')+'</div></div><div id="usersPageList" style="padding:0 18px 18px"><div style="padding:30px;text-align:center;color:var(--tx3)">'+t('loading','Chargement...')+'</div></div></div>';
+  const rows=await loadUsersPage();
+  const list=document.getElementById('usersPageList');
+  if(list)list.innerHTML=usersTableHtml(rows);
+  document.getElementById('usersRefreshBtn')?.addEventListener('click',renderUsers);
+  const create=document.getElementById('usersCreateBtn');
+  if(admin&&create){
+    const test=document.createElement('button');test.type='button';test.className='btn btn-outline btn-sm';test.textContent=t('test_my_email','Tester mon email');
+    test.addEventListener('click',()=>sendAdminEmailSelfTest(test));
+    create.parentElement.appendChild(test);
+    if(window.OnomoRosterImport){
+      const roster=document.createElement('button');roster.type='button';roster.id='usersRosterImportBtn';roster.className='btn btn-outline btn-sm';roster.textContent=t('import_it_roster','Importer la liste IT');
+      roster.addEventListener('click',()=>window.OnomoRosterImport.run());
+      create.parentElement.appendChild(roster);
+    }
+    create.addEventListener('click',()=>window.openModalUser());
+  }
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-view')==='users'));
+  const title=document.querySelector('.topbar-title');if(title)title.textContent=t('users','Utilisateurs');
 }
 
 function populateHotelCheckboxes(selectedHotels){
@@ -2676,6 +2740,48 @@ function showEmailNotification(prenom, nom, email, role){
   div.addEventListener("click", e=>{if(e.target===div)div.remove();});
 }
 
+/* An edit is written straight to the Supabase profile row, the source of
+   truth. A temporary password goes through the privileged Edge Function and
+   is never stored in public.utilisateurs. */
+async function saveUserEdit(id,form){
+  const t=appText;
+  const role=form.role==='requester'?'demandeur':form.role;
+  const hotel=String(form.hotel||'').trim()||null;
+  const hotels=role==='demandeur'?(hotel?[hotel]:[]):(Array.isArray(form.hotels)?form.hotels.filter(Boolean):[]);
+  if(role==='it_hotel'&&!hotel){showToast(t('select_it_hotel',"Sélectionnez un hôtel pour l'IT Hôtel"),'err');return false;}
+  if(role==='it_regional'&&!hotels.length){showToast(t('select_it_regional',"Sélectionnez au moins un hôtel pour l'IT Régional"),'err');return false;}
+  if(role==='demandeur'&&!hotel){showToast(t('select_requester_hotel','Sélectionnez un hôtel pour le demandeur'),'err');return false;}
+  if(typeof window.sbFetch!=='function'){showToast(t('supabase_update_unavailable','Supabase est indisponible. Modification non enregistrée.'),'err');return false;}
+  const temporaryPassword=document.getElementById('uPwd')?.value||'';
+  const strong=password=>password.length>=12&&/[a-z]/.test(password)&&/[A-Z]/.test(password)&&/\d/.test(password)&&/[^A-Za-z0-9]/.test(password);
+  if(temporaryPassword.trim()&&!strong(temporaryPassword)){showToast('Le mot de passe doit contenir 12 caractères minimum, une majuscule, une minuscule, un chiffre et un caractère spécial.','err');return false;}
+  if(temporaryPassword.trim()&&!window.confirm('Définir ce mot de passe temporaire pour cet utilisateur ? Il devra le modifier à sa prochaine connexion.'))return false;
+  try{
+    const payload={prenom:form.prenom,nom:form.nom,email:form.email,role,hotel,hotels,roles:[role]};
+    const rows=await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(payload),prefer:'return=representation'});
+    if(!Array.isArray(rows)||!rows[0])throw new Error('Aucune ligne utilisateur modifiée');
+    if(temporaryPassword.trim()){
+      const targetUserId=rows[0].auth_user_id||rows[0].id;
+      if(!targetUserId)throw new Error('Compte Auth Supabase introuvable pour cet utilisateur.');
+      if(typeof window.OnomoAuth?.resetUserPassword!=='function')throw new Error('Le service sécurisé de réinitialisation est indisponible.');
+      await window.OnomoAuth.resetUserPassword(targetUserId,temporaryPassword);
+    }
+    const fresh=dbRowToUser(rows[0]);
+    const index=DEMO_USERS.findIndex(x=>String(x.id)===String(id));
+    if(index>=0)DEMO_USERS[index]=fresh;else DEMO_USERS.push(fresh);
+    saveUsers(DEMO_USERS);
+    if(currentUser&&String(currentUser.id)===String(id))currentUser={...currentUser,...fresh};
+    populateSelects();
+    closeModal('modalUser');
+    showToast(temporaryPassword.trim()?'Mot de passe temporaire défini. L’utilisateur devra le modifier à sa prochaine connexion.':t('account_updated_sync','Compte mis à jour dans Supabase'),'ok');
+    renderUsers();
+    return true;
+  }catch(error){
+    console.error('ONOMO sauvegarde utilisateur:',error);
+    showToast(error?.message||t('account_update_failed','Modification non enregistrée dans Supabase'),'err');
+    return false;
+  }
+}
 async function submitUser(){
   const editId=document.getElementById("uEditId").value;
   const prenom=document.getElementById("uPrenom").value.trim();
@@ -2688,29 +2794,10 @@ async function submitUser(){
   if(role==='directeur_hotel'&&!hotel){showToast('Sélectionnez un hôtel pour le Directeur Hôtel','err');return;}
   if(role==='rh_regional'&&!hotels.length){showToast('Sélectionnez les hôtels du RH Régional','err');return;}
 
-  if(!email){showToast("L'email est requis","err");return;}
+  if(!email){showToast(appText("email_required","L'email est requis"),"err");return;}
 
   if(editId){
-    const existing=DEMO_USERS.find(u=>u.email===email&&u.id!==editId);
-    if(existing){showToast("Cet email est déjà utilisé","err");return;}
-    DEMO_USERS=DEMO_USERS.map(u=>{
-      if(u.id!==editId)return u;
-      const updated={...u,prenom,nom,email,role,hotel,hotels};
-      if(pwdRaw.trim()){updated.pwd=hashPwd(pwdRaw);}
-      return updated;
-    });
-    if(currentUser.id===editId){
-      currentUser={...currentUser,prenom,nom,email,role,hotel,hotels};
-      document.getElementById("sbAv").textContent=initials(`${prenom} ${nom}`);
-      document.getElementById("sbName").textContent=`${prenom} ${nom}`.trim()||email;
-    }
-    saveUsers(DEMO_USERS);
-    if(sbOK()){
-      const updated = DEMO_USERS.find(u=>u.id===editId);
-      if(updated) sbSaveUser(updated);
-    }
-    populateSelects();closeModal("modalUser");
-    showToast("Compte mis à jour","ok");renderUsers();
+    return saveUserEdit(editId,{prenom,nom,email,role,hotel,hotels});
   } else {
     if(!pwdRaw.trim()){showToast("Le mot de passe temporaire est requis","err");return;}
     if(DEMO_USERS.find(u=>u.email===email)){showToast("Email déjà utilisé","err");return;}
@@ -4638,10 +4725,9 @@ document.addEventListener('keydown', e => {
 <!-- Pinned and integrity-checked to prevent a mutable CDN "@2" response. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script src="assets/js/locales-data.js"></script>
-<script src="assets/js/i18n.js?v=20261116-fold-fixes-2"></script>
-<script src="assets/js/modern-features.js?v=20261116-rh-1"></script>
-<script src="assets/js/runtime-sync.js?v=20261116-fold-fixes-1"></script>
-<script src="assets/js/user-admin-fix.js?v=20261113-users-i18n-1"></script>
+<script src="assets/js/i18n.js?v=20261116-fold-fixes-3"></script>
+<script src="assets/js/modern-features.js?v=20261116-fold-fixes-1"></script>
+<script src="assets/js/runtime-sync.js?v=20261116-fold-fixes-2"></script>
 <script src="assets/js/mfa-auth.js?v=20261116-mfa-race-1"></script>
 <script src="assets/js/assignment-scope.js?v=20261116-fold-fixes-1"></script>
 <script src="assets/js/notification-delivery.js?v=20261012-mailing-1"></script>

@@ -204,6 +204,8 @@
   const originalEditUser=window.openEditUser;window.openEditUser=async function(id){await loadRolesFromSupabase(true);originalEditUser(id);addUserRolePicker();ensureRequesterHotelField();const user=DEMO_USERS.find(item=>item.id===id);const assigned=userRoles(user);document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=assigned.includes(input.value));};
   const originalSubmitUser=window.submitUser;window.submitUser=async function(){
     ensureRequesterHotelField();
+    // Edits are saved by submitUser in index.html (saveUserEdit).
+    if(document.getElementById('uEditId')?.value)return originalSubmitUser();
     const role=document.getElementById('uRole')?.value;
     if(role==='demandeur'||role==='requester'){
       const hotel=document.getElementById('uHotel')?.value||'';

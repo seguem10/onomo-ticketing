@@ -61,13 +61,6 @@
     }
     item.style.display=isAdmin()?'flex':'none';
   }
-  function loadUsersFix(){
-    /* user-admin-fix.js is loaded once, versioned, by index.html.  Loading it
-       a second time here without its version could revive a browser-cached
-       copy whose click handler bypassed the router and caused the Users page
-       to fall back to Dashboard/Tickets on the next background refresh. */
-    if(document.querySelector('script[src*="user-admin-fix.js"]'))return;
-  }
   async function render(){
     if(!isAdmin()){window.showToast?.(t('access_denied','Accès non autorisé.'),'err');return;}
     const main=document.getElementById('mainContent');if(!main)return;
@@ -116,13 +109,13 @@
     window.sbFetch=wrapped;
   }
   function init(){
-    brand();addNav();loadUsersFix();wrapSbFetch();
-    setInterval(()=>{brand();addNav();loadUsersFix();wrapSbFetch();},1500);
+    brand();addNav();wrapSbFetch();
+    setInterval(()=>{brand();addNav();wrapSbFetch();},1500);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   const oldInit=window.initSession;
   if(oldInit&&!oldInit.__activityWrapped){
-    window.initSession=function(){const r=oldInit.apply(this,arguments);setTimeout(()=>{brand();addNav();loadUsersFix();},100);return r;};
+    window.initSession=function(){const r=oldInit.apply(this,arguments);setTimeout(()=>{brand();addNav();},100);return r;};
     window.initSession.__activityWrapped=true;
   }
   const oldSwitch=window.switchView;
