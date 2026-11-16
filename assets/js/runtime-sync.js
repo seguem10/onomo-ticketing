@@ -545,7 +545,7 @@
       if(rows?.[0])await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(rows[0].id)}`,{method:'PATCH',body:JSON.stringify({must_change_password:false}),prefer:'return=minimal'});
     }catch(error){console.warn('Profil mis à jour sans modifier le mot de passe local',error);}
   }
-  if(typeof window.changeMyPassword==='function')window.changeMyPassword=async function(){
+  async function changeOwnPassword(){
     const old=document.getElementById('pOld')?.value||'',next=document.getElementById('pNew')?.value||'',confirm=document.getElementById('pConfirm')?.value||'';
     if(next!==confirm){showToast(t('password_mismatch','Les mots de passe ne correspondent pas'),'err');return false;}
     if(!validPassword(next)){showToast(passwordPolicyMessage(),'err');return false;}
@@ -555,6 +555,15 @@
     if(verification.error){showToast(t('current_password_incorrect','Mot de passe actuel incorrect'),'err');return false;}
     try{await updateSupabasePassword(next);showToast(t('password_updated','Mot de passe mis à jour'),'ok');['pOld','pNew','pConfirm'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});return true;}
     catch(error){showToast(error.message||t('password_update_failed','Mise à jour du mot de passe impossible'),'err');return false;}
+  }
+  /* The profile button stays disabled while Supabase verifies and updates
+     the password, so a double click cannot send two requests. */
+  if(typeof window.changeMyPassword==='function')window.changeMyPassword=async function(){
+    const button=document.getElementById('pSubmit');
+    if(button?.disabled)return false;
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true');}
+    try{return await changeOwnPassword();}
+    finally{if(button){button.disabled=false;button.removeAttribute('aria-busy');}}
   };
   if(typeof window.forceChangeDone==='function')window.forceChangeDone=async function(){
     const next=document.getElementById('fcNew')?.value||'',confirm=document.getElementById('fcConfirm')?.value||'',error=document.getElementById('fcErr'),message=document.getElementById('fcErrMsg');
