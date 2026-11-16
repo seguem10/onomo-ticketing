@@ -135,7 +135,12 @@
     for(const factor of listed?.all||[]){
       if(factor.status!=='verified')await auth.auth.mfa.unenroll({factorId:factor.id});
     }
-    const {data,error}=await auth.auth.mfa.enroll({factorType:'totp',friendlyName:'ONOMO Support IT'});
+    let {data,error}=await auth.auth.mfa.enroll({factorType:'totp',friendlyName:'ONOMO Support IT'});
+    // If an unverified factor could not be removed, the name is still taken:
+    // enroll under a dated name rather than blocking the user.
+    if(error&&/already exists|name_conflict/i.test(`${error.code||''} ${error.message||''}`)){
+      ({data,error}=await auth.auth.mfa.enroll({factorType:'totp',friendlyName:`ONOMO Support IT ${new Date().toISOString().slice(0,16).replace('T',' ')}`}));
+    }
     if(error)throw error;
     close();state.mode='enroll';state.factor=data;
     const secret=String(data.totp?.secret||'');
@@ -153,12 +158,21 @@
       action:tr('mfa_activate','Activer')
     });
   }
-  async function enforce(activeSession){
+  // Sign-in and session restore both call enforce() at the same moment. Run
+  // only one check at a time, and never replace an MFA screen already shown:
+  // a second enrollment would invalidate the QR code the user is scanning.
+  let pendingEnforce=null;
+  function enforce(activeSession){
+    if(!pendingEnforce)pendingEnforce=enforceOnce(activeSession).finally(()=>{pendingEnforce=null;});
+    return pendingEnforce;
+  }
+  async function enforceOnce(activeSession){
     if(!required(activeSession?.user))return true;
     const auth=client();if(!auth)return false;
     try{
       const {data:aal,error}=await auth.auth.mfa.getAuthenticatorAssuranceLevel();if(error)throw error;
       if(aal?.currentLevel==='aal2')return true;
+      if(document.getElementById('nativeMfaModal')&&state.mode)return false;
       const factors=await verified();
       if(factors.length)challenge(factors[0]);else await enroll();
       return false;
