@@ -12,6 +12,8 @@
   /* Security events store technical identifiers (snake_case) and JSON text.
      Present them as readable labels and "key: value" chips instead. */
   const humanize=value=>{const s=String(value??'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();return s?s.charAt(0).toUpperCase()+s.slice(1):'';};
+  // Known audit codes have a translated label (audit_<code>); unknown ones keep the readable code.
+  const actionLabel=code=>{const key='audit_'+String(code??'');const value=window.OnomoI18n?.t(key);return value&&value!==key?value:humanize(code);};
   const parseDetail=value=>{
     if(value&&typeof value==='object')return value;
     const s=String(value??'').trim();
@@ -77,7 +79,7 @@
         window.sbFetch(TABLE+'?select=id,actor_name,actor_email,action,entity_type,entity_id,details,created_at&order=created_at.desc&limit=200'),
         window.sbFetch('audit_logs?select=id,user,action,detail,timestamp&order=timestamp.desc&limit=200')
       ]);
-      const rows=[...(Array.isArray(activity)?activity:[]),...(Array.isArray(security)?security:[]).map(r=>({id:r.id,actor_name:r.user,action:t('security','Sécurité')+' · '+humanize(r.action),rawDetail:r.detail,created_at:r.timestamp}))]
+      const rows=[...(Array.isArray(activity)?activity:[]),...(Array.isArray(security)?security:[]).map(r=>({id:r.id,actor_name:r.user,action:t('security','Sécurité')+' · '+actionLabel(r.action),rawDetail:r.detail,created_at:r.timestamp}))]
         .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,200);
       const box=document.getElementById('activityList');
       if(!box)return;
