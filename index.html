@@ -981,7 +981,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
       <i class="ti ti-ticket" style="font-size:20px"></i>Tickets
     </div>
     <div onclick="openNewTicket()" id="mbNewTicketBtn" data-requires-write="true" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:var(--brand);font-size:9px" class="mbnav-item mbnav-new-ticket">
-      <i class="ti ti-plus-circle" style="font-size:20px"></i>Nouveau
+      <i class="ti ti-circle-plus" style="font-size:20px"></i>Nouveau
     </div>
     <div onclick="toggleSidebar()" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:rgba(255,255,255,0.45);font-size:9px" class="mbnav-item mbnav-menu">
       <i class="ti ti-menu-2" style="font-size:20px"></i>Menu
@@ -1932,6 +1932,8 @@ function switchView(v,el){
   else{const m=document.querySelector(`[data-view="${v}"]`);if(m)m.classList.add("active");}
   document.getElementById("topbarTitle").textContent=VIEW_TITLES[v]||v;
   renderView();
+  // Keep the mobile bottom bar in sync, also when the page is opened from the menu.
+  if(typeof updateMobileNav==="function")updateMobileNav();
 }
 function onSearch(v){searchQ=v;if(["dashboard","tickets","urgents","my-tickets"].includes(currentView))renderView();}
 function setFilter(s){filterStat=s;renderView();}
@@ -4602,7 +4604,7 @@ document.addEventListener('keydown', e => {
 <!-- Pinned and integrity-checked to prevent a mutable CDN "@2" response. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script src="assets/js/locales-data.js"></script>
-<script src="assets/js/i18n.js?v=20261116-mfa-ui-1"></script>
+<script src="assets/js/i18n.js?v=20261116-ui-nav-1"></script>
 <script src="assets/js/modern-features.js?v=20261113-admin-audit-1"></script>
 <script src="assets/js/runtime-sync.js?v=20261113-admin-delete-1"></script>
 <script src="assets/js/admin-navigation-fix.js?v=20261007-1"></script>
