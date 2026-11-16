@@ -23,7 +23,7 @@
 - assets/js/i18n.js : charge plusieurs modules complémentaires
 - assets/js/runtime-sync.js : synchronisation Supabase / session
 - assets/js/modern-features.js : fonctionnalités utilisateurs
-- assets/js/user-ticket-fix.js : logique ticket / profil
+- assets/js/assignment-scope.js : liste des IT assignables (y compris pour le Demandeur)
 - assets/js/user-save-fix.js : sauvegarde utilisateurs
 - assets/js/requester-it-list-fix.js : liste des IT pour Demandeur
 - index.html (renderMyProfile) : page Mon profil
