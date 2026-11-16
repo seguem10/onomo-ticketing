@@ -1,6 +1,6 @@
 /* Extensions Onomo Support IT : rôles, accès restreint et dictée multilingue. */
 (function(){
-  const POWER=['Administrateur','IT Regional','IT Hotel','Directeur','Directeur Hôtel'];
+  const POWER=['Administrateur','IT Regional','IT Hotel','Directeur','Directeur Hôtel','RH Régional'];
   // Offline/demo defaults deliberately mirror the production RBAC migration.
   // They are a fallback only; a connected account receives its own permissions
   // from Supabase via my_permissions().
@@ -10,7 +10,7 @@
     {name:'IT Hotel',permissions:['ticket:create','ticket:read:all','ticket:update:all','comment:create','comment:read'],is_system:true},
     {name:'Directeur',permissions:['ticket:read:all','report:read'],is_system:true},
     {name:'Directeur Hôtel',permissions:['ticket:create','ticket:read:own','ticket:read:all','report:read','comment:create','comment:read:own'],is_system:true},
-    {name:'RH Régional',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true},
+    {name:'RH Régional',permissions:['ticket:create','ticket:read:own','ticket:read:all','report:read','comment:create','comment:read:own'],is_system:true},
     {name:'Demandeur',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true}
   ];
   const SYSTEM_DEFAULTS=new Map(DEFAULT_ROLES.map(role=>[role.name,role]));
@@ -42,7 +42,7 @@
     })();
     return roleLoadPromise;
   }
-  const userRoles=user=>{const aliases={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',demandeur:'Demandeur',requester:'Demandeur'};const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
+  const userRoles=user=>{const aliases={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',demandeur:'Demandeur',requester:'Demandeur'};const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
   const isPower=user=>userRoles(user).some(role=>POWER.includes(role));
   const isAdmin=user=>userRoles(user).includes('Administrateur');
   const permissions=user=>effectivePermissions||userRoles(user).flatMap(name=>roles().find(role=>role.name===name)?.permissions||[]);

@@ -31,3 +31,14 @@ test('database grant only adds hotel-scoped read and reports to Directeur Hôtel
   assert.match(migration,/\["ticket:read:all","report:read"\]/);
   assert.doesNotMatch(migration,/ticket:update|\*|delete/i);
 });
+
+test('regional HR gets the same hotel-scoped dashboard access',()=>{
+  const rh=fs.readFileSync('supabase/migrations/20261116180000_rh_regional_reads_hotel_tickets.sql','utf8');
+  assert.match(features,/const POWER=\[[^\]]*'RH Régional'[^\]]*\];/);
+  assert.match(features,/rh_regional:'RH Régional'/);
+  assert.match(features,/\{name:'RH Régional',permissions:\[[^\]]*'ticket:read:all'[^\]]*'report:read'[^\]]*\]/);
+  const fn=html.match(/function isRequesterUser\([^)]*\)\{[^}]*\}/)[0];
+  assert.equal(new Function(`${fn};return isRequesterUser;`)()({role:'rh_regional'}),true);
+  assert.match(rh,/where name = 'RH Régional'/);
+  assert.doesNotMatch(rh,/ticket:update|\*|delete/i);
+});
