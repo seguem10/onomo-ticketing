@@ -6113,3 +6113,64 @@ html[dir="rtl"] .kanban-col-hdr{
   html[dir="rtl"] .report-section .ticket-table td,
   html[dir="rtl"] .report-section .ticket-table td[data-label]::before{text-align:right!important}
 }
+
+/* MFA setup and verification screens (assets/js/mfa-auth.js). The generic
+   .modal hides overflow, which cut the buttons off on short screens: this card
+   scrolls its body instead and keeps the actions visible. */
+.mfa-overlay{padding:16px!important;align-items:center!important;justify-content:center!important}
+.mfa-overlay .mfa-card{width:min(460px,100%)!important;max-width:460px!important;max-height:calc(100dvh - 32px)!important;display:flex!important;flex-direction:column!important;padding:0!important;overflow:hidden!important}
+.mfa-head{padding:26px 26px 6px;text-align:center}
+.mfa-head h2{margin:12px 0 6px;font-size:20px;font-weight:700;color:var(--tx,#101828)}
+.mfa-head p{margin:0;color:var(--tx2,#475467);font-size:14px;line-height:1.55}
+.mfa-badge{width:52px;height:52px;margin:0 auto;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--accent,#c9972a);background:rgba(201,151,42,.12)}
+.mfa-badge-warn{color:#b42318;background:rgba(180,35,24,.1)}
+.mfa-body{padding:18px 26px 6px;overflow-y:auto;flex:1 1 auto}
+.mfa-foot{display:flex;gap:10px;justify-content:space-between;padding:16px 26px 22px;border-top:1px solid var(--border,#eaecf0)}
+.mfa-foot .btn{flex:1 1 0;justify-content:center}
+.mfa-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px}
+.mfa-step{display:flex;gap:12px;align-items:flex-start}
+.mfa-step-num{flex:0 0 26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:var(--accent,#c9972a)}
+.mfa-step-body{flex:1;min-width:0}
+.mfa-step-body strong{display:block;font-size:14px;color:var(--tx,#101828);line-height:26px}
+.mfa-step-body p{margin:2px 0 0;font-size:13px;color:var(--tx2,#475467)}
+.mfa-qr{margin:10px 0 4px}
+.mfa-qr img{display:block;width:176px;height:176px;max-width:100%;padding:8px;border:1px solid var(--border,#eaecf0);border-radius:12px;background:#fff}
+.mfa-manual{margin-top:6px;font-size:13px}
+.mfa-manual summary{cursor:pointer;color:var(--accent,#c9972a);font-weight:600}
+.mfa-secret{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.mfa-secret code{direction:ltr;font-family:ui-monospace,Consolas,monospace;font-size:13px;letter-spacing:.5px;padding:7px 10px;border-radius:8px;background:var(--surface2,#f2f4f7);word-break:break-all}
+.mfa-code{direction:ltr;display:flex;gap:8px;justify-content:center;margin:10px 0 4px}
+.mfa-step .mfa-code{justify-content:flex-start}
+.mfa-digit{width:44px;height:52px;padding:0;text-align:center;font-size:22px;font-weight:600;font-family:ui-monospace,Consolas,monospace;border:1.5px solid var(--border,#d0d5dd);border-radius:10px;background:#fff;color:var(--tx,#101828);outline:none;transition:border-color .15s,box-shadow .15s}
+.mfa-digit:focus{border-color:var(--accent,#c9972a);box-shadow:0 0 0 3px rgba(201,151,42,.18)}
+.mfa-hint{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0;font-size:12.5px;color:var(--tx3,#667085)}
+.mfa-error{margin-top:14px;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.45;color:#b42318;background:#fef3f2;border:1px solid #fecdca}
+.mfa-error[hidden]{display:none}
+.mfa-spin{animation:mfa-spin 1s linear infinite}
+@keyframes mfa-spin{to{transform:rotate(360deg)}}
+.mfa-dialog{width:min(460px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;border:0;border-radius:18px;background:#fff;color:var(--tx,#101828);box-shadow:var(--sh3,0 20px 50px rgba(16,24,40,.2));margin:auto}
+.mfa-dialog::backdrop{background:rgba(10,17,30,.48);backdrop-filter:blur(3px)}
+.mfa-dialog form{display:flex;flex-direction:column}
+.mfa-dialog .form-g{padding:14px 26px 0}
+.mfa-dialog textarea{width:100%;box-sizing:border-box;resize:vertical}
+.mfa-check{display:flex;gap:10px;align-items:flex-start;padding:12px 26px 16px;font-size:13.5px;color:var(--tx2,#475467);cursor:pointer}
+.mfa-check input{margin-top:2px}
+@media (max-width:420px){
+  .mfa-head{padding:22px 18px 4px}.mfa-body{padding:16px 18px 4px}.mfa-foot{padding:14px 18px 18px}
+  .mfa-dialog .form-g{padding:12px 18px 0}.mfa-check{padding:12px 18px 14px}
+  .mfa-digit{width:40px;height:48px;font-size:20px}.mfa-code{gap:6px}
+}
+body.dark-mode .mfa-overlay .mfa-card,body.dark-mode .mfa-dialog{background:#171f28!important;border-color:#2a3542!important;color:#f2f4f7}
+body.dark-mode .mfa-head h2,body.dark-mode .mfa-step-body strong{color:#f2f4f7}
+body.dark-mode .mfa-head p,body.dark-mode .mfa-step-body p,body.dark-mode .mfa-check{color:#c2c8d0}
+body.dark-mode .mfa-foot{border-color:#2a3542}
+body.dark-mode .mfa-digit{background:#1d2732;border-color:#35414e;color:#f2f4f7}
+body.dark-mode .mfa-secret code{background:#1d2732;color:#f2f4f7}
+body.dark-mode .mfa-error{background:rgba(180,35,24,.15);border-color:rgba(254,205,202,.3);color:#fda29b}
+@media (max-height:720px){
+  .mfa-head{padding-top:18px}.mfa-badge{width:42px;height:42px;font-size:21px;border-radius:13px}
+  .mfa-head h2{margin:8px 0 4px;font-size:18px}.mfa-head p{font-size:13px}
+}
+/* Digits shrink on very narrow phones (320px) instead of overflowing. */
+.mfa-digit{flex:1 1 0;min-width:0;max-width:44px}
+html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
