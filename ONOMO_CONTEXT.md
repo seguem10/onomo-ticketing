@@ -26,8 +26,8 @@
 - assets/js/user-ticket-fix.js : logique ticket / profil
 - assets/js/user-save-fix.js : sauvegarde utilisateurs
 - assets/js/requester-it-list-fix.js : liste des IT pour Demandeur
-- assets/js/profile-navigation-fix.js : navigation Mon profil
-- assets/js/password-change-fix.js : changement de mot de passe
+- index.html (renderMyProfile) : page Mon profil
+- assets/js/runtime-sync.js (changeMyPassword) : changement de mot de passe
 - assets/js/admin-activity.js : audit et branding
 - assets/js/ticket-voice-notifications.js : voix et notifications
 - assets/pwa/onomo-logo.svg : logo
@@ -122,8 +122,10 @@ Les événements INITIAL_SESSION et SIGNED_IN peuvent initialiser/restaurer le p
 Le changement de mot de passe a provoqué un retour vers l'accueil / Dashboard pour tous les rôles, y compris Admin.
 
 Des corrections ont déjà été tentées dans :
-- assets/js/password-change-fix.js
+- assets/js/password-change-fix.js (supprimé le 16/11/2026, logique intégrée à runtime-sync.js)
 - assets/js/runtime-sync.js
+
+Depuis novembre 2026, restoreSupabaseProfile() ne relance plus initSession() quand le même utilisateur est déjà dans l'application (événement SIGNED_IN émis par la vérification du mot de passe actuel).
 
 Le problème doit être traité comme un problème de navigation/session, pas simplement comme un problème de délai de rafraîchissement.
 
