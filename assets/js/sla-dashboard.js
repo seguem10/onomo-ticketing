@@ -7,21 +7,24 @@
     fr: {
       title: 'Suivi SLA', subtitle: 'Vos tickets ouverts selon votre périmètre',
       onTrack: 'Dans les temps', atRisk: 'À risque', breached: 'Dépassés',
-      open: 'tickets ouverts', none: 'Aucun ticket ouvert',
+      openOf: 'sur {n} ticket(s) ouvert(s)', none: 'Aucun ticket ouvert',
+      noRisk: 'Aucun ticket à risque', noBreach: 'Aucun dépassement',
       riskList: 'À surveiller', breachList: 'À traiter en priorité',
       updated: 'Mise à jour automatique', openTicket: 'Ouvrir le ticket',
     },
     en: {
       title: 'SLA monitoring', subtitle: 'Your open tickets within your access scope',
       onTrack: 'On track', atRisk: 'At risk', breached: 'Breached',
-      open: 'open tickets', none: 'No open tickets',
+      openOf: 'of {n} open ticket(s)', none: 'No open tickets',
+      noRisk: 'No tickets at risk', noBreach: 'No breaches',
       riskList: 'Monitor', breachList: 'Priority action',
       updated: 'Automatically updated', openTicket: 'Open ticket',
     },
     ar: {
       title: 'متابعة اتفاقية مستوى الخدمة', subtitle: 'التذاكر المفتوحة ضمن نطاق صلاحياتك',
       onTrack: 'ضمن الوقت', atRisk: 'معرضة للتأخير', breached: 'متأخرة',
-      open: 'تذاكر مفتوحة', none: 'لا توجد تذاكر مفتوحة',
+      openOf: 'من أصل {n} تذكرة مفتوحة', none: 'لا توجد تذاكر مفتوحة',
+      noRisk: 'لا توجد تذاكر معرضة للتأخير', noBreach: 'لا يوجد تأخير',
       riskList: 'للمتابعة', breachList: 'إجراء ذو أولوية',
       updated: 'تحديث تلقائي', openTicket: 'فتح التذكرة',
     },
@@ -51,7 +54,10 @@
       </button>`).join(' · ');
     const direction = (window.OnomoI18n && window.OnomoI18n.language) === 'ar' ? 'rtl' : 'ltr';
 
-    host.insertAdjacentHTML('afterbegin', `
+    // Below the greeting, so the page still opens on "Bonjour …".
+    const welcome = host.querySelector('.dash-welcome');
+    const anchor = welcome ? welcome : host;
+    anchor.insertAdjacentHTML(welcome ? 'afterend' : 'afterbegin', `
       <section class="card" data-sla-dashboard style="margin-bottom:18px;padding:20px" dir="${direction}">
         <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
           <div>
@@ -61,9 +67,9 @@
           <span style="color:var(--muted,#6f8098);font-size:12px"><i class="ti ti-refresh"></i> ${text('updated')}</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
-          <div style="border:1px solid #dce7f4;border-radius:12px;padding:14px;background:#f8fbff"><div style="font-size:25px;font-weight:800;color:#168f55">${onTrack}</div><strong>${text('onTrack')}</strong><div style="font-size:12px;color:var(--muted,#6f8098);margin-top:3px">${text('open')}</div></div>
-          <div style="border:1px solid #f2d787;border-radius:12px;padding:14px;background:#fffaf0"><div style="font-size:25px;font-weight:800;color:#b47900">${atRisk.length}</div><strong>${text('atRisk')}</strong><div style="font-size:12px;color:var(--muted,#6f8098);margin-top:3px">${atRisk.length ? listing(atRisk) : text('none')}</div></div>
-          <div style="border:1px solid #f5b5b5;border-radius:12px;padding:14px;background:#fff5f5"><div style="font-size:25px;font-weight:800;color:#c93636">${breached.length}</div><strong>${text('breached')}</strong><div style="font-size:12px;color:var(--muted,#6f8098);margin-top:3px">${breached.length ? listing(breached) : text('none')}</div></div>
+          <div style="border:1px solid #dce7f4;border-radius:12px;padding:14px;background:#f8fbff"><div style="font-size:25px;font-weight:800;color:#168f55">${onTrack}</div><strong>${text('onTrack')}</strong><div style="font-size:12px;color:var(--muted,#6f8098);margin-top:3px">${openTickets.length ? escapeHtml(text('openOf').replace('{n}', openTickets.length)) : text('none')}</div></div>
+          <div style="border:1px solid #f2d787;border-radius:12px;padding:14px;background:#fffaf0"><div style="font-size:25px;font-weight:800;color:#b47900">${atRisk.length}</div><strong>${text('atRisk')}</strong><div style="font-size:12px;color:var(--muted,#6f8098);margin-top:3px">${atRisk.length ? listing(atRisk) : text(openTickets.length ? 'noRisk' : 'none')}</div></div>
+          <div style="border:1px solid #f5b5b5;border-radius:12px;padding:14px;background:#fff5f5"><div style="font-size:25px;font-weight:800;color:#c93636">${breached.length}</div><strong>${text('breached')}</strong><div style="font-size:12px;color:var(--muted,#6f8098);margin-top:3px">${breached.length ? listing(breached) : text(openTickets.length ? 'noBreach' : 'none')}</div></div>
         </div>
       </section>`);
 

@@ -4439,9 +4439,9 @@ renderTicketList = function(list, title){
     ${urg>0&&currentView!=='urgents'?`<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i><span>${urg} ticket(s) urgent(s) actif(s)</span><strong onclick="switchView('urgents',null)">Voir</strong></div>`:''}
     ${advFiltersBarHTML()}
     <div class="ticket-filter-strip">
-      ${['tous',...STATUTS,...(followUp?['waiting_it','waiting_requester']:[])].map(st=>`<button class="ticket-filter-pill${filterStat===st?' active':''}" onclick="setFilter('${st}')"><span>${st==='tous'?'Tous':esc(followUp?.[st]||STAT_L[st])}</span><b>${counts[st]??0}</b></button>`).join('')}
+      ${['tous',...STATUTS,...(followUp?['waiting_it','waiting_requester']:[])].map(st=>`<button class="ticket-filter-pill${filterStat===st?' active':''}" onclick="setFilter('${st}')"><span>${st==='tous'?esc(appText('all','Tous')):esc(followUp?.[st]||STAT_L[st])}</span><b>${counts[st]??0}</b></button>`).join('')}
     </div>
-    ${followUp?`<p class="ticket-follow-up-hint">${esc(followUp.hint)}</p>`:''}
+    ${followUp&&(filterStat==='waiting_it'||filterStat==='waiting_requester')?`<p class="ticket-follow-up-hint">${esc(followUp.hint)}</p>`:''}
     ${viewMode === 'kanban'
       ? renderKanban(filtered)
       : `<div class="card tickets-card">
@@ -4613,7 +4613,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/assignment-scope.js?v=20261008-1"></script>
 <script src="assets/js/notification-delivery.js?v=20261012-mailing-1"></script>
 <script src="assets/js/sla-escalation-ui.js?v=20261008-1"></script>
-<script src="assets/js/sla-dashboard.js?v=20261008-1"></script>
+<script src="assets/js/sla-dashboard.js?v=20261116-polish-1"></script>
 <script src="assets/js/it-assistant.js?v=20261001-4" data-it-assistant-loader="true"></script>
 <script src="assets/js/pwa-update.js?v=20261112-sw-load-1"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
@@ -4623,7 +4623,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/conversation-extras.js?v=20261011-2"></script>
 <script src="assets/js/conversation-reads.js?v=20261011-1"></script>
 <script src="assets/js/header-account.js?v=20261011-1"></script>
-<script src="assets/js/ticket-follow-up.js?v=20261011-1"></script>
+<script src="assets/js/ticket-follow-up.js?v=20261116-polish-1"></script>
 <script src="assets/js/profile-photos.js?v=20261011-1"></script>
 <!-- Module temporairement désactivé : <script src="assets/js/access-requests.js?v=20261011-1"></script> -->
 <!-- Alertes temporairement désactivées : <script src="assets/js/access-notifications.js?v=20261011-1"></script> -->
