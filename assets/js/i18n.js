@@ -223,7 +223,6 @@
     translation after those render passes so the UI never remains mixed. */
     [0,100,500].forEach(delay=>setTimeout(()=>{updateStatic();const leaks=auditVisibleText();if(leaks.length)console.warn('Traductions visibles à compléter',leaks);},delay));}catch(error){console.warn('Rendu multilingue impossible',error);}},0);});
   function loadOnomoAutomation(){if(document.querySelector('script[data-onomo-automation]'))return;const s=document.createElement('script');s.src='assets/js/voice-email-admin.js?v=20261002-1';s.dataset.onomoAutomation='1';document.body.appendChild(s);}
-  function loadAdminActivity(){if(document.querySelector('script[data-onomo-activity]'))return;const s=document.createElement('script');s.src='assets/js/admin-activity.js?v=20261116-audit-labels-1';s.dataset.onomoActivity='1';document.body.appendChild(s);}
-  function loadUserSaveFix(){if(document.querySelector('script[data-onomo-user-save-fix]'))return;const s=document.createElement('script');s.src='assets/js/user-save-fix.js?v=20261007-admin-password-1';s.dataset.onomoUserSaveFix='1';document.body.appendChild(s);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{loadOnomoAutomation();loadAdminActivity();loadUserSaveFix();},{once:true});else{loadOnomoAutomation();loadAdminActivity();loadUserSaveFix();}
+  function loadAdminActivity(){if(document.querySelector('script[data-onomo-activity]'))return;const s=document.createElement('script');s.src='assets/js/admin-activity.js?v=20261116-fold-fixes-1';s.dataset.onomoActivity='1';document.body.appendChild(s);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{loadOnomoAutomation();loadAdminActivity();},{once:true});else{loadOnomoAutomation();loadAdminActivity();}
 })();
