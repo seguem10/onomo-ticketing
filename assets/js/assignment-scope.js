@@ -8,6 +8,8 @@
   const nameOf=user=>`${user?.prenom||''} ${user?.nom||''}`.trim();
   const labels={local:'IT de cet hôtel',regional:'IT régional couvrant cet hôtel',admin:'Administrateurs — escalade'};
   const allowedRoles=new Set(['admin','it_hotel','it_regional','demandeur']);
+  const t=(key,fallback)=>{const value=window.OnomoI18n?.t?.(key);return value&&value!==key?value:fallback;};
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
   function currentRole(){return role(currentUser?.role);}
   function notice(select,message,kind='info'){
@@ -44,8 +46,58 @@
     const assigneeName=option.dataset?.assigneeName||option.value||'';
     return {assignedTo,assigneeName};
   }
+  /* A requester picks among the IT staff the server allows for their own
+     hotel. Auth restoration can finish just after the form opens, so an
+     empty answer is retried briefly before showing "no IT available". */
+  async function requesterCandidates(){
+    if(typeof window.sbFetch!=='function'||typeof window.sbOK!=='function'||!window.sbOK())return [];
+    for(const delay of [0,250,750]){
+      if(delay)await wait(delay);
+      try{
+        const rows=await window.sbFetch('rpc/requester_available_it',{method:'POST',body:'{}',prefer:'return=representation'});
+        if(Array.isArray(rows)&&rows.length)return rows;
+      }catch(error){console.warn('ONOMO IT autorisés indisponibles',error);}
+    }
+    return [];
+  }
+  let requesterRun=0;
+  async function populateRequester(select){
+    const run=++requesterRun;
+    select.disabled=true;
+    select.innerHTML='<option value="">'+esc(t('loading','Chargement…'))+'</option>';
+    notice(select,'');
+    const available=await requesterCandidates();
+    if(run!==requesterRun)return;
+    const hotel=currentUser?.hotel||'';
+    const hotelSelect=document.getElementById('ntHotel');
+    if(hotelSelect){
+      hotelSelect.innerHTML='';
+      const option=document.createElement('option');
+      option.value=hotel;option.textContent=hotel||t('no_hotel_option','— Aucun hôtel assigné —');option.disabled=!hotel;
+      hotelSelect.appendChild(option);hotelSelect.value=hotel;
+    }
+    select.innerHTML='<option value="">'+esc(t('select_it_option','— Sélectionner un IT —'))+'</option>';
+    const grouped={local:[],regional:[],admin:[]};
+    available.forEach(row=>grouped[grouped[row.scope_type]?row.scope_type:'local'].push(row));
+    [['local',t('it_your_hotel','IT de votre hôtel')],['regional',t('regional_it','IT régional')],['admin',t('assignment_admin_escalation','Administrateurs — escalade')]].forEach(([key,label])=>{
+      if(!grouped[key].length)return;
+      const group=document.createElement('optgroup');group.label=label;
+      grouped[key].forEach(row=>{
+        const name=nameOf(row);if(!name||!row.assigned_to)return;
+        const option=document.createElement('option');
+        option.value=row.assigned_to;option.textContent=name;
+        option.dataset.assignedTo=row.assigned_to;option.dataset.assigneeName=name;
+        group.appendChild(option);
+      });
+      select.appendChild(group);
+    });
+    select.disabled=available.length===0;
+    if(available[0]){select.value=available[0].assigned_to;notice(select,'');}
+    else notice(select,t('no_it_available','Aucun responsable IT n’est actuellement configuré pour votre hôtel.'),'err');
+  }
   async function populate(id,hotel,selected=''){
     const select=document.getElementById(id);if(!select)return;
+    if(id==='ntAgent'&&currentRole()==='demandeur')return populateRequester(select);
     select.disabled=true;
     select.innerHTML='<option value="">Chargement des responsables autorisés…</option>';
     notice(select,'');
@@ -97,8 +149,13 @@
   if(typeof previousCreate==='function')window.createTicket=async function(data){
     const chosen=selectedValue(document.getElementById('ntAgent'));
     if(chosen?.assignedTo)return previousCreate.call(this,{...data,assigned_to:chosen.assignedTo,assigne_a:chosen.assigneeName});
+    // A requester's ticket must go to one of the IT staff the server allowed.
+    if(currentRole()==='demandeur'){window.showToast?.(t('no_it_available','Aucun responsable IT n’est actuellement configuré pour votre hôtel.'),'err');return null;}
     return previousCreate.apply(this,arguments);
   };
+  window.addEventListener('onomo:languagechange',()=>{
+    if(currentRole()==='demandeur'&&document.getElementById('ntAgent'))void populate('ntAgent','','');
+  });
   const previousUpdate=window.updateTicket;
   if(typeof previousUpdate==='function')window.updateTicket=async function(id,updates){
     if(Object.prototype.hasOwnProperty.call(updates||{},'assigne_a')){
