@@ -43,7 +43,9 @@
    ticket:item?.numero||'',titre:item?.titre||'',hotel:item?.hotel||'',
    agent:[who?.prenom,who?.nom].filter(Boolean).join(' ')||who?.email||''
   };
-  return String(body||'').replace(/\{(demandeur|ticket|titre|hotel|agent)\}/g,(_,key)=>values[key]);
+  // The page translation layer may show {Demandeur} or {hôtel} in the hint:
+  // accept any case and the accented spelling.
+  return String(body||'').replace(/\{(demandeur|ticket|titre|h[oô]tel|agent)\}/gi,(_,key)=>values[key.toLowerCase().replace('ô','o')]);
  }
  function filtered(){
   const q=query.trim().toLowerCase();

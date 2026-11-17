@@ -33,6 +33,7 @@ test('a reply is inserted at the cursor with the ticket details filled in',()=>{
   assert.equal(h.input.selectionStart,h.input.value.length);
   assert.equal(h.elements.cannedRepliesPanel.hidden,true);
   assert.equal(h.api.insert('missing'),false);
+  assert.equal(h.api.fill('{Demandeur} {HÔTEL} {Ticket} {inconnu}'),'Moussa Onomo Dakar TK-0042 {inconnu}');
 });
 
 test('the list is searchable, escaped, and only the author or an admin can change a reply',()=>{
