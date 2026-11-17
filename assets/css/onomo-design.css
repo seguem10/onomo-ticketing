@@ -6174,3 +6174,22 @@ body.dark-mode .mfa-error{background:rgba(180,35,24,.15);border-color:rgba(254,2
 /* Digits shrink on very narrow phones (320px) instead of overflowing. */
 .mfa-digit{flex:1 1 0;min-width:0;max-width:44px}
 html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
+
+/* Requester satisfaction */
+.satisfaction-card{margin:14px 0;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface2)}
+.satisfaction-card h3{margin:0 0 6px;font-size:13px;display:flex;align-items:center;gap:6px}
+.satisfaction-card p{margin:0 0 8px;font-size:12px;color:var(--tx2)}
+.satisfaction-stars{color:#f59e0b;font-size:18px;letter-spacing:2px}
+.satisfaction-comment{white-space:pre-wrap;margin-top:6px!important;color:var(--tx)!important}
+.satisfaction-picker{display:flex;gap:4px;margin-bottom:8px}
+.satisfaction-picker button{border:0;background:none;cursor:pointer;font-size:28px;line-height:1;color:#d0d5dd;padding:2px}
+.satisfaction-picker button.on{color:#f59e0b}
+.satisfaction-picker button:focus-visible{outline:2px solid #155eef;border-radius:6px}
+.satisfaction-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+.satisfaction-card .btn-outline{margin-top:8px}
+.satisfaction-report{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}
+.satisfaction-score{text-align:center}
+.satisfaction-score strong{font-size:30px;color:var(--tx)}
+.satisfaction-score span{font-size:14px;color:var(--tx2)}
+.satisfaction-score small{display:block;font-size:11px;color:var(--tx3);margin-top:2px}
+@media(max-width:560px){.satisfaction-report{grid-template-columns:1fr}}
