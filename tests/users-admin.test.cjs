@@ -28,7 +28,10 @@ const form=(role,extra={})=>({prenom:'Awa',nom:'Diop',email:'awa@example.invalid
 test('an edit patches the Supabase profile row and refreshes the page',async()=>{
   const h=editHarness();
   assert.equal(await h.page.saveUserEdit('p1',form('it_hotel',{hotel:' Onomo Dakar '})),true);
-  assert.equal(JSON.stringify(h.calls),JSON.stringify([['utilisateurs?id=eq.p1',{prenom:'Awa',nom:'Diop',email:'awa@example.invalid',role:'it_hotel',hotel:'Onomo Dakar',hotels:[],roles:['it_hotel']},'PATCH']]));
+  assert.equal(JSON.stringify(h.calls),JSON.stringify([
+    ['rpc/admin_set_user_roles',{target_profile:'p1',role_names:['IT Hotel']},'POST'],
+    ['utilisateurs?id=eq.p1',{prenom:'Awa',nom:'Diop',email:'awa@example.invalid',role:'it_hotel',hotel:'Onomo Dakar',hotels:[],roles:['IT Hotel']},'PATCH']
+  ]));
   assert.deepEqual(h.events,['saveUsers','populateSelects','close:modalUser','renderUsers']);
   assert.equal(h.page.DEMO_USERS[0].mapped,true);
   assert.equal(h.page.currentUser.prenom,'Awa');
@@ -38,19 +41,62 @@ test('an edit patches the Supabase profile row and refreshes the page',async()=>
 
 test('hotel scopes follow the role',async()=>{
   const cases=[
-    [form('demandeur',{hotel:'Onomo Lomé'}),'Onomo Lomé',['Onomo Lomé'],'demandeur'],
-    [form('requester',{hotel:'Onomo Lomé'}),'Onomo Lomé',['Onomo Lomé'],'demandeur'],
-    [form('it_regional',{hotels:['Onomo Dakar','',null,'Onomo Abidjan']}),null,['Onomo Dakar','Onomo Abidjan'],'it_regional'],
-    [form('directeur_hotel',{hotel:'Onomo Dakar'}),'Onomo Dakar',[],'directeur_hotel'],
-    [form('rh_regional',{hotels:['Onomo Dakar']}),null,['Onomo Dakar'],'rh_regional'],
-    [form('admin'),null,[],'admin']
+    [form('demandeur',{hotel:'Onomo Lomé'}),'Onomo Lomé',['Onomo Lomé'],'demandeur','Demandeur'],
+    [form('requester',{hotel:'Onomo Lomé'}),'Onomo Lomé',['Onomo Lomé'],'demandeur','Demandeur'],
+    [form('it_regional',{hotels:['Onomo Dakar','',null,'Onomo Abidjan']}),null,['Onomo Dakar','Onomo Abidjan'],'it_regional','IT Regional'],
+    [form('directeur_hotel',{hotel:'Onomo Dakar'}),'Onomo Dakar',[],'directeur_hotel','Directeur Hôtel'],
+    [form('rh_regional',{hotels:['Onomo Dakar']}),null,['Onomo Dakar'],'rh_regional','RH Régional'],
+    [form('admin'),null,[],'admin','Administrateur']
   ];
-  for(const [data,hotel,hotels,role] of cases){
+  for(const [data,hotel,hotels,role,name] of cases){
     const h=editHarness();
     assert.equal(await h.page.saveUserEdit('p1',data),true,data.role);
-    const body=h.calls[0][1];
-    assert.equal(body.hotel,hotel,data.role);assert.deepEqual(body.hotels,hotels,data.role);assert.equal(body.role,role);assert.deepEqual(body.roles,[role]);
+    const body=h.calls[1][1];
+    assert.equal(body.hotel,hotel,data.role);assert.deepEqual(body.hotels,hotels,data.role);assert.equal(body.role,role);assert.deepEqual(body.roles,[name]);
+    assert.deepEqual(h.calls[0][1].role_names,[name]);
   }
+});
+
+test('additional roles are saved with the main role, in app_user_roles first',async()=>{
+  const h=editHarness();
+  assert.equal(await h.page.saveUserEdit('p1',form('it_hotel',{hotel:'Onomo Dakar',roles:['IT Hotel','Directeur','RH Régional','admin','']})),true);
+  assert.deepEqual(h.calls.map(c=>c[0]),['rpc/admin_set_user_roles','utilisateurs?id=eq.p1']);
+  assert.deepEqual(h.calls[0][1].role_names,['IT Hotel','Directeur','RH Régional','Administrateur']);
+  assert.deepEqual(h.calls[1][1].roles,['IT Hotel','Directeur','RH Régional','Administrateur']);
+});
+
+test('a refused role change leaves the profile untouched and the modal open',async()=>{
+  const calls=[],toasts=[],events=[];
+  const page=loadUsersPage({
+    currentUser:{id:'p1',role:'admin'},DEMO_USERS:[{id:'p1'}],
+    document:{getElementById:()=>null},
+    window:{confirm:()=>true,sbFetch:async path=>{calls.push(path);throw new Error('Vous ne pouvez pas retirer votre propre rôle Administrateur');}},
+    showToast:(message,kind)=>toasts.push([message,kind]),
+    dbRowToUser:row=>row,saveUsers:()=>events.push('saveUsers'),populateSelects:()=>{},closeModal:()=>events.push('close')
+  });
+  assert.equal(await page.saveUserEdit('p1',form('it_hotel',{hotel:'Onomo Dakar'})),false);
+  assert.deepEqual(calls,['rpc/admin_set_user_roles']);assert.deepEqual(events,[]);
+  assert.deepEqual(toasts.at(-1),['Vous ne pouvez pas retirer votre propre rôle Administrateur','err']);
+});
+
+test('admin_set_user_roles is admin-only and replaces roles in both tables',()=>{
+  const sql=fs.readFileSync('supabase/migrations/20261117090000_admin_set_user_roles.sql','utf8').replace(/\r\n/g,'\n');
+  for(const fragment of [
+    "security definer\nset search_path = ''",
+    "if not public.is_admin() then\n    raise exception",
+    "target_auth = auth.uid() and not ('Administrateur' = any(names))",
+    "not exists (select 1 from public.app_roles r where r.name = n)",
+    "delete from public.app_user_roles where user_id = target_auth and role_id <> all(wanted)",
+    "update public.utilisateurs set roles = to_jsonb(names)",
+    "revoke all on function public.admin_set_user_roles(text, text[]) from public, anon;"
+  ])assert.ok(sql.includes(fragment),fragment);
+});
+
+test('the role boxes follow the main role and the list loads saved roles',()=>{
+  const modern=fs.readFileSync('assets/js/modern-features.js','utf8');
+  assert.ok(modern.includes("select.addEventListener('change',()=>{const previous=roleName(select.dataset.previousRole||''),next=roleName(select.value);"));
+  assert.ok(modern.includes('input.checked=input.value===roleName(select.value)'));
+  assert.ok(html.includes('utilisateurs?select=id,auth_user_id,email,prenom,nom,role,roles,'));
 });
 
 test('missing hotels block the edit before any request',async()=>{
@@ -100,7 +146,7 @@ test('the router, the search box and the wrappers use the integrated page',()=>{
   const switchView=html.slice(html.indexOf('function switchView(v,el){'));
   assert.match(switchView.slice(0,200),/if\(v==="users"\)return openUsersView\(el\);/);
   assert.match(html,/function onSearch\(v\)\{searchQ=v;if\(currentView==="users"\)\{void refreshUsersList\(\);return;\}/);
-  assert.match(html,/if\(editId\)\{\r?\n    return saveUserEdit\(editId,\{prenom,nom,email,role,hotel,hotels\}\);/);
+  assert.match(html,/if\(editId\)\{\r?\n    const roles=Array\.from\(document\.querySelectorAll\('#uRoleChoices input:checked'\)\)\.map\(input=>input\.value\);\r?\n    return saveUserEdit\(editId,\{prenom,nom,email,role,hotel,hotels,roles\}\);/);
   assert.match(fs.readFileSync('assets/js/modern-features.js','utf8'),/ensureRequesterHotelField\(\);\s*\/\/[^\n]*\n\s*if\(document\.getElementById\('uEditId'\)\?\.value\)return originalSubmitUser\(\);/);
   assert.match(fs.readFileSync('assets/js/runtime-sync.js','utf8'),/if\(document\.getElementById\('uEditId'\)\?\.value\)return previousSubmitUser\(\);/);
 });
