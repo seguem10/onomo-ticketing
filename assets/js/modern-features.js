@@ -42,7 +42,9 @@
     })();
     return roleLoadPromise;
   }
-  const userRoles=user=>{const aliases={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',demandeur:'Demandeur',requester:'Demandeur'};const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
+  const ROLE_ALIASES={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',demandeur:'Demandeur',requester:'Demandeur'};
+  const roleName=code=>ROLE_ALIASES[code]||code;
+  const userRoles=user=>{const aliases=ROLE_ALIASES;const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
   const isPower=user=>userRoles(user).some(role=>POWER.includes(role));
   const isAdmin=user=>userRoles(user).includes('Administrateur');
   const permissions=user=>effectivePermissions||userRoles(user).flatMap(name=>roles().find(role=>role.name===name)?.permissions||[]);
@@ -199,9 +201,11 @@
     }catch(error){console.error('Suppression rôle',error);showToast(t('role_delete_failed','Impossible de supprimer le rôle.'),'err');}
   };
   function addRoleNav(){const admin=document.getElementById('sbAdminSec');if(!admin||document.querySelector('[data-view="roles"]'))return;admin.insertAdjacentHTML('beforeend','<div class="nav-item" data-view="roles" onclick="renderRoleManager();document.querySelectorAll(\'.nav-item\').forEach(i=>i.classList.remove(\'active\'));this.classList.add(\'active\')"><i class="ti ti-key"></i><span>'+t('roles','Rôles et permissions')+'</span></div>');}
-  function addUserRolePicker(){ensureRequesterRoleOption();const select=document.getElementById('uRole');if(!select||document.getElementById('uRolesMulti'))return;select.closest('.form-g').insertAdjacentHTML('afterend',`<div class="form-g" id="uRolesMulti"><label class="field-lbl">${t('additional_roles','Rôles additionnels')}</label><div id="uRoleChoices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:9px;border:1px solid var(--border);border-radius:var(--r)">${roles().map(role=>`<label style="font-size:11px"><input type="checkbox" value="${esc(role.name)}"> ${esc(role.name)}</label>`).join('')}</div></div>`);}
-  const originalOpenUser=window.openModalUser;window.openModalUser=async function(){await loadRolesFromSupabase(true);originalOpenUser();addUserRolePicker();ensureRequesterHotelField();document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=input.value===document.getElementById('uRole').value);};
-  const originalEditUser=window.openEditUser;window.openEditUser=async function(id){await loadRolesFromSupabase(true);originalEditUser(id);addUserRolePicker();ensureRequesterHotelField();const user=DEMO_USERS.find(item=>item.id===id);const assigned=userRoles(user);document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=assigned.includes(input.value));};
+  function addUserRolePicker(){ensureRequesterRoleOption();const select=document.getElementById('uRole');if(!select||document.getElementById('uRolesMulti'))return;select.closest('.form-g').insertAdjacentHTML('afterend',`<div class="form-g" id="uRolesMulti"><label class="field-lbl">${t('additional_roles','Rôles additionnels')}</label><div id="uRoleChoices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:9px;border:1px solid var(--border);border-radius:var(--r)">${roles().map(role=>`<label style="font-size:11px"><input type="checkbox" value="${esc(role.name)}"> ${esc(role.name)}</label>`).join('')}</div></div>`);
+    // The main role is always one of the boxes: changing it swaps the box.
+    select.addEventListener('change',()=>{const previous=roleName(select.dataset.previousRole||''),next=roleName(select.value);document.querySelectorAll('#uRoleChoices input').forEach(input=>{if(input.value===previous)input.checked=false;if(input.value===next)input.checked=true;});select.dataset.previousRole=select.value;});}
+  const originalOpenUser=window.openModalUser;window.openModalUser=async function(){await loadRolesFromSupabase(true);originalOpenUser();addUserRolePicker();ensureRequesterHotelField();const select=document.getElementById('uRole');select.dataset.previousRole=select.value;document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=input.value===roleName(select.value));};
+  const originalEditUser=window.openEditUser;window.openEditUser=async function(id){await loadRolesFromSupabase(true);originalEditUser(id);addUserRolePicker();ensureRequesterHotelField();const user=DEMO_USERS.find(item=>item.id===id);const assigned=userRoles(user);document.getElementById('uRole').dataset.previousRole=document.getElementById('uRole').value;document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=assigned.includes(input.value));};
   const originalSubmitUser=window.submitUser;window.submitUser=async function(){
     ensureRequesterHotelField();
     // Edits are saved by submitUser in index.html (saveUserEdit).
