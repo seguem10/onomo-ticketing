@@ -2784,7 +2784,11 @@ async function saveUserEdit(id,form){
     return true;
   }catch(error){
     console.error('ONOMO sauvegarde utilisateur:',error);
-    showToast(error?.message||t('account_update_failed','Modification non enregistrée dans Supabase'),'err');
+    // sbFetch errors read "Supabase 403: {json}"; show only the database message.
+    let message=String(error?.message||'');
+    const body=message.match(/^Supabase \d+: (\{[\s\S]*\})$/);
+    if(body){try{message=JSON.parse(body[1]).message||message;}catch(_){}}
+    showToast(message||t('account_update_failed','Modification non enregistrée dans Supabase'),'err');
     return false;
   }
 }

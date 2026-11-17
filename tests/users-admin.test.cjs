@@ -79,6 +79,19 @@ test('a refused role change leaves the profile untouched and the modal open',asy
   assert.deepEqual(toasts.at(-1),['Vous ne pouvez pas retirer votre propre rôle Administrateur','err']);
 });
 
+test('a Supabase error shows only the database message',async()=>{
+  const toasts=[];
+  const page=loadUsersPage({
+    currentUser:{id:'p1',role:'admin'},DEMO_USERS:[{id:'p1'}],
+    document:{getElementById:()=>null},
+    window:{confirm:()=>true,sbFetch:async()=>{throw new Error('Supabase 403: {"code":"42501","details":null,"hint":null,"message":"Vous ne pouvez pas retirer votre propre rôle Administrateur"}');}},
+    showToast:(message,kind)=>toasts.push([message,kind]),
+    dbRowToUser:row=>row,saveUsers:()=>{},populateSelects:()=>{},closeModal:()=>{}
+  });
+  assert.equal(await page.saveUserEdit('p1',form('it_hotel',{hotel:'Onomo Dakar'})),false);
+  assert.deepEqual(toasts.at(-1),['Vous ne pouvez pas retirer votre propre rôle Administrateur','err']);
+});
+
 test('admin_set_user_roles is admin-only and replaces roles in both tables',()=>{
   const sql=fs.readFileSync('supabase/migrations/20261117090000_admin_set_user_roles.sql','utf8').replace(/\r\n/g,'\n');
   for(const fragment of [
