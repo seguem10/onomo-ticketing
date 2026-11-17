@@ -672,7 +672,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 #loginScreen{background:linear-gradient(145deg,#101828 0%,#172554 55%,#155eef 145%)!important;color:#fff!important}#loginScreen::before{display:block!important;background:radial-gradient(ellipse 75% 55% at 50% 0%,rgba(132,173,255,.32),transparent 68%)!important}.login-card{background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:0 24px 60px rgba(0,0,0,.28)!important}.login-logo{color:#fff!important}.login-logo i{color:#84adff!important}.login-tagline{color:#cbd5e1!important}.login-h{color:#fff!important}.login-d{color:#d0d5dd!important}.form-lbl{color:#e2e8f0!important}.login-card .form-ctrl{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.28)!important;color:#fff!important}.login-card .form-ctrl::placeholder{color:#cbd5e1!important}.login-card .form-ctrl:focus{background:rgba(255,255,255,.18)!important;border-color:#84adff!important}.input-wrap .eye-btn{color:#e2e8f0!important}.login-err{background:rgba(254,226,226,.95)!important;color:#b42318!important;border-color:#f97066!important}.login-card .btn-primary{width:100%!important;padding:12px!important;background:#2970ff!important}.login-card .btn-primary:hover{background:#155eef!important}
 .language-selector{margin-left:auto;border:1px solid #d0d5dd;border-radius:7px;background:#fff;color:#344054;padding:6px 9px;font:600 11px inherit;cursor:pointer}.login-brand .language-selector{position:fixed;z-index:10;top:30px;right:32px;margin:0;min-width:92px;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(8px)}.login-brand{position:relative}html[dir="rtl"] .sidebar{right:0;left:auto!important}html[dir="rtl"] .main-area{margin-right:260px;margin-left:0}html[dir="rtl"] .topbar,html[dir="rtl"] .content{text-align:right}html[dir="rtl"] .ticket-table th,html[dir="rtl"] .ticket-table td{text-align:right}html[dir="rtl"] .sidebar-overlay{right:260px;left:0}@media(max-width:768px){.login-brand .language-selector{top:16px;right:16px;min-width:82px}html[dir="rtl"] .main-area{margin-right:0}.language-selector{margin-left:0;margin-right:auto}}
 </style>
-<link rel="stylesheet" href="assets/css/onomo-design.css?v=20261117-canned-1">
+<link rel="stylesheet" href="assets/css/onomo-design.css?v=20261117-kb-1">
 <link rel="stylesheet" href="assets/css/header-account.css?v=20261011-4">
 </head>
 <body>
@@ -731,6 +731,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
         <div class="nav-item" data-view="urgents" onclick="switchView('urgents',this)"><i class="ti ti-alert-triangle"></i><span>Urgents</span><span class="nav-badge urgent" id="sbUrgent" style="display:none">0</span></div>
         <div class="nav-item" data-view="my-tickets" onclick="switchView('my-tickets',this)"><i class="ti ti-user-check"></i><span>Mes tickets</span></div>
         <div class="nav-item" data-view="assistant" onclick="switchView('assistant',this)"><i class="ti ti-message-chatbot"></i><span data-i18n="assistant_name">Assistant IT</span></div>
+        <div class="nav-item" data-view="knowledge" onclick="switchView('knowledge',this)"><i class="ti ti-book"></i><span>Base de connaissances</span></div>
         <div id="sbReportSec" style="display:none">
           <div class="sb-sec-lbl" style="margin-top:8px">Rapports</div>
           <div class="nav-item" data-view="report-global" onclick="switchView('report-global',this)"><i class="ti ti-chart-bar"></i><span>Vue globale</span></div>
@@ -798,6 +799,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
     <div class="modal-hdr"><div class="modal-title">Nouveau ticket</div><button class="modal-close" onclick="closeModal('modalTicket')" aria-label="Fermer"><i class="ti ti-x"></i></button></div>
     <div class="ticket-form-body">
       <div class="form-g"><label class="field-lbl">Sujet *</label><input id="ntTitre" class="field-ctrl" placeholder="Résumé du problème..." oninput="onTitreInput(this.value)"></div>
+      <div id="kbSuggest" aria-live="polite"></div>
       <div class="form-g"><label class="field-lbl">Description *</label><textarea id="ntDesc" class="field-ctrl" rows="5" placeholder="Décrivez le problème en détail..."></textarea></div>
       <div id="aiBtnWrap" style="margin-bottom:12px;display:none"><button class="btn btn-outline btn-sm" onclick="runAI()" id="aiBtnEl"><i class="ti ti-brain"></i>Analyser avec l'IA</button></div>
       <div id="aiBox" class="ai-panel" style="display:none">
@@ -1910,7 +1912,7 @@ function addAct(iconClass,text,ico,ibg,icol){
 
 const VIEW_TITLES={
   dashboard:"Tableau de bord",tickets:"Tous les tickets",urgents:"Tickets urgents",
-  "my-tickets":"Mes tickets",detail:"Détail ticket",
+  "my-tickets":"Mes tickets",detail:"Détail ticket",knowledge:"Base de connaissances",
   "report-global":"Rapport global","report-hotel":"Rapport par hôtel","report-agents":"Rapport par agent",
   "report-anomalies":"Rapport anomalies","report-my":"Mon hôtel",users:"Utilisateurs","hotels-admin":"Gestion des hôtels",
   settings:"Paramètres",profile:"Mon profil",assistant:"Assistant IT",
@@ -1972,7 +1974,8 @@ function renderView(){
       if(!window.ITAssistant?.renderAssistantView&&target)target.innerHTML='<div class="loading-state"><i class="ti ti-loader-2 spin"></i> Chargement de l’Assistant IT…</div>';
       ensureITAssistant().then(assistant=>assistant.renderAssistantView()).catch(()=>{});
     },
-    "hotels-admin":renderHotelsAdmin,settings:renderSettings
+    "hotels-admin":renderHotelsAdmin,settings:renderSettings,
+    knowledge:()=>globalThis.KnowledgeBase?.render()
   };
   (M[currentView]||renderDashboard)();
 }
@@ -3357,6 +3360,7 @@ function openNewTicket(prefill={}){
   document.getElementById("aiBox").style.display="none";
   document.getElementById("aiBtnWrap").style.display="none";
   document.getElementById("ntTitre").value="";
+  globalThis.KnowledgeBase?.resetSuggestions();
   document.getElementById("ntDesc").value="";
   // Re-populate selects fresh each time (users may have loaded from Supabase)
   populateSelects();
@@ -3376,6 +3380,7 @@ function openNewTicket(prefill={}){
   openModal("modalTicket");
 }
 function onTitreInput(v){
+  globalThis.KnowledgeBase?.suggest(v);
   document.getElementById("aiBtnWrap").style.display=(settings.aiEnabled&&v.length>5)?"block":"none";
 }
 async function runAI(){
@@ -4764,6 +4769,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/ticket-follow-up.js?v=20261116-polish-1"></script>
 <script src="assets/js/ticket-satisfaction.js?v=20261117-csat-1"></script>
 <script src="assets/js/canned-replies.js?v=20261117-canned-2"></script>
+<script src="assets/js/knowledge-base.js?v=20261117-kb-1"></script>
 <script src="assets/js/profile-photos.js?v=20261011-1"></script>
 <!-- Module temporairement désactivé : <script src="assets/js/access-requests.js?v=20261011-1"></script> -->
 <!-- Alertes temporairement désactivées : <script src="assets/js/access-notifications.js?v=20261011-1"></script> -->
