@@ -4666,7 +4666,7 @@ renderReportGlobal = function(){
 /* hide viewToggle on non-list views */
 const _ov = renderView;
 renderView = function(){
-  const nonListViews = ['dashboard','detail','assistant','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile'];
+  const nonListViews = ['dashboard','detail','assistant','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile','knowledge'];
   const vt = document.getElementById('viewToggle');
   if(vt) vt.style.display = nonListViews.includes(currentView) ? 'none' : 'flex';
   updateCounts();
@@ -4689,7 +4689,8 @@ renderView = function(){
     users: renderUsers,
     'hotels-admin': renderHotelsAdmin,
     settings: renderSettings,
-    profile: renderMyProfile
+    profile: renderMyProfile,
+    knowledge: () => globalThis.KnowledgeBase?.render()
   };
   (M[currentView] || renderDashboard)();
 };
