@@ -6248,3 +6248,26 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 .kb-suggest small{display:block;margin-top:6px;color:var(--tx2)}
 [dir="rtl"] .kb-head,[dir="rtl"] .kb-suggest-item>button{text-align:right}
 @media(max-width:640px){.kb-top{flex-direction:column}.kb-head{flex-wrap:wrap}}
+
+/* Error journal */
+.ej-page{max-width:1000px}
+.ej-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.ej-top p{margin:0;font-size:13px;color:var(--tx2)}
+.ej-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ej-danger{color:#d92d20!important}
+.ej-list{display:grid;gap:8px}
+.ej-group{border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.ej-head{width:100%;display:flex;align-items:flex-start;gap:12px;border:0;background:none;padding:12px 14px;cursor:pointer;text-align:left;color:var(--tx)}
+.ej-kind{font-size:11px;font-weight:600;border-radius:6px;padding:2px 8px;white-space:nowrap;background:#fee4e2;color:#b42318}
+.ej-kind.ej-console{background:#fef0c7;color:#b54708}
+.ej-kind.ej-rejection{background:#f4ebff;color:#6941c6}
+.ej-main{flex:1;min-width:0;display:grid;gap:2px}
+.ej-main strong{font-size:13px;word-break:break-word}
+.ej-main small,.ej-stats small{font-size:11px;color:var(--tx3);word-break:break-all}
+.ej-stats{font-size:12px;color:var(--tx2);text-align:right;display:grid;gap:2px;white-space:nowrap}
+.ej-body{padding:0 14px 14px;font-size:12px}
+.ej-label{margin:10px 0 4px;font-weight:600;color:var(--tx2)}
+.ej-body pre{margin:0;padding:10px;border-radius:8px;background:var(--surface2);overflow:auto;max-height:220px;font-size:11px;white-space:pre-wrap;word-break:break-all}
+.ej-table{width:100%;border-collapse:collapse}
+.ej-table td{padding:4px 6px;border-top:1px solid var(--border);color:var(--tx2)}
+@media(max-width:640px){.ej-top{flex-direction:column}.ej-head{flex-wrap:wrap}.ej-stats{text-align:left}}
