@@ -121,7 +121,7 @@ test('the menu entry, both renderView maps and the ticket page are wired',()=>{
   assert.ok(html.includes('assets:()=>globalThis.AssetInventory?.render()'));
   const override=html.slice(html.indexOf('renderView = function(){'));
   assert.ok(override.slice(0,2800).includes('assets: () => globalThis.AssetInventory?.render()'));
-  assert.ok(override.slice(0,500).includes("'client-errors','assets'];"));
+  assert.ok(override.slice(0,500).includes("'client-errors','assets'"));
   assert.ok(html.includes(`\${canEdit?'<div id="ticketAsset"></div>':''}`));
   assert.ok(html.includes('if(canEdit)globalThis.AssetInventory?.mountTicket(t);'));
 });
