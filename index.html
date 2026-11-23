@@ -672,7 +672,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 #loginScreen{background:linear-gradient(145deg,#101828 0%,#172554 55%,#155eef 145%)!important;color:#fff!important}#loginScreen::before{display:block!important;background:radial-gradient(ellipse 75% 55% at 50% 0%,rgba(132,173,255,.32),transparent 68%)!important}.login-card{background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:0 24px 60px rgba(0,0,0,.28)!important}.login-logo{color:#fff!important}.login-logo i{color:#84adff!important}.login-tagline{color:#cbd5e1!important}.login-h{color:#fff!important}.login-d{color:#d0d5dd!important}.form-lbl{color:#e2e8f0!important}.login-card .form-ctrl{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.28)!important;color:#fff!important}.login-card .form-ctrl::placeholder{color:#cbd5e1!important}.login-card .form-ctrl:focus{background:rgba(255,255,255,.18)!important;border-color:#84adff!important}.input-wrap .eye-btn{color:#e2e8f0!important}.login-err{background:rgba(254,226,226,.95)!important;color:#b42318!important;border-color:#f97066!important}.login-card .btn-primary{width:100%!important;padding:12px!important;background:#2970ff!important}.login-card .btn-primary:hover{background:#155eef!important}
 .language-selector{margin-left:auto;border:1px solid #d0d5dd;border-radius:7px;background:#fff;color:#344054;padding:6px 9px;font:600 11px inherit;cursor:pointer}.login-brand .language-selector{position:fixed;z-index:10;top:30px;right:32px;margin:0;min-width:92px;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(8px)}.login-brand{position:relative}html[dir="rtl"] .sidebar{right:0;left:auto!important}html[dir="rtl"] .main-area{margin-right:260px;margin-left:0}html[dir="rtl"] .topbar,html[dir="rtl"] .content{text-align:right}html[dir="rtl"] .ticket-table th,html[dir="rtl"] .ticket-table td{text-align:right}html[dir="rtl"] .sidebar-overlay{right:260px;left:0}@media(max-width:768px){.login-brand .language-selector{top:16px;right:16px;min-width:82px}html[dir="rtl"] .main-area{margin-right:0}.language-selector{margin-left:0;margin-right:auto}}
 </style>
-<link rel="stylesheet" href="assets/css/onomo-design.css?v=20261001-photo-analysis-1">
+<link rel="stylesheet" href="assets/css/onomo-design.css?v=20261123-mp-1">
 <link rel="stylesheet" href="assets/css/header-account.css?v=20261011-4">
 </head>
 <body>
@@ -731,6 +731,9 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
         <div class="nav-item" data-view="urgents" onclick="switchView('urgents',this)"><i class="ti ti-alert-triangle"></i><span>Urgents</span><span class="nav-badge urgent" id="sbUrgent" style="display:none">0</span></div>
         <div class="nav-item" data-view="my-tickets" onclick="switchView('my-tickets',this)"><i class="ti ti-user-check"></i><span>Mes tickets</span></div>
         <div class="nav-item" data-view="assistant" onclick="switchView('assistant',this)"><i class="ti ti-message-chatbot"></i><span data-i18n="assistant_name">Assistant IT</span></div>
+        <div class="nav-item" data-view="knowledge" onclick="switchView('knowledge',this)"><i class="ti ti-book"></i><span>Base de connaissances</span></div>
+        <div class="nav-item" data-view="assets" onclick="switchView('assets',this)" style="display:none"><i class="ti ti-device-desktop"></i><span>Inventaire</span></div>
+        <div class="nav-item" data-view="maintenance" onclick="switchView('maintenance',this)" style="display:none"><i class="ti ti-calendar-repeat"></i><span>Maintenance planifiée</span></div>
         <div id="sbReportSec" style="display:none">
           <div class="sb-sec-lbl" style="margin-top:8px">Rapports</div>
           <div class="nav-item" data-view="report-global" onclick="switchView('report-global',this)"><i class="ti ti-chart-bar"></i><span>Vue globale</span></div>
@@ -746,6 +749,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
           <div class="sb-sec-lbl" style="margin-top:8px">Administration</div>
           <div class="nav-item" data-view="users" onclick="openUsersView(this)"><i class="ti ti-users"></i><span>Utilisateurs</span></div>
           <div class="nav-item" data-view="hotels-admin" onclick="switchView('hotels-admin',this)"><i class="ti ti-building-skyscraper"></i><span>Hôtels</span></div>
+          <div class="nav-item" data-view="client-errors" onclick="switchView('client-errors',this)"><i class="ti ti-bug"></i><span>Erreurs</span></div>
         </div>
         <div class="sb-sec-lbl" style="margin-top:8px">Système</div>
         <div class="nav-item" data-view="profile" onclick="switchView('profile',this)"><i class="ti ti-user-circle"></i><span>Mon profil</span></div>
@@ -798,6 +802,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
     <div class="modal-hdr"><div class="modal-title">Nouveau ticket</div><button class="modal-close" onclick="closeModal('modalTicket')" aria-label="Fermer"><i class="ti ti-x"></i></button></div>
     <div class="ticket-form-body">
       <div class="form-g"><label class="field-lbl">Sujet *</label><input id="ntTitre" class="field-ctrl" placeholder="Résumé du problème..." oninput="onTitreInput(this.value)"></div>
+      <div id="kbSuggest" aria-live="polite"></div>
       <div class="form-g"><label class="field-lbl">Description *</label><textarea id="ntDesc" class="field-ctrl" rows="5" placeholder="Décrivez le problème en détail..."></textarea></div>
       <div id="aiBtnWrap" style="margin-bottom:12px;display:none"><button class="btn btn-outline btn-sm" onclick="runAI()" id="aiBtnEl"><i class="ti ti-brain"></i>Analyser avec l'IA</button></div>
       <div id="aiBox" class="ai-panel" style="display:none">
@@ -981,7 +986,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
       <i class="ti ti-ticket" style="font-size:20px"></i>Tickets
     </div>
     <div onclick="openNewTicket()" id="mbNewTicketBtn" data-requires-write="true" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:var(--brand);font-size:9px" class="mbnav-item mbnav-new-ticket">
-      <i class="ti ti-plus-circle" style="font-size:20px"></i>Nouveau
+      <i class="ti ti-circle-plus" style="font-size:20px"></i>Nouveau
     </div>
     <div onclick="toggleSidebar()" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:rgba(255,255,255,0.45);font-size:9px" class="mbnav-item mbnav-menu">
       <i class="ti ti-menu-2" style="font-size:20px"></i>Menu
@@ -1489,6 +1494,7 @@ function doLogout(){
 /* ══════════════════════════════════════════════
    SESSION
 ══════════════════════════════════════════════ */
+function adminNavigationAccess(user){const values=[user?.role,...(Array.isArray(user?.roles)?user.roles:[])].filter(Boolean).map(value=>String(value).trim().toLowerCase());const admin=values.some(value=>['admin','administrateur','administrator'].includes(value));return {admin,support:admin||values.some(value=>['it regional','it_regional','it hotel','it_hotel'].includes(value))};}
 function initSession(){
   applyBrand();
   applyLogoToUI();
@@ -1512,7 +1518,17 @@ function initSession(){
   const isStaff=currentUser.role==="it_regional"||currentUser.role==="it_hotel";
   document.getElementById("sbReportSec").style.display=isDir?"block":"none";
   document.getElementById("sbMySec").style.display=isStaff?"block":"none";
-  document.getElementById("sbAdminSec").style.display=currentUser.role==="admin"?"block":"none";
+  // Profiles may store role labels ("Administrateur") instead of the old aliases.
+  const navAccess=adminNavigationAccess(currentUser);
+  document.getElementById("sbAdminSec").style.display=navAccess.admin?"block":"none";
+  const usersNav=document.querySelector('[data-view="users"]');
+  if(usersNav)usersNav.style.display=navAccess.support?"flex":"none";
+  const assetsNav=document.querySelector('[data-view="assets"]');
+  if(assetsNav)assetsNav.style.display=navAccess.support?"flex":"none";
+  const maintenanceNav=document.querySelector('[data-view="maintenance"]');
+  if(maintenanceNav)maintenanceNav.style.display=navAccess.support?"flex":"none";
+  // Due maintenance tasks become tickets, once per page load, for technicians.
+  if(navAccess.support)globalThis.MaintenancePlans?.runOnce();
   // Masquer tous les points d'entrée "Nouveau ticket" pour les comptes en lecture seule (direction)
   document.querySelectorAll('[data-requires-write="true"]').forEach(el=>{el.style.display=isReadOnly()?"none":"";});
   const btnNew=document.getElementById("btnNewTicket");
@@ -1880,7 +1896,17 @@ function matchesTicketFilter(ticket,filter){
   return filter==='tous'||ticket.statut===filter;
 }
 function getUrgents(){return visibleTickets().filter(t=>t.priorite==="Urgente"&&t.statut!=="résolu"&&t.statut!=="fermé");}
-function getMyTickets(){const name=`${currentUser.prenom} ${currentUser.nom}`.trim();return visibleTickets().filter(t=>t.assigne_a===name);}
+/* Requesters never receive assignments: their "my tickets" are the ones they
+   created. Support roles keep the tickets assigned to them. */
+function isRequesterUser(user=currentUser){const role=String(user?.role||'').toLowerCase();return role==='demandeur'||role==='requester'||role==='directeur_hotel'||role==='rh_regional';}
+function getMyTickets(){
+  if(isRequesterUser()){
+    const identity=[currentUser?.auth_user_id,currentUser?.id,currentUser?.email].filter(Boolean).map(v=>String(v).toLowerCase());
+    return visibleTickets().filter(t=>identity.includes(String(t.created_by||'').toLowerCase())||identity.includes(String(t.created_by_email||'').toLowerCase()));
+  }
+  const name=`${currentUser.prenom} ${currentUser.nom}`.trim();return visibleTickets().filter(t=>t.assigne_a===name);
+}
+function myTicketsTitle(){return isRequesterUser()?appText('my_created_tickets','Mes tickets créés'):'Mes tickets assignés';}
 function updateCounts(){
   const vt=visibleTickets();
   const open=vt.filter(t=>t.statut!=="résolu"&&t.statut!=="fermé").length;
@@ -1895,16 +1921,14 @@ function addAct(iconClass,text,ico,ibg,icol){
 
 const VIEW_TITLES={
   dashboard:"Tableau de bord",tickets:"Tous les tickets",urgents:"Tickets urgents",
-  "my-tickets":"Mes tickets",detail:"Détail ticket",
+  "my-tickets":"Mes tickets",detail:"Détail ticket",knowledge:"Base de connaissances","client-errors":"Journal des erreurs",assets:"Inventaire",maintenance:"Maintenance planifiée",
   "report-global":"Rapport global","report-hotel":"Rapport par hôtel","report-agents":"Rapport par agent",
   "report-anomalies":"Rapport anomalies","report-my":"Mon hôtel",users:"Utilisateurs","hotels-admin":"Gestion des hôtels",
-  settings:"Paramètres",profile:"Mon profil",assistant:"Assistant IT"
+  settings:"Paramètres",profile:"Mon profil",assistant:"Assistant IT",
+  roles:"Rôles et permissions","activity-log":"Journal d’activité"
 };
 function openUsersView(el){
-  const values=[currentUser?.role,...(Array.isArray(currentUser?.roles)?currentUser.roles:[])]
-    .filter(Boolean).map(value=>String(value).trim().toLowerCase());
-  const allowed=values.some(value=>['admin','administrateur','administrator','it_hotel','it hotel','it_regional','it regional'].includes(value));
-  if(!allowed){showToast("Accès non autorisé.","err");return;}
+  if(!adminNavigationAccess(currentUser).support){showToast("Accès non autorisé.","err");return;}
   currentView='users';filterStat='tous';searchQ='';
   const si=document.getElementById('searchInput');if(si)si.value='';
   document.querySelectorAll('.nav-item').forEach(item=>item.classList.remove('active'));
@@ -1914,6 +1938,8 @@ function openUsersView(el){
 }
 window.openUsersView=openUsersView;
 function switchView(v,el){
+  // The users page has its own access check (support directory included).
+  if(v==="users")return openUsersView(el);
   currentView=v;filterStat="tous";searchQ="";
   const si=document.getElementById("searchInput");if(si)si.value="";
   document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
@@ -1921,8 +1947,10 @@ function switchView(v,el){
   else{const m=document.querySelector(`[data-view="${v}"]`);if(m)m.classList.add("active");}
   document.getElementById("topbarTitle").textContent=VIEW_TITLES[v]||v;
   renderView();
+  // Keep the mobile bottom bar in sync, also when the page is opened from the menu.
+  if(typeof updateMobileNav==="function")updateMobileNav();
 }
-function onSearch(v){searchQ=v;if(["dashboard","tickets","urgents","my-tickets"].includes(currentView))renderView();}
+function onSearch(v){searchQ=v;if(currentView==="users"){void refreshUsersList();return;}if(["dashboard","tickets","urgents","my-tickets"].includes(currentView))renderView();}
 function setFilter(s){filterStat=s;renderView();}
 let itAssistantLoader=null;
 function ensureITAssistant(){
@@ -1947,7 +1975,7 @@ function renderView(){
   const M={
     dashboard:renderDashboard,tickets:()=>renderTicketList(getFiltered(),"Tous les tickets"),
     urgents:()=>renderTicketList(getUrgents(),"Tickets urgents"),
-    "my-tickets":()=>renderTicketList(getMyTickets(),"Mes tickets assignés"),
+    "my-tickets":()=>renderTicketList(getMyTickets(),myTicketsTitle()),
     detail:renderDetail,"report-global":renderReportGlobal,
     "report-hotel":renderReportHotel,"report-agents":renderReportAgents,
     "report-my":renderReportMy,users:renderUsers,assistant:()=>{
@@ -1955,7 +1983,11 @@ function renderView(){
       if(!window.ITAssistant?.renderAssistantView&&target)target.innerHTML='<div class="loading-state"><i class="ti ti-loader-2 spin"></i> Chargement de l’Assistant IT…</div>';
       ensureITAssistant().then(assistant=>assistant.renderAssistantView()).catch(()=>{});
     },
-    "hotels-admin":renderHotelsAdmin,settings:renderSettings
+    "hotels-admin":renderHotelsAdmin,settings:renderSettings,
+    knowledge:()=>globalThis.KnowledgeBase?.render(),
+    "client-errors":()=>globalThis.ErrorJournal?.render(),
+    assets:()=>globalThis.AssetInventory?.render(),
+    maintenance:()=>globalThis.MaintenancePlans?.render()
   };
   (M[currentView]||renderDashboard)();
 }
@@ -2074,7 +2106,7 @@ function renderTicketList(list,title){
   };
   let html=`<div class="tickets-page">
     <div class="tickets-page-head">
-      <div><h1>${esc(title||"Tickets")}</h1><p>${currentView==="urgents"?"Priorisez les tickets urgents nécessitant une attention immédiate.":currentView==="my-tickets"?"Suivez les tickets qui vous sont assignés.":"Gérez et suivez tous les tickets de votre périmètre."}</p></div>
+      <div><h1>${esc(title||"Tickets")}</h1><p>${esc(currentView==="urgents"?appText("tickets_subtitle_urgent","Priorisez les tickets urgents nécessitant une attention immédiate."):currentView==="my-tickets"?(isRequesterUser()?appText("tickets_subtitle_created","Suivez les tickets que vous avez créés."):appText("tickets_subtitle_mine","Suivez les tickets qui vous sont assignés.")):appText("tickets_subtitle_all","Gérez et suivez tous les tickets de votre périmètre."))}</p></div>
       <div class="tickets-page-actions">
         <div class="tickets-search"><i class="ti ti-search"></i><input placeholder="Rechercher un ticket..." value="${esc(searchQ)}" oninput="onSearch(this.value)"></div>
         <button class="btn btn-outline tickets-filter-btn" onclick="toggleAdvFilters()"><i class="ti ti-filter"></i>Filtres</button>
@@ -2088,7 +2120,7 @@ function renderTicketList(list,title){
     </div>
     <div class="card tickets-card">
       <div style="overflow-x:auto">${ticketTableHTML(list)}</div>
-      <div class="tickets-card-foot"><span>Affichage de ${list.length?1:0} à ${list.length} sur ${list.length} résultat(s)</span><div class="fake-pagination"><button disabled><i class="ti ti-chevron-left"></i></button><button class="active">1</button><button disabled><i class="ti ti-chevron-right"></i></button></div></div>
+      <div class="tickets-card-foot"><span>${esc(appText("tickets_showing_range","Affichage de {from} à {to} sur {total} résultat(s)",{from:list.length?1:0,to:list.length,total:list.length}))}</span><div class="fake-pagination"><button disabled><i class="ti ti-chevron-left"></i></button><button class="active">1</button><button disabled><i class="ti ti-chevron-right"></i></button></div></div>
     </div>
   </div>`;
   document.getElementById("mainContent").innerHTML=html;
@@ -2163,6 +2195,8 @@ function renderDetail(){
           </section>
         </div>
         ${controls}
+        <div id="ticketSatisfaction"></div>
+        ${canEdit?'<div id="ticketAsset"></div>':''}
         <section class="conversation-panel" aria-label="${esc(copy.title)}">
           <div class="conversation-heading"><h3><i class="ti ti-messages"></i> ${esc(copy.title)}</h3><span class="conversation-count">${tcoms.length} ${tcoms.length===1?esc(copy.countOne):esc(copy.countMany)}</span></div>
           <div id="commentList" class="conversation-stream">${comHTML}</div>
@@ -2178,7 +2212,9 @@ function renderDetail(){
               <button type="button" title="${esc(copy.underline)}" aria-label="${esc(copy.underline)}" onclick="insertConversationFormat('__','__')"><u>U</u></button>
               <button type="button" title="${esc(copy.list)}" aria-label="${esc(copy.list)}" onclick="insertConversationFormat('• ')"><i class="ti ti-list"></i></button>
               <button type="button" title="${esc(copy.link)}" aria-label="${esc(copy.link)}" onclick="insertConversationFormat('[','](https://)')"><i class="ti ti-link"></i></button>
+              ${canEdit?globalThis.CannedReplies?.button()||'':''}
             </div>
+            ${canEdit?'<div id="cannedRepliesPanel" class="canned-panel" hidden></div>':''}
             <textarea id="conversationInput" class="conversation-editor" placeholder="${esc(copy.placeholder)}" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){submitComment();event.preventDefault();}"></textarea>
             <div class="conversation-composer-foot"><span class="conversation-safety"><i class="ti ti-shield-lock"></i> ${esc(copy.safety)}</span><button class="btn btn-gold btn-sm conversation-send" onclick="submitComment()"><i class="ti ti-send"></i> ${esc(copy.send)}</button></div>
           </div>`:""}
@@ -2195,6 +2231,9 @@ function renderDetail(){
   window.loadTicketAttachments?.(t.id);
   window.TicketConversation?.mount(t,tcoms);
   window.ConversationExtras?.mount();
+  globalThis.TicketSatisfaction?.mount(t);
+  globalThis.CannedReplies?.mount();
+  if(canEdit)globalThis.AssetInventory?.mountTicket(t);
 }
 
 let commentSubmissionPending=false;
@@ -2353,6 +2392,7 @@ function renderReportGlobal(){
       <div class="kpi-card"><div class="kpi-lbl">Urgents actifs</div><div class="kpi-val" style="color:${urg>0?"var(--red)":"var(--tx)"}">${urg}</div><div class="kpi-sub">${urg>0?"⚠ attention":"aucun"}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Taux résolution</div><div class="kpi-val" style="color:${rCol}">${rate}%</div><div class="kpi-sub">${resolved} résolus</div></div>
     </div>
+    ${globalThis.TicketSatisfaction?.reportHtml(all)||''}
     <div class="two-col">
       <div class="report-section"><div class="section-title"><i class="ti ti-building"></i>Tickets par hôtel</div>${hotelChartHTML(all)}</div>
       <div class="report-section"><div class="section-title"><i class="ti ti-tag"></i>Tickets par catégorie</div>${catChartHTML(all)}</div>
@@ -2391,6 +2431,7 @@ function renderReportHotel(){
       <div class="kpi-card"><div class="kpi-lbl">Urgents actifs</div><div class="kpi-val" style="color:${urg>0?"var(--red)":"var(--tx)"}">${urg}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Taux résolution</div><div class="kpi-val" style="color:${rCol}">${rate}%</div></div>
     </div>
+    ${globalThis.TicketSatisfaction?.reportHtml(ht)||''}
     <div class="two-col" style="margin-bottom:12px">
       <div class="report-section"><div class="section-title"><i class="ti ti-tag"></i>Par catégorie</div>${catChartHTML(ht)}</div>
       <div class="report-section"><div class="section-title"><i class="ti ti-alert-triangle"></i>Par priorité</div>${prioChartHTML(ht)}</div>
@@ -2470,7 +2511,7 @@ function renderReportAgents(){
     <div class="report-section" style="margin-bottom:14px">
       <div class="section-title"><i class="ti ti-users"></i>Performance par agent</div>
       <table class="ticket-table">
-        <thead><tr><th>Agent</th><th>Hôtel</th><th>Total assignés</th><th>Résolus</th><th>Ouverts</th><th>Taux</th></tr></thead>
+        <thead><tr><th>Agent</th><th>Hôtel</th><th>Total assignés</th><th>Résolus</th><th>Ouverts</th><th>Taux</th><th>${esc(globalThis.TicketSatisfaction?.column()||'Satisfaction')}</th></tr></thead>
         <tbody>${agents.map(u=>{
           const name=`${u.prenom} ${u.nom}`.trim();
           const at=tickets.filter(t=>t.assigne_a===name);
@@ -2479,7 +2520,7 @@ function renderReportAgents(){
           const rate=at.length?Math.round(res/at.length*100):0;
           const rCol=rate>70?"var(--green)":rate>40?"var(--amber)":"var(--red)";
           const rs=ROLE_STYLES[u.role]||ROLE_STYLES.it;
-          return`<tr><td><div class="assignee-cell"><div class="mini-av" style="background:${rs.bg};color:${rs.color}">${esc(initials(name))}</div><div><div style="font-weight:500">${esc(name)}</div><div style="font-size:10px;color:var(--tx3)">${esc(ROLE_L[u.role])}</div></div></div></td><td style="font-size:11px;color:var(--tx2)">${esc(u.hotel||"—")}</td><td style="font-weight:600">${at.length}</td><td style="color:var(--green);font-weight:600">${res}</td><td style="color:var(--amber);font-weight:600">${op}</td><td><span style="font-weight:700;color:${rCol}">${rate}%</span></td></tr>`;
+          return`<tr><td><div class="assignee-cell"><div class="mini-av" style="background:${rs.bg};color:${rs.color}">${esc(initials(name))}</div><div><div style="font-weight:500">${esc(name)}</div><div style="font-size:10px;color:var(--tx3)">${esc(ROLE_L[u.role])}</div></div></div></td><td style="font-size:11px;color:var(--tx2)">${esc(u.hotel||"—")}</td><td style="font-weight:600">${at.length}</td><td style="color:var(--green);font-weight:600">${res}</td><td style="color:var(--amber);font-weight:600">${op}</td><td><span style="font-weight:700;color:${rCol}">${rate}%</span></td><td>${globalThis.TicketSatisfaction?.agentCell(at)||'—'}</td></tr>`;
         }).join("")}</tbody>
       </table>
     </div>`;
@@ -2497,7 +2538,7 @@ function renderReportMy(){
   document.getElementById("mainContent").innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div class="alert alert-info" style="margin-bottom:0;flex:1"><i class="ti ti-building"></i><strong>${esc(hotel)}</strong></div>
-      <button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" onclick="exportPDF('hotel','${esc(hotel)}')"><i class="ti ti-file-type-pdf"></i>PDF</button>
+      <button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" data-report-hotel="${esc(hotel)}" onclick="exportPDF('hotel',this.dataset.reportHotel)"><i class="ti ti-file-type-pdf"></i>PDF</button>
     </div>
     <div class="kpi-row">
       <div class="kpi-card"><div class="kpi-lbl">Total</div><div class="kpi-val">${ht.length}</div></div>
@@ -2505,6 +2546,7 @@ function renderReportMy(){
       <div class="kpi-card"><div class="kpi-lbl">Urgents</div><div class="kpi-val" style="color:${urg>0?"var(--red)":"var(--tx)"}">${urg}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Taux résolution</div><div class="kpi-val" style="color:${rCol}">${rate}%</div></div>
     </div>
+    ${globalThis.TicketSatisfaction?.reportHtml(ht)||''}
     <div class="two-col" style="margin-bottom:12px">
       <div class="report-section"><div class="section-title"><i class="ti ti-tag"></i>Par catégorie</div>${catChartHTML(ht)}</div>
       <div class="report-section"><div class="section-title"><i class="ti ti-alert-triangle"></i>Par priorité</div>${prioChartHTML(ht)}</div>
@@ -2515,42 +2557,104 @@ function renderReportMy(){
 /* ══════════════════════════════════════════════
    ADMIN — USERS
 ══════════════════════════════════════════════ */
-function renderUsers(){
-  const mc = document.getElementById("mainContent");
-  mc.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--tx)">Gestion des comptes</div>
-        <div style="font-size:11px;color:var(--tx3);margin-top:2px">${DEMO_USERS.length} utilisateur(s) — stockage local</div>
-      </div>
-      <button class="btn btn-gold" onclick="openModalUser()"><i class="ti ti-user-plus"></i>Ajouter un compte</button>
-    </div>
-    <div class="card">
-      <div class="card-hdr"><div class="card-title"><i class="ti ti-users"></i>Comptes enregistrés</div></div>
-      ${DEMO_USERS.map(u=>{
-        const rs=ROLE_STYLES[u.role]||ROLE_STYLES.it;
-        const name=`${u.prenom} ${u.nom}`.trim();
-        const isMe=u.id===currentUser.id;
-        const lastLogin=u.lastLogin?`Dernière connexion : ${timeAgo(u.lastLogin)}`:"Jamais connecté";
-        return`<div class="user-row">
-          <div class="user-av" style="background:${rs.bg};color:${rs.color}">${esc(initials(name))}</div>
-          <div class="user-info" style="flex:1">
-            <div class="user-name">${esc(name)}${isMe?'<span style="font-size:9px;background:var(--brand-l);color:var(--brand-text);padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:700">VOUS</span>':""}</div>
-            <div style="font-size:10px;color:var(--tx3);margin-top:2px">${esc(u.email)} · ${lastLogin}</div>
-            <div style="font-size:9px;color:var(--tx3);margin-top:2px;font-style:italic">${esc(ROLE_DESC[u.role]||"")}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span class="role-tag" style="background:${rs.bg};color:${rs.color}">${esc(ROLE_L[u.role]||u.role)}</span>
-            ${u.role==="it_hotel"&&u.hotel?`<span style="font-size:10px;color:var(--tx3);background:var(--surface2);padding:2px 8px;border-radius:10px;border:1px solid var(--border)">${esc(u.hotel.replace("Onomo ",""))}</span>`:""}
-            ${u.role==="it_regional"&&(u.hotels||[]).length>0?`<span style="font-size:10px;color:var(--purple-t);background:var(--purple-l);padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.2)">${u.hotels.length} hôtel(s)</span>`:""}
-            ${u.mfaEnabled?`<span style="font-size:9px;font-weight:700;background:var(--green-l);color:var(--green-t);padding:2px 7px;border-radius:10px;border:1px solid rgba(5,150,105,.2)"><i class="ti ti-shield-check" style="font-size:10px"></i> MFA</span>`:`<span style="font-size:9px;color:var(--tx3);background:var(--surface2);padding:2px 7px;border-radius:10px;border:1px solid var(--border)">Sans MFA</span>`}
-            <button class="btn btn-outline btn-sm" data-user-id="${esc(u.id)}" onclick="openEditUser(this.dataset.userId)"><i class="ti ti-edit"></i></button>
-            ${u.mfaEnabled?`<button class="btn btn-sm" style="background:var(--red-l);color:var(--red-t);border:1px solid rgba(220,38,38,.2)" data-user-id="${esc(u.id)}" onclick="disableMFA(this.dataset.userId)"><i class="ti ti-shield-off"></i></button>`:`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple-t);border:1px solid rgba(124,58,237,.2)" data-user-id="${esc(u.id)}" onclick="openMFASetup(this.dataset.userId)"><i class="ti ti-shield-check"></i>MFA</button>`}
-            ${!isMe?`<button class="btn btn-danger btn-sm" data-user-id="${esc(u.id)}" onclick="askDeleteUser(this.dataset.userId)"><i class="ti ti-trash"></i></button>`:""}
-          </div>
-        </div>`;
-      }).join("")}
-    </div>`;
+/* Administrators manage accounts here; IT staff see the support directory
+   that the server scopes to their hotels. */
+function usersRoleValues(u){
+  const raw=[u?.role,u?.role_name,u?.user_role].concat(Array.isArray(u?.roles)?u.roles:[]).filter(Boolean);
+  return raw.flatMap(v=>v&&typeof v==='object'?[v.name,v.role,v.value].filter(Boolean):[v]).map(v=>String(v).toLowerCase().trim());
+}
+function usersIsAdmin(){
+  const u=currentUser||null;
+  return !!(u&&(u.is_admin===true||u.isAdmin===true||usersRoleValues(u).some(r=>['admin','administrateur','administrator','admin système'].includes(r))));
+}
+function usersIsSupport(){
+  return usersIsAdmin()||usersRoleValues(currentUser||{}).some(r=>['it_regional','it regional','it_hotel','it hotel'].includes(r));
+}
+function emailTestAcceptedMessage(data){
+  if(data?.ok!==true||data?.accepted!==true||typeof data.recipient!=='string'||!data.recipient.trim())throw new Error(appText('email_test_unconfirmed','Test email non confirmé'));
+  const provider=data.provider==='microsoft365'?'Microsoft 365':data.provider==='emailjs'?'EmailJS':appText('email_service','Le service email');
+  return appText('email_test_accepted','{provider} a accepté le test vers {recipient}. La réception reste à confirmer : vérifiez votre boîte mail et les indésirables.',{provider,recipient:data.recipient});
+}
+async function loadUsersPage(){
+  let rows=Array.isArray(DEMO_USERS)?DEMO_USERS.slice():[];
+  try{
+    if(typeof window.sbOK==='function'&&window.sbOK()&&typeof window.sbFetch==='function'){
+      const remote=usersIsAdmin()
+        ?await window.sbFetch('utilisateurs?select=id,auth_user_id,email,prenom,nom,role,roles,hotel,hotels,must_change_password,mfa_enabled,created_at&order=created_at.desc&limit=500')
+        :await window.sbFetch('rpc/get_support_directory',{method:'POST',body:'{}',prefer:'return=representation'});
+      // Connected mode must never fall back to a previous account's list.
+      rows=Array.isArray(remote)?remote:[];
+    }
+  }catch(_){ rows=[]; }
+  return rows;
+}
+function usersTableHtml(rows){
+  const t=appText;
+  const q=String(searchQ||'').toLowerCase().trim();
+  const filtered=q?rows.filter(u=>[u.prenom,u.nom,u.email,u.role,u.hotel].join(' ').toLowerCase().includes(q)):rows;
+  if(!filtered.length)return '<div style="padding:35px;text-align:center;color:var(--tx3)">'+t('no_user_found','Aucun utilisateur trouvé.')+'</div>';
+  const admin=usersIsAdmin();
+  const cell='padding:11px 10px;border-bottom:1px solid var(--border)';
+  const headings='<thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('user','Utilisateur')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('role','Rôle')+'</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('hotel','Hôtel')+'</th>'+(admin?'<th style="text-align:left;padding:10px;border-bottom:1px solid var(--border)">'+t('account_security','Sécurité')+'</th><th style="text-align:right;padding:10px;border-bottom:1px solid var(--border)">'+t('actions','Actions')+'</th>':'')+'</tr></thead>';
+  const body=filtered.map(u=>{
+    const id=esc(u.id||''),target=esc(u.auth_user_id||u.id||'');
+    const name=[u.prenom,u.nom].filter(Boolean).join(' ')||u.email||t('user','Utilisateur');
+    const role=usersRoleValues(u)[0]||u.role||'—';
+    const hotelScope=u.hotel||(Array.isArray(u.hotels)&&u.hotels.length?u.hotels.join(', '):(['admin','direction'].includes(u.role)?t('all_hotels','Tous les hôtels'):t('no_hotel_assigned_short','Aucun hôtel assigné')));
+    const security=u.mfa_enabled?t('mfa_required','MFA obligatoire'):t('standard','Standard');
+    let actions='';
+    if(admin){
+      // IDs travel in escaped data attributes, never inside the inline script.
+      const ids='data-user-id="'+id+'" data-auth-user-id="'+target+'"';
+      actions+='<button class="btn btn-outline btn-sm" '+ids+' onclick="window.OnomoMfa?.reset(this.dataset.authUserId)">'+t('reset_mfa','Réinitialiser MFA')+'</button> ';
+      actions+='<button class="btn btn-outline btn-sm" '+ids+' onclick="openEditUser(this.dataset.userId)"><i class="ti ti-edit"></i>'+t('edit','Modifier')+'</button> ';
+      actions+='<button class="btn btn-outline btn-sm" '+ids+' onclick="window.OnomoMfa?.setRequired(this.dataset.authUserId,'+(u.mfa_enabled?'false':'true')+')"><i class="ti ti-shield-'+(u.mfa_enabled?'off':'check')+'"></i>'+(u.mfa_enabled?t('remove_mfa','Retirer MFA'):t('require_mfa','Exiger MFA'))+'</button> ';
+      actions+='<button class="btn btn-danger btn-sm" '+ids+' onclick="askDeleteUser(this.dataset.userId)"><i class="ti ti-trash"></i></button>';
+    }
+    return '<tr><td data-label="'+esc(t('user','Utilisateur'))+'" style="'+cell+'"><strong>'+esc(name)+'</strong><div style="font-size:11px;color:var(--tx3)">'+esc(u.email||'')+'</div></td><td data-label="'+esc(t('role','Rôle'))+'" style="'+cell+'"><span class="role-tag">'+esc(role)+'</span></td><td data-label="'+esc(t('hotel','Hôtel'))+'" style="'+cell+'">'+esc(hotelScope)+'</td>'+(admin?'<td data-label="'+esc(t('account_security','Sécurité'))+'" style="'+cell+'">'+security+(u.must_change_password?' · '+t('password_change_required','Mot de passe à changer'):'')+'</td><td class="user-actions" style="'+cell+';text-align:right;white-space:nowrap">'+actions+'</td>':'')+'</tr>';
+  }).join('');
+  return '<div style="overflow:auto"><table class="onomo-users-table" style="width:100%;border-collapse:collapse">'+headings+'<tbody>'+body+'</tbody></table></div>';
+}
+async function refreshUsersList(){
+  const rows=await loadUsersPage();
+  const list=document.getElementById('usersPageList');
+  if(list)list.innerHTML=usersTableHtml(rows);
+}
+async function sendAdminEmailSelfTest(button){
+  if(!confirm(appText('email_test_confirm','Envoyer TEST-NOTIFICATION uniquement à l’adresse de votre compte administrateur connecté ? Aucun ticket ne sera créé.')))return;
+  button.disabled=true;
+  try{
+    const client=window.OnomoAuth?.getClient?.();if(!client)throw new Error(appText('session_required','Session requise'));
+    const {data,error}=await client.functions.invoke('admin-email-self-test',{body:{}});
+    if(error){let message;try{message=(await error.context?.json())?.error;}catch(_){}throw new Error(message||appText('email_test_unconfirmed','Test email non confirmé'));}
+    if(data?.error)throw new Error(data.error);
+    showToast(emailTestAcceptedMessage(data),'ok');
+  }catch(error){showToast(error.message,'err');}finally{button.disabled=false;}
+}
+async function renderUsers(){
+  const t=appText;
+  if(!usersIsSupport()){showToast(t('access_denied','Accès non autorisé.'),'err');return;}
+  const main=document.getElementById('mainContent');if(!main)return;
+  const admin=usersIsAdmin();
+  main.innerHTML='<div class="card"><div class="card-hdr"><div><div class="card-title">'+t('users','Utilisateurs')+'</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">'+(admin?t('user_management_description','Gestion des comptes, rôles et hôtels assignés'):'Annuaire des équipes IT, IT régional et administrateurs')+'</div></div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" id="usersRefreshBtn"><i class="ti ti-refresh"></i>'+t('refresh','Actualiser')+'</button>'+(admin?'<button class="btn btn-gold btn-sm" id="usersCreateBtn"><i class="ti ti-user-plus"></i>'+t('new_user','Nouvel utilisateur')+'</button>':'')+'</div></div><div id="usersPageList" style="padding:0 18px 18px"><div style="padding:30px;text-align:center;color:var(--tx3)">'+t('loading','Chargement...')+'</div></div></div>';
+  const rows=await loadUsersPage();
+  const list=document.getElementById('usersPageList');
+  if(list)list.innerHTML=usersTableHtml(rows);
+  document.getElementById('usersRefreshBtn')?.addEventListener('click',renderUsers);
+  const create=document.getElementById('usersCreateBtn');
+  if(admin&&create){
+    const test=document.createElement('button');test.type='button';test.className='btn btn-outline btn-sm';test.textContent=t('test_my_email','Tester mon email');
+    test.addEventListener('click',()=>sendAdminEmailSelfTest(test));
+    create.parentElement.appendChild(test);
+    if(window.OnomoRosterImport){
+      const roster=document.createElement('button');roster.type='button';roster.id='usersRosterImportBtn';roster.className='btn btn-outline btn-sm';roster.textContent=t('import_it_roster','Importer la liste IT');
+      roster.addEventListener('click',()=>window.OnomoRosterImport.run());
+      create.parentElement.appendChild(roster);
+    }
+    create.addEventListener('click',()=>window.openModalUser());
+  }
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-view')==='users'));
+  const title=document.querySelector('.topbar-title');if(title)title.textContent=t('users','Utilisateurs');
 }
 
 function populateHotelCheckboxes(selectedHotels){
@@ -2661,6 +2765,58 @@ function showEmailNotification(prenom, nom, email, role){
   div.addEventListener("click", e=>{if(e.target===div)div.remove();});
 }
 
+/* An edit is written straight to the Supabase profile row, the source of
+   truth. A temporary password goes through the privileged Edge Function and
+   is never stored in public.utilisateurs. */
+async function saveUserEdit(id,form){
+  const t=appText;
+  const role=form.role==='requester'?'demandeur':form.role;
+  const hotel=String(form.hotel||'').trim()||null;
+  const hotels=role==='demandeur'?(hotel?[hotel]:[]):(Array.isArray(form.hotels)?form.hotels.filter(Boolean):[]);
+  if(role==='it_hotel'&&!hotel){showToast(t('select_it_hotel',"Sélectionnez un hôtel pour l'IT Hôtel"),'err');return false;}
+  if(role==='it_regional'&&!hotels.length){showToast(t('select_it_regional',"Sélectionnez au moins un hôtel pour l'IT Régional"),'err');return false;}
+  if(role==='demandeur'&&!hotel){showToast(t('select_requester_hotel','Sélectionnez un hôtel pour le demandeur'),'err');return false;}
+  if(typeof window.sbFetch!=='function'){showToast(t('supabase_update_unavailable','Supabase est indisponible. Modification non enregistrée.'),'err');return false;}
+  const temporaryPassword=document.getElementById('uPwd')?.value||'';
+  const strong=password=>password.length>=12&&/[a-z]/.test(password)&&/[A-Z]/.test(password)&&/\d/.test(password)&&/[^A-Za-z0-9]/.test(password);
+  if(temporaryPassword.trim()&&!strong(temporaryPassword)){showToast('Le mot de passe doit contenir 12 caractères minimum, une majuscule, une minuscule, un chiffre et un caractère spécial.','err');return false;}
+  if(temporaryPassword.trim()&&!window.confirm('Définir ce mot de passe temporaire pour cet utilisateur ? Il devra le modifier à sa prochaine connexion.'))return false;
+  // Main role plus "additional roles", as app_roles names (same mapping as
+  // admin-create-user). Effective permissions live in app_user_roles, so they
+  // are replaced first by the admin-only RPC; the profile follows.
+  const ROLE_NAMES={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',demandeur:'Demandeur',requester:'Demandeur'};
+  const roles=[...new Set([role,...(Array.isArray(form.roles)?form.roles:[])].filter(Boolean).map(value=>ROLE_NAMES[value]||String(value)))];
+  try{
+    await window.sbFetch('rpc/admin_set_user_roles',{method:'POST',body:JSON.stringify({target_profile:String(id),role_names:roles})});
+    const payload={prenom:form.prenom,nom:form.nom,email:form.email,role,hotel,hotels,roles};
+    const rows=await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(payload),prefer:'return=representation'});
+    if(!Array.isArray(rows)||!rows[0])throw new Error('Aucune ligne utilisateur modifiée');
+    if(temporaryPassword.trim()){
+      const targetUserId=rows[0].auth_user_id||rows[0].id;
+      if(!targetUserId)throw new Error('Compte Auth Supabase introuvable pour cet utilisateur.');
+      if(typeof window.OnomoAuth?.resetUserPassword!=='function')throw new Error('Le service sécurisé de réinitialisation est indisponible.');
+      await window.OnomoAuth.resetUserPassword(targetUserId,temporaryPassword);
+    }
+    const fresh=dbRowToUser(rows[0]);
+    const index=DEMO_USERS.findIndex(x=>String(x.id)===String(id));
+    if(index>=0)DEMO_USERS[index]=fresh;else DEMO_USERS.push(fresh);
+    saveUsers(DEMO_USERS);
+    if(currentUser&&String(currentUser.id)===String(id))currentUser={...currentUser,...fresh};
+    populateSelects();
+    closeModal('modalUser');
+    showToast(temporaryPassword.trim()?'Mot de passe temporaire défini. L’utilisateur devra le modifier à sa prochaine connexion.':t('account_updated_sync','Compte mis à jour dans Supabase'),'ok');
+    renderUsers();
+    return true;
+  }catch(error){
+    console.error('ONOMO sauvegarde utilisateur:',error);
+    // sbFetch errors read "Supabase 403: {json}"; show only the database message.
+    let message=String(error?.message||'');
+    const body=message.match(/^Supabase \d+: (\{[\s\S]*\})$/);
+    if(body){try{message=JSON.parse(body[1]).message||message;}catch(_){}}
+    showToast(message||t('account_update_failed','Modification non enregistrée dans Supabase'),'err');
+    return false;
+  }
+}
 async function submitUser(){
   const editId=document.getElementById("uEditId").value;
   const prenom=document.getElementById("uPrenom").value.trim();
@@ -2673,29 +2829,11 @@ async function submitUser(){
   if(role==='directeur_hotel'&&!hotel){showToast('Sélectionnez un hôtel pour le Directeur Hôtel','err');return;}
   if(role==='rh_regional'&&!hotels.length){showToast('Sélectionnez les hôtels du RH Régional','err');return;}
 
-  if(!email){showToast("L'email est requis","err");return;}
+  if(!email){showToast(appText("email_required","L'email est requis"),"err");return;}
 
   if(editId){
-    const existing=DEMO_USERS.find(u=>u.email===email&&u.id!==editId);
-    if(existing){showToast("Cet email est déjà utilisé","err");return;}
-    DEMO_USERS=DEMO_USERS.map(u=>{
-      if(u.id!==editId)return u;
-      const updated={...u,prenom,nom,email,role,hotel,hotels};
-      if(pwdRaw.trim()){updated.pwd=hashPwd(pwdRaw);}
-      return updated;
-    });
-    if(currentUser.id===editId){
-      currentUser={...currentUser,prenom,nom,email,role,hotel,hotels};
-      document.getElementById("sbAv").textContent=initials(`${prenom} ${nom}`);
-      document.getElementById("sbName").textContent=`${prenom} ${nom}`.trim()||email;
-    }
-    saveUsers(DEMO_USERS);
-    if(sbOK()){
-      const updated = DEMO_USERS.find(u=>u.id===editId);
-      if(updated) sbSaveUser(updated);
-    }
-    populateSelects();closeModal("modalUser");
-    showToast("Compte mis à jour","ok");renderUsers();
+    const roles=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
+    return saveUserEdit(editId,{prenom,nom,email,role,hotel,hotels,roles});
   } else {
     if(!pwdRaw.trim()){showToast("Le mot de passe temporaire est requis","err");return;}
     if(DEMO_USERS.find(u=>u.email===email)){showToast("Email déjà utilisé","err");return;}
@@ -2734,15 +2872,27 @@ function askDeleteUser(id){
   openModal("modalConfirmUser");
 }
 
-function confirmDeleteUser(){
+let userDeletionPending=false;
+async function confirmDeleteUser(){
   const id=document.getElementById("confirmUserId").value;
-  if(!id)return;
+  if(!id||userDeletionPending)return;
   const u=DEMO_USERS.find(x=>x.id===id);
+  /* Delete server-side first (Auth login + profile) and only report success
+     once the server confirms. The previous flow removed the row locally and
+     announced success before the request finished, and left the Supabase Auth
+     login in place. */
+  if(sbOK()){
+    if(typeof window.OnomoAuth?.deleteUser!=='function'){showToast(appText('user_delete_failed','La suppression a échoué. Vérifiez que votre session administrateur est active puis réessayez.'),"err");return;}
+    userDeletionPending=true;
+    const button=document.querySelector('#modalConfirmUser button[onclick="confirmDeleteUser()"]');if(button)button.disabled=true;
+    try{await window.OnomoAuth.deleteUser(id);}
+    catch(error){showToast(error?.message||appText('user_delete_failed','La suppression a échoué. Vérifiez que votre session administrateur est active puis réessayez.'),"err");return;}
+    finally{userDeletionPending=false;if(button)button.disabled=false;}
+  }
   DEMO_USERS=DEMO_USERS.filter(x=>x.id!==id);
   saveUsers(DEMO_USERS);
-  if(sbOK()) sbDeleteUser(id);
   populateSelects();closeModal("modalConfirmUser");
-  showToast("Compte supprimé","ok");
+  showToast(appText('user_deleted','Compte supprimé'),"ok");
   addNotif(`Compte supprimé : ${u?.prenom||""} ${u?.nom||""}`,"user-minus","var(--red)");
   renderUsers();
 }
@@ -3106,48 +3256,75 @@ function toggleSetting(key,btnId){
 /* ══════════════════════════════════════════════
    MON PROFIL (change own password)
 ══════════════════════════════════════════════ */
-function renderMyProfile(){
-  const u=currentUser;
-  const rs=ROLE_STYLES[u.role]||ROLE_STYLES.it;
-  const name=`${u.prenom} ${u.nom}`.trim()||u.email;
-  document.getElementById("mainContent").innerHTML=`
-    <div style="max-width:480px" id="myProfilePage">
-      <div class="card" style="padding:20px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-          <div data-photo-user="${esc(u.auth_user_id||'')}" style="width:52px;height:52px;border-radius:50%;background:${rs.bg};color:${rs.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${esc(initials(name))}</div>
-          <div>
-            <div style="font-size:16px;font-weight:700;color:var(--tx)">${esc(name)}</div>
-            <div style="font-size:11px;color:var(--tx3)">${esc(u.email)}</div>
-            <span class="role-tag" style="background:${rs.bg};color:${rs.color};margin-top:4px;display:inline-block">${esc(ROLE_L[u.role]||u.role)}</span>
+/* Profile page for every role (Administrateur, IT, Demandeur…). It reads the
+   current profile row so role and hotel changes made by an administrator are
+   shown without signing in again. */
+function profileText(key,fallback){const value=window.OnomoI18n?.t?.(key);return value&&value!==key?value:fallback;}
+function profileRoleLabel(role){
+  const r=String(role||'').toLowerCase();
+  if(r==='it_hotel'||r==='it hotel')return 'IT Hôtel';
+  if(r==='it_regional'||r==='it regional')return 'IT Régional';
+  if(r==='demandeur'||r==='requester')return 'Demandeur';
+  if(r==='admin'||r==='administrateur')return 'Administrateur';
+  return role||'Utilisateur';
+}
+function profileHotelLabel(u){
+  if(u.hotel)return u.hotel;
+  if(Array.isArray(u.hotels)&&u.hotels.length)return u.hotels.join(', ');
+  if(typeof u.hotels==='string'){
+    try{const a=JSON.parse(u.hotels);if(Array.isArray(a)&&a.length)return a.join(', ');}catch(_){ }
+    return u.hotels;
+  }
+  return profileText('not_defined','Non défini');
+}
+async function loadMyProfile(){
+  try{
+    const session=await window.OnomoAuth?.getSession?.();
+    const authId=session?.user?.id;
+    if(authId&&typeof window.sbFetch==='function'){
+      const rows=await window.sbFetch(`utilisateurs?auth_user_id=eq.${encodeURIComponent(authId)}&limit=1`);
+      if(Array.isArray(rows)&&rows[0])return {...(currentUser||{}),...rows[0],auth_user_id:authId};
+    }
+  }catch(error){console.warn('[ONOMO] profil Supabase non chargé',error);}
+  return currentUser||null;
+}
+async function renderMyProfile(){
+  const t=profileText;
+  const title=document.getElementById('topbarTitle');if(title)title.textContent=t('profile','Mon profil');
+  const u=await loadMyProfile();
+  // The user may have opened another page while the profile was loading.
+  if(currentView!=='profile')return;
+  const main=document.getElementById('mainContent');if(!main)return;
+  if(!u){
+    main.innerHTML='<div class="card" style="padding:20px"><h3 style="margin-bottom:8px">'+t('profile','Mon profil')+'</h3><p style="color:var(--tx2)">'+t('profile_load_failed','Impossible de charger les informations du profil. Veuillez actualiser la page.')+'</p></div>';
+    return;
+  }
+  const name=`${u.prenom||''} ${u.nom||''}`.trim()||u.email||t('user','Utilisateur');
+  const field='width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--tx);outline:none';
+  const info=(label,value)=>`<div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">${label}</div><div style="color:var(--tx);font-weight:500">${esc(value)}</div></div>`;
+  const input=(id,label,autocomplete,margin)=>`<div style="margin-bottom:${margin}px"><label style="display:block;font-size:11px;color:var(--tx2);margin-bottom:5px">${label}</label><input id="${id}" type="password" autocomplete="${autocomplete}" style="${field}"></div>`;
+  main.innerHTML=`
+      <div style="max-width:700px">
+        <div class="page-head" style="margin-bottom:18px">
+          <div><h2>${t('profile','Mon profil')}</h2><p>${t('profile_description','Informations de votre compte et changement de mot de passe.')}</p></div>
+        </div>
+        <div class="card" style="margin-bottom:16px;padding:18px">
+          <div style="font-weight:600;font-size:15px;margin-bottom:16px;color:var(--tx)">${t('account_info','Informations du compte')}</div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+            ${info(t('name','Nom'),name)}
+            ${info(t('email','Email'),u.email||'')}
+            ${info(t('role','Rôle'),profileRoleLabel(u.role))}
+            ${info(t('hotel','Hôtel'),profileHotelLabel(u))}
           </div>
         </div>
-        ${u.hotel?`<div class="alert alert-info" style="margin-bottom:0"><i class="ti ti-building"></i>Hôtel assigné : <strong>${esc(u.hotel)}</strong></div>`:""}
-      </div>
-      <div class="card" style="padding:20px">
-        <div class="settings-title"><i class="ti ti-lock"></i>Changer mon mot de passe</div>
-        <div class="form-g"><label class="field-lbl">Mot de passe actuel</label><div style="position:relative"><input id="pOld" class="field-ctrl" type="password" placeholder="••••••••"><button onclick="togglePwd('pOld',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--tx3);cursor:pointer;font-size:15px"><i class="ti ti-eye"></i></button></div></div>
-        <div class="form-g"><label class="field-lbl">Nouveau mot de passe</label><div style="position:relative"><input id="pNew" class="field-ctrl" type="password" placeholder="••••••••"><button onclick="togglePwd('pNew',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--tx3);cursor:pointer;font-size:15px"><i class="ti ti-eye"></i></button></div></div>
-        <div class="form-g"><label class="field-lbl">Confirmer le nouveau mot de passe</label><input id="pConfirm" class="field-ctrl" type="password" placeholder="••••••••"></div>
-        <button class="btn btn-gold" onclick="changeMyPassword()"><i class="ti ti-lock-check"></i>Mettre à jour le mot de passe</button>
-      </div>
-      <div class="card" style="padding:20px;margin-top:14px">
-        <div class="settings-title"><i class="ti ti-bell"></i>Notifications push</div>
-        <div style="font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.7">Activez les notifications pour recevoir une alerte instantanée sur cet appareil lors d'une assignation de ticket.</div>
-        ${"Notification" in window && Notification.permission==="granted"
-          ? '<div class="alert alert-info" style="margin-bottom:0"><i class="ti ti-bell-check"></i>Notifications activées sur cet appareil</div>'
-          : '<button class="btn btn-gold btn-sm" onclick="requestPushPermission().then(ok=>{ if(ok){showToast(\'Notifications activées\',\'ok\');renderMyProfile();}else{showToast(\'Permission refusée\',\'err\');}})"><i class="ti ti-bell"></i>Activer les notifications</button>'
-        }
-      </div>
-      <div class="card" style="padding:20px;margin-top:14px">
-        <div class="settings-title"><i class="ti ti-shield-check"></i>Authentification à deux facteurs (MFA)</div>
-        ${currentUser.mfaEnabled
-          ? `<div class="alert alert-info" style="margin-bottom:12px"><i class="ti ti-shield-check"></i>MFA activé — votre compte est protégé par Google Authenticator / Authy.</div>
-             <button class="btn btn-danger btn-sm" onclick="disableMFA('${currentUser.id}')"><i class="ti ti-shield-off"></i>Désactiver le MFA</button>`
-          : `<div style="font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.7">Le MFA ajoute une couche de sécurité supplémentaire. À chaque connexion, vous devrez entrer un code généré par votre application (Google Authenticator, Authy, etc.).</div>
-             <button class="btn btn-gold" onclick="openMFASetup('${currentUser.id}')"><i class="ti ti-shield-check"></i>Activer le MFA</button>`
-        }
-      </div>
-    </div>`;
+        <div class="card" style="padding:18px">
+          <div style="font-weight:600;font-size:15px;margin-bottom:16px;color:var(--tx)">${t('password','Mot de passe')}</div>
+          ${input('pOld',t('current_password','Mot de passe actuel'),'current-password',14)}
+          ${input('pNew',t('password_new','Nouveau mot de passe'),'new-password',14)}
+          ${input('pConfirm',t('confirm_new_password','Confirmer le nouveau mot de passe'),'new-password',16)}
+          <button id="pSubmit" class="btn-primary" type="button" onclick="changeMyPassword()">${t('save_new_password','Enregistrer le nouveau mot de passe')}</button>
+        </div>
+      </div>`;
 }
 
 function changeMyPassword(){
@@ -3197,6 +3374,7 @@ function openNewTicket(prefill={}){
   document.getElementById("aiBox").style.display="none";
   document.getElementById("aiBtnWrap").style.display="none";
   document.getElementById("ntTitre").value="";
+  globalThis.KnowledgeBase?.resetSuggestions();
   document.getElementById("ntDesc").value="";
   // Re-populate selects fresh each time (users may have loaded from Supabase)
   populateSelects();
@@ -3216,6 +3394,7 @@ function openNewTicket(prefill={}){
   openModal("modalTicket");
 }
 function onTitreInput(v){
+  globalThis.KnowledgeBase?.suggest(v);
   document.getElementById("aiBtnWrap").style.display=(settings.aiEnabled&&v.length>5)?"block":"none";
 }
 async function runAI(){
@@ -3258,11 +3437,18 @@ let ticketSubmissionPending=false;
 async function submitNewTicket(){
   if(ticketSubmissionPending)return;
   if(isReadOnly()){showToast("Votre compte est en lecture seule — création de ticket non autorisée","err");closeModal("modalTicket");return;}
+  if(["demandeur","requester"].includes(String(currentUser?.role||"").toLowerCase().trim())){
+    const text=(key,fallback)=>{const value=window.OnomoI18n?.t?.(key);return value&&value!==key?value:fallback;};
+    if(!document.getElementById("ntHotel")?.value){showToast(text("no_hotel_assigned","Votre compte Demandeur n’a aucun hôtel assigné."),"err");return;}
+    if(!document.getElementById("ntAgent")?.value){showToast(text("no_it_available","Aucun IT disponible pour cet hôtel."),"err");return;}
+  }
   const titre=document.getElementById("ntTitre").value.trim();
   if(!titre){showToast("Le sujet est requis","err");return;}
+  const description=document.getElementById("ntDesc").value.trim();
+  if(!description){showToast("La description est requise","err");return;}
   const data={
     titre,
-    description:document.getElementById("ntDesc").value,
+    description,
     hotel:document.getElementById("ntHotel").value,
     categorie:document.getElementById("ntCat").value,
     priorite:document.getElementById("ntPrio").value,
@@ -4394,10 +4580,10 @@ renderTicketList = function(list, title){
     waiting_requester:commonFiltered.filter(t=>matchesTicketFilter(t,'waiting_requester')).length
   };
   const subtitle = currentView === 'urgents'
-    ? 'Priorisez les tickets urgents nécessitant une attention immédiate.'
+    ? appText('tickets_subtitle_urgent','Priorisez les tickets urgents nécessitant une attention immédiate.')
     : currentView === 'my-tickets'
-      ? 'Suivez les tickets qui vous sont assignés.'
-      : 'Gérez et suivez tous les tickets de votre périmètre.';
+      ? (isRequesterUser() ? appText('tickets_subtitle_created','Suivez les tickets que vous avez créés.') : appText('tickets_subtitle_mine','Suivez les tickets qui vous sont assignés.'))
+      : appText('tickets_subtitle_all','Gérez et suivez tous les tickets de votre périmètre.');
 
   let html = `<div class="tickets-page">
     <div class="tickets-page-head">
@@ -4412,14 +4598,14 @@ renderTicketList = function(list, title){
     ${urg>0&&currentView!=='urgents'?`<div class="alert alert-danger"><i class="ti ti-alert-triangle"></i><span>${urg} ticket(s) urgent(s) actif(s)</span><strong onclick="switchView('urgents',null)">Voir</strong></div>`:''}
     ${advFiltersBarHTML()}
     <div class="ticket-filter-strip">
-      ${['tous',...STATUTS,...(followUp?['waiting_it','waiting_requester']:[])].map(st=>`<button class="ticket-filter-pill${filterStat===st?' active':''}" onclick="setFilter('${st}')"><span>${st==='tous'?'Tous':esc(followUp?.[st]||STAT_L[st])}</span><b>${counts[st]??0}</b></button>`).join('')}
+      ${['tous',...STATUTS,...(followUp?['waiting_it','waiting_requester']:[])].map(st=>`<button class="ticket-filter-pill${filterStat===st?' active':''}" onclick="setFilter('${st}')"><span>${st==='tous'?esc(appText('all','Tous')):esc(followUp?.[st]||STAT_L[st])}</span><b>${counts[st]??0}</b></button>`).join('')}
     </div>
-    ${followUp?`<p class="ticket-follow-up-hint">${esc(followUp.hint)}</p>`:''}
+    ${followUp&&(filterStat==='waiting_it'||filterStat==='waiting_requester')?`<p class="ticket-follow-up-hint">${esc(followUp.hint)}</p>`:''}
     ${viewMode === 'kanban'
       ? renderKanban(filtered)
       : `<div class="card tickets-card">
           <div style="overflow-x:auto">${ticketTableHTML(filtered)}</div>
-          <div class="tickets-card-foot"><span>Affichage de ${filtered.length?1:0} à ${filtered.length} sur ${filtered.length} résultat(s)</span><div class="fake-pagination"><button disabled><i class="ti ti-chevron-left"></i></button><button class="active">1</button><button disabled><i class="ti ti-chevron-right"></i></button></div></div>
+          <div class="tickets-card-foot"><span>${esc(appText('tickets_showing_range','Affichage de {from} à {to} sur {total} résultat(s)',{from:filtered.length?1:0,to:filtered.length,total:filtered.length}))}</span><div class="fake-pagination"><button disabled><i class="ti ti-chevron-left"></i></button><button class="active">1</button><button disabled><i class="ti ti-chevron-right"></i></button></div></div>
         </div>`}
   </div>`;
 
@@ -4494,7 +4680,7 @@ renderReportGlobal = function(){
 /* hide viewToggle on non-list views */
 const _ov = renderView;
 renderView = function(){
-  const nonListViews = ['dashboard','detail','assistant','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile'];
+  const nonListViews = ['dashboard','detail','assistant','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile','knowledge','client-errors','assets','maintenance'];
   const vt = document.getElementById('viewToggle');
   if(vt) vt.style.display = nonListViews.includes(currentView) ? 'none' : 'flex';
   updateCounts();
@@ -4502,7 +4688,7 @@ renderView = function(){
     dashboard: renderDashboard,
     tickets: () => renderTicketList(getFilteredAdv(), 'Tous les tickets'),
     urgents: () => renderTicketList(getUrgents(), 'Tickets urgents'),
-    'my-tickets': () => renderTicketList(getMyTickets(), 'Mes tickets assignés'),
+    'my-tickets': () => renderTicketList(getMyTickets(), myTicketsTitle()),
     detail: renderDetail,
     'report-global': renderReportGlobal,
     'report-hotel': renderReportHotel,
@@ -4517,7 +4703,11 @@ renderView = function(){
     users: renderUsers,
     'hotels-admin': renderHotelsAdmin,
     settings: renderSettings,
-    profile: renderMyProfile
+    profile: renderMyProfile,
+    knowledge: () => globalThis.KnowledgeBase?.render(),
+    'client-errors': () => globalThis.ErrorJournal?.render(),
+    assets: () => globalThis.AssetInventory?.render(),
+    maintenance: () => globalThis.MaintenancePlans?.render()
   };
   (M[currentView] || renderDashboard)();
 };
@@ -4577,18 +4767,16 @@ document.addEventListener('keydown', e => {
 <!-- Pinned and integrity-checked to prevent a mutable CDN "@2" response. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script src="assets/js/locales-data.js"></script>
-<script src="assets/js/i18n.js?v=20261013-security-audit-1"></script>
-<script src="assets/js/modern-features.js?v=20261013-it-report-menu-2"></script>
-<script src="assets/js/runtime-sync.js?v=20261012-mailing-1"></script>
-<script src="assets/js/admin-navigation-fix.js?v=20261007-1"></script>
-<script src="assets/js/user-admin-fix.js?v=20261012-mail-test-1"></script>
-<script src="assets/js/mfa-auth.js?v=20261012-mfa-reset-1"></script>
-<script src="assets/js/assignment-scope.js?v=20261008-1"></script>
+<script src="assets/js/i18n.js?v=20261117-roles-1"></script>
+<script src="assets/js/modern-features.js?v=20261117-roles-1"></script>
+<script src="assets/js/runtime-sync.js?v=20261116-fold-fixes-2"></script>
+<script src="assets/js/mfa-auth.js?v=20261116-mfa-race-1"></script>
+<script src="assets/js/assignment-scope.js?v=20261116-fold-fixes-1"></script>
 <script src="assets/js/notification-delivery.js?v=20261012-mailing-1"></script>
 <script src="assets/js/sla-escalation-ui.js?v=20261008-1"></script>
-<script src="assets/js/sla-dashboard.js?v=20261008-1"></script>
+<script src="assets/js/sla-dashboard.js?v=20261116-polish-1"></script>
 <script src="assets/js/it-assistant.js?v=20261001-4" data-it-assistant-loader="true"></script>
-<script src="assets/js/pwa-update.js?v=20260925-8"></script>
+<script src="assets/js/pwa-update.js?v=20261112-sw-load-1"></script>
 <script src="assets/js/ui-polish.js?v=20260924-2"></script>
 <script src="assets/js/dashboard-polish.js?v=20260925-2"></script>
 <script src="assets/js/ticket-attachments.js?v=20261001-1"></script>
@@ -4596,7 +4784,13 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/conversation-extras.js?v=20261011-2"></script>
 <script src="assets/js/conversation-reads.js?v=20261011-1"></script>
 <script src="assets/js/header-account.js?v=20261011-1"></script>
-<script src="assets/js/ticket-follow-up.js?v=20261011-1"></script>
+<script src="assets/js/ticket-follow-up.js?v=20261116-polish-1"></script>
+<script src="assets/js/error-journal.js?v=20261119-errors-1"></script>
+<script src="assets/js/ticket-satisfaction.js?v=20261117-csat-1"></script>
+<script src="assets/js/canned-replies.js?v=20261117-canned-2"></script>
+<script src="assets/js/knowledge-base.js?v=20261117-kb-1"></script>
+<script src="assets/js/asset-inventory.js?v=20261123-inv-1"></script>
+<script src="assets/js/maintenance-plans.js?v=20261123-mp-1"></script>
 <script src="assets/js/profile-photos.js?v=20261011-1"></script>
 <!-- Module temporairement désactivé : <script src="assets/js/access-requests.js?v=20261011-1"></script> -->
 <!-- Alertes temporairement désactivées : <script src="assets/js/access-notifications.js?v=20261011-1"></script> -->
