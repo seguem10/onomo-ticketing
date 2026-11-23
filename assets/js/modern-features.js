@@ -1,6 +1,6 @@
 /* Extensions Onomo Support IT : rôles, accès restreint et dictée multilingue. */
 (function(){
-  const POWER=['Administrateur','IT Regional','IT Hotel','Directeur'];
+  const POWER=['Administrateur','IT Regional','IT Hotel','Directeur','Directeur Hôtel','RH Régional'];
   // Offline/demo defaults deliberately mirror the production RBAC migration.
   // They are a fallback only; a connected account receives its own permissions
   // from Supabase via my_permissions().
@@ -9,8 +9,8 @@
     {name:'IT Regional',permissions:['ticket:create','ticket:read:all','ticket:update:all','comment:create','comment:read'],is_system:true},
     {name:'IT Hotel',permissions:['ticket:create','ticket:read:all','ticket:update:all','comment:create','comment:read'],is_system:true},
     {name:'Directeur',permissions:['ticket:read:all','report:read'],is_system:true},
-    {name:'Directeur Hôtel',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true},
-    {name:'RH Régional',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true},
+    {name:'Directeur Hôtel',permissions:['ticket:create','ticket:read:own','ticket:read:all','report:read','comment:create','comment:read:own'],is_system:true},
+    {name:'RH Régional',permissions:['ticket:create','ticket:read:own','ticket:read:all','report:read','comment:create','comment:read:own'],is_system:true},
     {name:'Demandeur',permissions:['ticket:create','ticket:read:own','comment:create','comment:read:own'],is_system:true}
   ];
   const SYSTEM_DEFAULTS=new Map(DEFAULT_ROLES.map(role=>[role.name,role]));
@@ -42,7 +42,9 @@
     })();
     return roleLoadPromise;
   }
-  const userRoles=user=>{const aliases={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',demandeur:'Demandeur',requester:'Demandeur'};const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
+  const ROLE_ALIASES={admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',demandeur:'Demandeur',requester:'Demandeur'};
+  const roleName=code=>ROLE_ALIASES[code]||code;
+  const userRoles=user=>{const aliases=ROLE_ALIASES;const assigned=user?.roles?.length?user.roles:[user?.role||'Demandeur'];return assigned.map(role=>aliases[role]||role);};
   const isPower=user=>userRoles(user).some(role=>POWER.includes(role));
   const isAdmin=user=>userRoles(user).includes('Administrateur');
   const permissions=user=>effectivePermissions||userRoles(user).flatMap(name=>roles().find(role=>role.name===name)?.permissions||[]);
@@ -129,9 +131,8 @@
   }
   window.addEventListener('hashchange',applyHashRoute);
   const originalInit=window.initSession;window.initSession=function(){effectivePermissions=null;originalInit();applyAccess();void loadMyPermissions();if(!isPower(currentUser))switchView('tickets',document.querySelector('[data-view="tickets"]'));setTimeout(applyHashRoute,0);};
-  const loginGuard={key:'onomo_login_guard',maxAttempts:5,lockMinutes:15,read(){try{return JSON.parse(localStorage.getItem(this.key)||'{}')}catch(_){return{}}},write(value){localStorage.setItem(this.key,JSON.stringify(value))},locked(email){const entry=this.read()[email];return entry?.until&&Date.now()<entry.until},failure(email){const all=this.read(),entry=all[email]||{count:0};entry.count++;if(entry.count>=this.maxAttempts){entry.until=Date.now()+this.lockMinutes*60000;entry.count=0;}all[email]=entry;this.write(all);return entry.until},success(email){const all=this.read();delete all[email];this.write(all)}};
-  const originalLogin=window.doLogin;window.doLogin=async function(){const email=document.getElementById('loginEmail')?.value.trim().toLowerCase();if(loginGuard.locked(email)){const err=document.getElementById('loginErr');document.getElementById('loginErrMsg').textContent=window.OnomoI18n?.t('login_locked')||'Trop de tentatives. Réessayez dans quelques minutes.';err?.classList.add('show');return;}await originalLogin();const failed=document.getElementById('loginErr')?.classList.contains('show');if(failed)loginGuard.failure(email);else if(currentUser){loginGuard.success(email);sessionStorage.setItem('onomo_session_started',String(Date.now()));}};
-  const originalLogout=window.doLogout;window.doLogout=function(){sessionStorage.removeItem('onomo_session_started');return originalLogout();};
+  /* Login throttling is enforced server-side by Supabase Auth rate limits;
+     the former browser-only attempt counter was never reached and was removed. */
   // The authoritative 15-minute, user-activity-based timeout lives in
   // runtime-sync.js. Do not retain the legacy fixed eight-hour timer here.
   window.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();});
@@ -173,6 +174,8 @@
     if(!userRoles(currentUser).includes('Administrateur'))return;
     if(refresh)loadRolesFromSupabase().then(()=>window.renderRoleManager(false));
     const list=roles();
+    // Rendered outside switchView: set the top bar title explicitly.
+    const title=document.getElementById('topbarTitle');if(title)title.textContent=t('roles','Rôles et permissions');
     document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-hdr"><div class="card-title">${t('roles','Rôles et permissions')}</div><button class="btn btn-gold" onclick="addCustomRole()"><i class="ti ti-plus"></i>${t('new_role','Nouveau rôle')}</button></div><div class="user-list">${list.map((role,index)=>`<div class="user-row"><div class="user-info"><div class="user-name">${esc(role.name)}</div><div class="user-email">${esc(role.permissions.join(', ')||t('no_permission','Aucune permission'))}</div></div>${role.is_system?'<span class="role-tag">'+t('system_role','Système')+'</span>':`<button class="btn btn-danger btn-sm" onclick="removeCustomRole(${index})"><i class="ti ti-trash"></i></button>`}</div>`).join('')}</div></div>`;
   };
   window.addCustomRole=async function(){
@@ -198,11 +201,15 @@
     }catch(error){console.error('Suppression rôle',error);showToast(t('role_delete_failed','Impossible de supprimer le rôle.'),'err');}
   };
   function addRoleNav(){const admin=document.getElementById('sbAdminSec');if(!admin||document.querySelector('[data-view="roles"]'))return;admin.insertAdjacentHTML('beforeend','<div class="nav-item" data-view="roles" onclick="renderRoleManager();document.querySelectorAll(\'.nav-item\').forEach(i=>i.classList.remove(\'active\'));this.classList.add(\'active\')"><i class="ti ti-key"></i><span>'+t('roles','Rôles et permissions')+'</span></div>');}
-  function addUserRolePicker(){ensureRequesterRoleOption();const select=document.getElementById('uRole');if(!select||document.getElementById('uRolesMulti'))return;select.closest('.form-g').insertAdjacentHTML('afterend',`<div class="form-g" id="uRolesMulti"><label class="field-lbl">${t('additional_roles','Rôles additionnels')}</label><div id="uRoleChoices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:9px;border:1px solid var(--border);border-radius:var(--r)">${roles().map(role=>`<label style="font-size:11px"><input type="checkbox" value="${esc(role.name)}"> ${esc(role.name)}</label>`).join('')}</div></div>`);}
-  const originalOpenUser=window.openModalUser;window.openModalUser=async function(){await loadRolesFromSupabase(true);originalOpenUser();addUserRolePicker();ensureRequesterHotelField();document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=input.value===document.getElementById('uRole').value);};
-  const originalEditUser=window.openEditUser;window.openEditUser=async function(id){await loadRolesFromSupabase(true);originalEditUser(id);addUserRolePicker();ensureRequesterHotelField();const user=DEMO_USERS.find(item=>item.id===id);const assigned=userRoles(user);document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=assigned.includes(input.value));};
+  function addUserRolePicker(){ensureRequesterRoleOption();const select=document.getElementById('uRole');if(!select||document.getElementById('uRolesMulti'))return;select.closest('.form-g').insertAdjacentHTML('afterend',`<div class="form-g" id="uRolesMulti"><label class="field-lbl">${t('additional_roles','Rôles additionnels')}</label><div id="uRoleChoices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:9px;border:1px solid var(--border);border-radius:var(--r)">${roles().map(role=>`<label style="font-size:11px"><input type="checkbox" value="${esc(role.name)}"> ${esc(role.name)}</label>`).join('')}</div></div>`);
+    // The main role is always one of the boxes: changing it swaps the box.
+    select.addEventListener('change',()=>{const previous=roleName(select.dataset.previousRole||''),next=roleName(select.value);document.querySelectorAll('#uRoleChoices input').forEach(input=>{if(input.value===previous)input.checked=false;if(input.value===next)input.checked=true;});select.dataset.previousRole=select.value;});}
+  const originalOpenUser=window.openModalUser;window.openModalUser=async function(){await loadRolesFromSupabase(true);originalOpenUser();addUserRolePicker();ensureRequesterHotelField();const select=document.getElementById('uRole');select.dataset.previousRole=select.value;document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=input.value===roleName(select.value));};
+  const originalEditUser=window.openEditUser;window.openEditUser=async function(id){await loadRolesFromSupabase(true);originalEditUser(id);addUserRolePicker();ensureRequesterHotelField();const user=DEMO_USERS.find(item=>item.id===id);const assigned=userRoles(user);document.getElementById('uRole').dataset.previousRole=document.getElementById('uRole').value;document.querySelectorAll('#uRoleChoices input').forEach(input=>input.checked=assigned.includes(input.value));};
   const originalSubmitUser=window.submitUser;window.submitUser=async function(){
     ensureRequesterHotelField();
+    // Edits are saved by submitUser in index.html (saveUserEdit).
+    if(document.getElementById('uEditId')?.value)return originalSubmitUser();
     const role=document.getElementById('uRole')?.value;
     if(role==='demandeur'||role==='requester'){
       const hotel=document.getElementById('uHotel')?.value||'';
@@ -286,5 +293,5 @@
     button.addEventListener('click',()=>{active=!active;if(active){button.innerHTML=`<i class="ti ti-player-stop"></i>${stopLabel()}`;language=preferred();start();}else{clearTimeout(restartTimer);recognition?.stop();button.innerHTML=`<i class="ti ti-microphone"></i>${buttonLabel()}`;status.textContent=text('voice_stopped','Dictée arrêtée.');}});
   }
   function rebrand(root=document.body){root.querySelectorAll('*').forEach(element=>element.childNodes.forEach(node=>{if(node.nodeType===Node.TEXT_NODE)node.nodeValue=node.nodeValue.replace(/Support hôtelière|Support hôtelier|Support Hotelier|Support Desk · Hôtellerie/gi,'Support IT');}));}
-  document.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();addRoleNav();addUserRolePicker();addVoice();rebrand();new MutationObserver(()=>rebrand()).observe(document.body,{childList:true,subtree:true});const manifest=document.getElementById('pwa-manifest');if(manifest)manifest.href='assets/pwa/manifest.webmanifest';document.title='Onomo Support IT';document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent='Support IT');const installed=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone||localStorage.getItem('onomo_pwa_installed')==='1';if(installed){localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');}/* Keep exactly one worker for this scope. */if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(error=>console.warn('Service worker indisponible',error));window.addEventListener('appinstalled',()=>{localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');});});
+  document.addEventListener('DOMContentLoaded',()=>{ensureRequesterRoleOption();addRoleNav();addUserRolePicker();addVoice();rebrand();new MutationObserver(()=>rebrand()).observe(document.body,{childList:true,subtree:true});const manifest=document.getElementById('pwa-manifest');if(manifest)manifest.href='assets/pwa/manifest.webmanifest';document.title='Onomo Support IT';document.querySelectorAll('.sb-logo-sub').forEach(el=>el.textContent='Support IT');const installed=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone||localStorage.getItem('onomo_pwa_installed')==='1';if(installed){localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');}/* Service worker registration is owned by pwa-update.js (single registration). */window.addEventListener('appinstalled',()=>{localStorage.setItem('onomo_pwa_installed','1');localStorage.setItem('pwa_installed','1');document.querySelector('.pwa-install-bar')?.classList.remove('show');});});
 })();

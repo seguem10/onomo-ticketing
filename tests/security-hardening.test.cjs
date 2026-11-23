@@ -1,5 +1,6 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
-const html=fs.readFileSync('index.html','utf8');
+// Normalise Windows line endings so code extraction works on any checkout.
+const html=fs.readFileSync('index.html','utf8').replace(/\r\n/g,'\n');
 
 test('connected UI session stores only a tab-scoped marker and purges legacy business caches',()=>{
  const runtime=fs.readFileSync('assets/js/runtime-sync.js','utf8');
@@ -46,7 +47,10 @@ test('hotel administration isolates malicious IDs in escaped data attributes',()
  assert.ok(host.innerHTML.includes('onclick="openEditHotel(this.dataset.hotelId)"'));
  assert.ok(host.innerHTML.includes('onclick="deleteHotel(this.dataset.hotelId)"'));
  assert.equal(host.innerHTML.includes('<img src=x>'),false);
- for(const action of ['openEditUser','disableMFA','openMFASetup','askDeleteUser'])assert.ok(html.includes(action+'(this.dataset.userId)'));
+ // Users page: user IDs also travel in escaped data attributes only.
+ for(const action of ['openEditUser(this.dataset.userId)','askDeleteUser(this.dataset.userId)','OnomoMfa?.reset(this.dataset.authUserId)','OnomoMfa?.setRequired(this.dataset.authUserId,'])assert.ok(html.includes(action),action);
+ const users=html.slice(html.indexOf('function usersTableHtml('),html.indexOf('async function refreshUsersList('));
+ assert.equal(/onclick="[^"]*\\'\s*\+/.test(users),false);
 });
 
 test('kanban treats malicious ticket IDs and text as data, never handler code',()=>{

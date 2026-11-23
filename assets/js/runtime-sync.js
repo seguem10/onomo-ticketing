@@ -124,19 +124,10 @@
     }
     return client;
   }
-  function releaseLegacyLoginLock(email){
-    /* Older builds counted every temporary SDK/network failure as a bad
-       password and stored a device-only lock. Once the real Supabase client
-       is available, that stale browser marker must never block an account. */
-    try{
-      const all=JSON.parse(localStorage.getItem('onomo_login_guard')||'{}');
-      if(!all||typeof all!=='object')return;
-      const key=String(email||'').trim().toLowerCase();
-      if(key&&Object.prototype.hasOwnProperty.call(all,key)){
-        delete all[key];
-        localStorage.setItem('onomo_login_guard',JSON.stringify(all));
-      }
-    }catch(_){ }
+  function releaseLegacyLoginLock(){
+    /* Older builds stored a device-only attempt counter. Login throttling is
+       now enforced by Supabase Auth rate limits, so drop the stale marker. */
+    try{localStorage.removeItem('onomo_login_guard');}catch(_){ }
   }
 
   /* The original shell predates Supabase Auth and falls back to browser data
@@ -184,7 +175,8 @@
   /* Supabase is the only source of truth in production.  Keep no ticket,
      comment or profile copy in persistent browser storage: shared hotel
      workstations must not expose a previous user's data after logout. */
-  const LOCAL_DATA_KEYS=['dh_tickets','dh_comments','dh_users','dh_hotels'];
+  // Includes legacy profile-bearing keys from older builds (shared hotel PCs).
+  const LOCAL_DATA_KEYS=['dh_tickets','dh_comments','dh_users','dh_hotels','dh_user','dh_current_user','currentUser'];
   const purgeConnectedBrowserCache=()=>{
     if(!hasAuthConfiguration())return;
     try{
@@ -462,13 +454,26 @@
     }catch(error){console.warn('Restauration locale impossible',error);}
   }
 
+  /* Supabase returns English technical messages; map the known cases to the
+     user's language and never show a raw provider message on the login page. */
+  function loginErrorMessage(error){
+    const code=String(error?.code||''),text=String(error?.message||'').toLowerCase();
+    if(code==='no_profile')return t('login_no_profile','Aucun profil n’est lié à ce compte. Contactez l’administrateur.');
+    if(code==='invalid_credentials'||text.includes('invalid login credentials'))return t('invalid_credentials','Email ou mot de passe incorrect.');
+    if(code==='email_not_confirmed'||text.includes('email not confirmed'))return t('email_not_confirmed','Votre adresse email n’est pas encore confirmée.');
+    if(error?.name==='TypeError'||text.includes('failed to fetch')||text.includes('network'))return t('login_network_error','Connexion au serveur impossible. Vérifiez votre réseau puis réessayez.');
+    return t('invalid_credentials','Email ou mot de passe incorrect.');
+  }
+
   const previousLogin=window.doLogin;
   if(typeof previousLogin==='function'){
     window.doLogin=async function(){
       const email=document.getElementById('loginEmail')?.value.trim().toLowerCase(),pwd=document.getElementById('loginPwd')?.value||'';
+      const showLoginError=text=>{const err=document.getElementById('loginErr'),msg=document.getElementById('loginErrMsg');if(err&&msg){msg.textContent=text;err.classList.add('show');}};
+      if(!email||!pwd){showLoginError(t('login_required','Veuillez saisir votre email et votre mot de passe.'));return false;}
       const client=await waitForAuthClient();
       if(client&&email&&pwd){
-        releaseLegacyLoginLock(email);
+        releaseLegacyLoginLock();
         try{
           const {data,error}=await client.auth.signInWithPassword({email,password:pwd});
           if(error)throw error;
@@ -490,17 +495,15 @@
               touch();
               return true;
             }
-            throw new Error('Aucun profil utilisateurs lié à ce compte Supabase.');
+            const noProfile=new Error('Aucun profil utilisateurs lié à ce compte Supabase.');noProfile.code='no_profile';throw noProfile;
           }
         }catch(error){
           console.warn('Supabase Auth login échoué:',error.message||error);
-          const err=document.getElementById('loginErr'),msg=document.getElementById('loginErrMsg');
-          if(err&&msg){msg.textContent=error.message||'Connexion Supabase impossible.';err.classList.add('show');}
+          showLoginError(loginErrorMessage(error));
           return false;
         }
       }
-      const err=document.getElementById('loginErr'),msg=document.getElementById('loginErrMsg');
-      if(err&&msg){msg.textContent=t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.');err.classList.add('show');}
+      showLoginError(t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.'));
       return false;
     };
   }
@@ -542,7 +545,7 @@
       if(rows?.[0])await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(rows[0].id)}`,{method:'PATCH',body:JSON.stringify({must_change_password:false}),prefer:'return=minimal'});
     }catch(error){console.warn('Profil mis à jour sans modifier le mot de passe local',error);}
   }
-  if(typeof window.changeMyPassword==='function')window.changeMyPassword=async function(){
+  async function changeOwnPassword(){
     const old=document.getElementById('pOld')?.value||'',next=document.getElementById('pNew')?.value||'',confirm=document.getElementById('pConfirm')?.value||'';
     if(next!==confirm){showToast(t('password_mismatch','Les mots de passe ne correspondent pas'),'err');return false;}
     if(!validPassword(next)){showToast(passwordPolicyMessage(),'err');return false;}
@@ -552,6 +555,15 @@
     if(verification.error){showToast(t('current_password_incorrect','Mot de passe actuel incorrect'),'err');return false;}
     try{await updateSupabasePassword(next);showToast(t('password_updated','Mot de passe mis à jour'),'ok');['pOld','pNew','pConfirm'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});return true;}
     catch(error){showToast(error.message||t('password_update_failed','Mise à jour du mot de passe impossible'),'err');return false;}
+  }
+  /* The profile button stays disabled while Supabase verifies and updates
+     the password, so a double click cannot send two requests. */
+  if(typeof window.changeMyPassword==='function')window.changeMyPassword=async function(){
+    const button=document.getElementById('pSubmit');
+    if(button?.disabled)return false;
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true');}
+    try{return await changeOwnPassword();}
+    finally{if(button){button.disabled=false;button.removeAttribute('aria-busy');}}
   };
   if(typeof window.forceChangeDone==='function')window.forceChangeDone=async function(){
     const next=document.getElementById('fcNew')?.value||'',confirm=document.getElementById('fcConfirm')?.value||'',error=document.getElementById('fcErr'),message=document.getElementById('fcErrMsg');
@@ -613,6 +625,17 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
+  async function deleteUserByAdmin(profileId){
+    const client=getAuthClient();if(!client)throw new Error(t('auth_unavailable','Supabase Auth indisponible. Reconnectez-vous.'));
+    const {data,error}=await client.functions.invoke('admin-delete-user',{body:{profile_id:profileId}});
+    if(error){
+      let detail='';
+      try{const response=error.context;const payload=response?.clone?await response.clone().json():null;if(payload&&typeof payload.error==='string')detail=payload.error;}catch(_){ }
+      throw new Error(detail||t('user_delete_failed','La suppression a échoué. Vérifiez que votre session administrateur est active puis réessayez.'));
+    }
+    if(data?.error)throw new Error(data.error);
+    return data;
+  }
   async function completeFirstLogin(password){
     const client=getAuthClient();if(!client)throw new Error('Supabase Auth indisponible');
     const {data,error}=await client.functions.invoke('complete-first-login',{body:{password}});
@@ -620,16 +643,7 @@
     if(data?.error)throw new Error(data.error);
     return data;
   }
-  const roleDatabaseName=value=>({admin:'Administrateur',it_regional:'IT Regional',it_hotel:'IT Hotel',direction:'Directeur',directeur_hotel:'Directeur Hôtel',rh_regional:'RH Régional',demandeur:'Demandeur',requester:'Demandeur'}[value]||value);
-  async function replaceUserRoles(profileId, roleValues){
-    if(!profileId||!Array.isArray(roleValues)||!roleValues.length||!window.sbFetch)return;
-    const profiles=await window.sbFetch(`utilisateurs?id=eq.${encodeURIComponent(profileId)}&select=auth_user_id&limit=1`);
-    const targetUserId=profiles?.[0]?.auth_user_id;
-    if(!targetUserId)throw new Error('Compte Auth Supabase introuvable pour cet utilisateur.');
-    const roles=[...new Set(roleValues.map(roleDatabaseName).filter(Boolean))];
-    await window.sbFetch('rpc/replace_user_roles',{method:'POST',body:JSON.stringify({target_user_id:targetUserId,role_names:roles}),prefer:'return=minimal'});
-  }
-  window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,completeFirstLogin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
+  window.OnomoAuth={createUser:createAuthUser,resetUserPassword:resetUserPasswordByAdmin,deleteUser:deleteUserByAdmin,completeFirstLogin,getClient:getAuthClient,getSession:getAuthSession,getConfig:()=>{
     const s=cfg()||{};
     return {sbUrl:s.sbUrl||'',sbKey:s.sbKey||''};
   },restore:restoreSession,resumeAfterMfa};
@@ -637,15 +651,8 @@
   const previousSubmitUser=window.submitUser;
   if(typeof previousSubmitUser==='function'){
     window.submitUser=async function(){
-      const editId=document.getElementById('uEditId')?.value||'';
-      if(editId){
-        const primaryRole=document.getElementById('uRole')?.value||'demandeur';
-        const selected=Array.from(document.querySelectorAll('#uRoleChoices input:checked')).map(input=>input.value);
-        const result=await previousSubmitUser();
-        try{await replaceUserRoles(editId,[primaryRole,...selected]);}
-        catch(error){console.error('Synchronisation des rôles Supabase',error);showToast(error.message||'Rôles enregistrés localement, synchronisation Supabase impossible.','err');}
-        return result;
-      }
+      // Edits are saved by submitUser in index.html (saveUserEdit).
+      if(document.getElementById('uEditId')?.value)return previousSubmitUser();
       const prenom=document.getElementById('uPrenom')?.value.trim()||'';
       const nom=document.getElementById('uNom')?.value.trim()||'';
       const email=document.getElementById('uEmail')?.value.trim().toLowerCase()||'';

@@ -1,13 +1,9 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const vm=require('node:vm');
-const source=fs.readFileSync('assets/js/user-admin-fix.js','utf8')
- .replace(/\}\)\(\);\s*$/, 'window.testLoadUsers=loadUsers;})();');
+const {loadUsersPage}=require('./users-page-harness.cjs');
 function harness(fetch){
- const window={DEMO_USERS:[{email:'stale-other-hotel@example.invalid'}],currentUser:{role:'it_hotel'},sbOK:()=>true,sbFetch:fetch};
- vm.runInNewContext(source,{window,document:{readyState:'loading',addEventListener(){}}});
- return window;
+ const page=loadUsersPage({DEMO_USERS:[{email:'stale-other-hotel@example.invalid'}],currentUser:{role:'it_hotel'},window:{sbOK:()=>true,sbFetch:fetch}});
+ return {testLoadUsers:page.loadUsersPage};
 }
 test('empty connected directory never restores a stale user list',async()=>{
  const w=harness(async()=>[]);assert.equal((await w.testLoadUsers()).length,0);

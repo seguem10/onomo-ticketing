@@ -2,6 +2,7 @@
 // the provider secret and may not supply their own recipient list.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { internalRecipients } from "./recipients.mjs";
+import { alertTeamsOnce, isUrgent, teamsPayload } from "../_shared/teams.mjs";
 
 const URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -13,6 +14,7 @@ const EMAILJS_PUBLIC_KEY = Deno.env.get("EMAILJS_PUBLIC_KEY") ?? "";
 const EMAILJS_PRIVATE_KEY = Deno.env.get("EMAILJS_PRIVATE_KEY") ?? "";
 const FROM = Deno.env.get("NOTIFICATION_FROM_EMAIL") ?? "ONOMO Support IT <onboarding@resend.dev>";
 const APP_URL = Deno.env.get("APP_URL") ?? "https://onomo-ticketing.vercel.app";
+const TEAMS_WEBHOOK_URL = Deno.env.get("TEAMS_WEBHOOK_URL") ?? "";
 
 function allowedOrigin(origin: string) {
   return origin === "https://onomo-ticketing.vercel.app" || /^https:\/\/onomo-ticketing(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin) || /^http:\/\/(localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin);
@@ -61,6 +63,17 @@ Deno.serve(async req => {
   if (claimed !== true) return reply(req, { error: "Notification déjà envoyée récemment. Réessayez dans quelques instants." }, 429);
 
   const service = createClient(URL, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });
+  // An urgent or critical ticket (new, or raised later) alerts the IT Teams
+  // channel once. The e-mails below are sent either way.
+  let teams = false;
+  if ((event === "created" || event === "updated") && isUrgent(ticket.priorite)) {
+    const result = await alertTeamsOnce(service, TEAMS_WEBHOOK_URL, {
+      ticketId, event: "urgent_created",
+      payload: teamsPayload({ heading: `Ticket ${ticket.priorite} — ${ticket.hotel ?? ""}`, ticket: { number: ticket.numero ?? ticket.id, title: ticket.titre, hotel: ticket.hotel, priority: ticket.priorite, status: ticket.statut }, appUrl: APP_URL }),
+    });
+    teams = result.sent;
+    if (!result.sent && TEAMS_WEBHOOK_URL && result.reason !== "déjà envoyé") console.error("ticket Teams alert", result.reason);
+  }
   const { data: recipientRows, error: recipientsError } = await service.rpc("ticket_notification_recipient_ids", { target_ticket: ticketId });
   if (recipientsError) { console.error("ticket notification recipients", recipientsError.message); return reply(req, { error: "Destinataires indisponibles." }, 500); }
   let ids = [...new Set((recipientRows ?? []).map((row: { recipient_id?: string }) => row.recipient_id).filter((id): id is string => Boolean(id) && id !== auth.user.id))];
@@ -70,12 +83,12 @@ Deno.serve(async req => {
     if (membershipError || rolesError) return reply(req, { error: "Vérification des destinataires indisponible." }, 503);
     ids = internalRecipients(ids, memberships ?? [], roles ?? []);
   }
-  if (!ids.length) return reply(req, { email_configured: Boolean(RESEND_KEY), recipients: 0, delivered: 0 });
+  if (!ids.length) return reply(req, { teams, email_configured: Boolean(RESEND_KEY), recipients: 0, delivered: 0 });
   const { data: profiles, error: profileError } = await service.from("utilisateurs").select("auth_user_id,email,prenom,nom").in("auth_user_id", ids);
   if (profileError) { console.error("ticket notification profiles", profileError.message); return reply(req, { error: "Profils destinataires indisponibles." }, 500); }
   const recipients = (profiles ?? []).filter(profile => typeof profile.email === "string" && profile.email.includes("@"));
   const emailJsConfigured = Boolean(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
-  if (!emailJsConfigured && !RESEND_KEY) return reply(req, { email_configured: false, recipients: recipients.length, delivered: 0 });
+  if (!emailJsConfigured && !RESEND_KEY) return reply(req, { teams, email_configured: false, recipients: recipients.length, delivered: 0 });
 
   const subject = `[ONOMO Support IT] ${eventLabel(event)} — ${ticket.numero ?? ticket.id}`;
   const details = `<p><strong>${escape(ticket.titre)}</strong></p><table><tr><td>Ticket</td><td>${escape(ticket.numero ?? ticket.id)}</td></tr><tr><td>Hôtel</td><td>${escape(ticket.hotel)}</td></tr><tr><td>Statut</td><td>${escape(ticket.statut)}</td></tr><tr><td>Priorité</td><td>${escape(ticket.priorite)}</td></tr></table><p><a href="${APP_URL}">Ouvrir ONOMO Support IT</a></p>`;
@@ -123,7 +136,7 @@ Deno.serve(async req => {
     if (!response.ok) console.error("ticket notification Resend", response.status, (await response.text()).slice(0, 300));
     return response.ok;
   }));
-  return reply(req, { email_configured: true, provider: emailJsConfigured ? "emailjs" : "resend", recipients: recipients.length, delivered: sent.filter(Boolean).length });
+  return reply(req, { teams, email_configured: true, provider: emailJsConfigured ? "emailjs" : "resend", recipients: recipients.length, delivered: sent.filter(Boolean).length });
   } catch (error) {
     // Always reply with CORS headers: the browser can then show a useful
     // message instead of a generic "Failed to fetch".

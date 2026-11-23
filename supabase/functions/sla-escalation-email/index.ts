@@ -2,6 +2,7 @@
 // database schedule bearing the secret stored in Supabase Vault; browser
 // clients never see an e-mail provider credential or the scheduler secret.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { alertTeamsOnce, teamsPayload } from "../_shared/teams.mjs";
 
 const URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -13,6 +14,7 @@ const EMAILJS_PRIVATE_KEY = Deno.env.get("EMAILJS_PRIVATE_KEY") ?? "";
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM = Deno.env.get("NOTIFICATION_FROM_EMAIL") ?? "ONOMO Support IT <onboarding@resend.dev>";
 const APP_URL = Deno.env.get("APP_URL") ?? "https://onomo-ticketing.vercel.app";
+const TEAMS_WEBHOOK_URL = Deno.env.get("TEAMS_WEBHOOK_URL") ?? "";
 
 type Escalation = {
   event_id: string; ticket_id: string; escalation_stage: "warning" | "breach" | "critical";
@@ -46,8 +48,18 @@ Deno.serve(async req => {
   const { data, error } = await service.rpc("claim_sla_escalation_email_batch", { batch_limit: 25 });
   if (error) { console.error("SLA e-mail claim", error.message); return Response.json({ error: "File d’attente SLA indisponible." }, { status: 500 }); }
 
-  let delivered = 0;
+  let delivered = 0, teams = 0;
   for (const row of (data ?? []) as Escalation[]) {
+    // A breached or critical SLA also alerts the IT Teams channel, once per
+    // ticket and stage even though the e-mail goes to several recipients.
+    if (row.escalation_stage !== "warning") {
+      const result = await alertTeamsOnce(service, TEAMS_WEBHOOK_URL, {
+        ticketId: row.ticket_id, event: row.escalation_stage === "critical" ? "sla_critical" : "sla_breach",
+        payload: teamsPayload({ heading: `${label(row.escalation_stage)} — ${row.ticket_hotel ?? ""}`, ticket: { number: row.ticket_number, title: row.ticket_title, hotel: row.ticket_hotel, priority: row.ticket_priority, status: row.ticket_status }, appUrl: APP_URL }),
+      });
+      if (result.sent) teams++;
+      else if (TEAMS_WEBHOOK_URL && result.reason !== "déjà envoyé") console.error("SLA Teams alert", result.reason);
+    }
     const subject = `[ONOMO Support IT] ${label(row.escalation_stage)} — ${row.ticket_number}`;
     const recipientName = `${row.recipient_first_name ?? ""} ${row.recipient_last_name ?? ""}`.trim();
     let success = false;
@@ -74,5 +86,5 @@ Deno.serve(async req => {
     if (completeError) console.error("SLA e-mail completion", completeError.message);
     if (success) delivered++;
   }
-  return Response.json({ queued: (data ?? []).length, delivered });
+  return Response.json({ queued: (data ?? []).length, delivered, teams });
 });
