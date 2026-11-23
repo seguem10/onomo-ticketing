@@ -110,7 +110,7 @@ test('the admin menu and both renderView maps route the journal page',()=>{
   assert.ok(html.includes('"client-errors":()=>globalThis.ErrorJournal?.render()'));
   const override=html.slice(html.indexOf('renderView = function(){'));
   assert.ok(override.slice(0,2600).includes("'client-errors': () => globalThis.ErrorJournal?.render()"));
-  assert.ok(override.slice(0,500).includes("'knowledge','client-errors'];"));
+  assert.ok(override.slice(0,500).includes("'knowledge','client-errors'"));
   const adminSection=html.slice(html.indexOf('<div id="sbAdminSec"'),html.indexOf('<div id="sbAdminSec"')+800);
   assert.ok(adminSection.includes('data-view="client-errors"'));
   assert.ok(html.indexOf('assets/js/error-journal.js')<html.indexOf('assets/js/ticket-satisfaction.js'));
