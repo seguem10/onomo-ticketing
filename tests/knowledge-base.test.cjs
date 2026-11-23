@@ -107,7 +107,7 @@ test('the page, its menu entry and the ticket form are wired',()=>{
   // The later renderView override (view toggle) is the one actually used.
   const override=html.slice(html.indexOf('renderView = function(){'));
   assert.ok(override.slice(0,2500).includes('knowledge: () => globalThis.KnowledgeBase?.render()'));
-  assert.ok(override.slice(0,400).includes("'profile','knowledge'];"));
+  assert.ok(override.slice(0,400).includes("'profile','knowledge'"));
   assert.ok(html.includes('knowledge:"Base de connaissances"'));
   assert.ok(html.includes('<div id="kbSuggest" aria-live="polite"></div>'));
   assert.ok(html.includes('function onTitreInput(v){\n  globalThis.KnowledgeBase?.suggest(v);'));

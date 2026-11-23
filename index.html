@@ -672,7 +672,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
 #loginScreen{background:linear-gradient(145deg,#101828 0%,#172554 55%,#155eef 145%)!important;color:#fff!important}#loginScreen::before{display:block!important;background:radial-gradient(ellipse 75% 55% at 50% 0%,rgba(132,173,255,.32),transparent 68%)!important}.login-card{background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:0 24px 60px rgba(0,0,0,.28)!important}.login-logo{color:#fff!important}.login-logo i{color:#84adff!important}.login-tagline{color:#cbd5e1!important}.login-h{color:#fff!important}.login-d{color:#d0d5dd!important}.form-lbl{color:#e2e8f0!important}.login-card .form-ctrl{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.28)!important;color:#fff!important}.login-card .form-ctrl::placeholder{color:#cbd5e1!important}.login-card .form-ctrl:focus{background:rgba(255,255,255,.18)!important;border-color:#84adff!important}.input-wrap .eye-btn{color:#e2e8f0!important}.login-err{background:rgba(254,226,226,.95)!important;color:#b42318!important;border-color:#f97066!important}.login-card .btn-primary{width:100%!important;padding:12px!important;background:#2970ff!important}.login-card .btn-primary:hover{background:#155eef!important}
 .language-selector{margin-left:auto;border:1px solid #d0d5dd;border-radius:7px;background:#fff;color:#344054;padding:6px 9px;font:600 11px inherit;cursor:pointer}.login-brand .language-selector{position:fixed;z-index:10;top:30px;right:32px;margin:0;min-width:92px;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(8px)}.login-brand{position:relative}html[dir="rtl"] .sidebar{right:0;left:auto!important}html[dir="rtl"] .main-area{margin-right:260px;margin-left:0}html[dir="rtl"] .topbar,html[dir="rtl"] .content{text-align:right}html[dir="rtl"] .ticket-table th,html[dir="rtl"] .ticket-table td{text-align:right}html[dir="rtl"] .sidebar-overlay{right:260px;left:0}@media(max-width:768px){.login-brand .language-selector{top:16px;right:16px;min-width:82px}html[dir="rtl"] .main-area{margin-right:0}.language-selector{margin-left:0;margin-right:auto}}
 </style>
-<link rel="stylesheet" href="assets/css/onomo-design.css?v=20261117-kb-1">
+<link rel="stylesheet" href="assets/css/onomo-design.css?v=20261119-errors-1">
 <link rel="stylesheet" href="assets/css/header-account.css?v=20261011-4">
 </head>
 <body>
@@ -747,6 +747,7 @@ body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system
           <div class="sb-sec-lbl" style="margin-top:8px">Administration</div>
           <div class="nav-item" data-view="users" onclick="openUsersView(this)"><i class="ti ti-users"></i><span>Utilisateurs</span></div>
           <div class="nav-item" data-view="hotels-admin" onclick="switchView('hotels-admin',this)"><i class="ti ti-building-skyscraper"></i><span>Hôtels</span></div>
+          <div class="nav-item" data-view="client-errors" onclick="switchView('client-errors',this)"><i class="ti ti-bug"></i><span>Erreurs</span></div>
         </div>
         <div class="sb-sec-lbl" style="margin-top:8px">Système</div>
         <div class="nav-item" data-view="profile" onclick="switchView('profile',this)"><i class="ti ti-user-circle"></i><span>Mon profil</span></div>
@@ -1912,7 +1913,7 @@ function addAct(iconClass,text,ico,ibg,icol){
 
 const VIEW_TITLES={
   dashboard:"Tableau de bord",tickets:"Tous les tickets",urgents:"Tickets urgents",
-  "my-tickets":"Mes tickets",detail:"Détail ticket",knowledge:"Base de connaissances",
+  "my-tickets":"Mes tickets",detail:"Détail ticket",knowledge:"Base de connaissances","client-errors":"Journal des erreurs",
   "report-global":"Rapport global","report-hotel":"Rapport par hôtel","report-agents":"Rapport par agent",
   "report-anomalies":"Rapport anomalies","report-my":"Mon hôtel",users:"Utilisateurs","hotels-admin":"Gestion des hôtels",
   settings:"Paramètres",profile:"Mon profil",assistant:"Assistant IT",
@@ -1975,7 +1976,8 @@ function renderView(){
       ensureITAssistant().then(assistant=>assistant.renderAssistantView()).catch(()=>{});
     },
     "hotels-admin":renderHotelsAdmin,settings:renderSettings,
-    knowledge:()=>globalThis.KnowledgeBase?.render()
+    knowledge:()=>globalThis.KnowledgeBase?.render(),
+    "client-errors":()=>globalThis.ErrorJournal?.render()
   };
   (M[currentView]||renderDashboard)();
 }
@@ -4666,7 +4668,7 @@ renderReportGlobal = function(){
 /* hide viewToggle on non-list views */
 const _ov = renderView;
 renderView = function(){
-  const nonListViews = ['dashboard','detail','assistant','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile','knowledge'];
+  const nonListViews = ['dashboard','detail','assistant','report-global','report-hotel','report-agents','report-anomalies','report-my','users','hotels-admin','settings','profile','knowledge','client-errors'];
   const vt = document.getElementById('viewToggle');
   if(vt) vt.style.display = nonListViews.includes(currentView) ? 'none' : 'flex';
   updateCounts();
@@ -4690,7 +4692,8 @@ renderView = function(){
     'hotels-admin': renderHotelsAdmin,
     settings: renderSettings,
     profile: renderMyProfile,
-    knowledge: () => globalThis.KnowledgeBase?.render()
+    knowledge: () => globalThis.KnowledgeBase?.render(),
+    'client-errors': () => globalThis.ErrorJournal?.render()
   };
   (M[currentView] || renderDashboard)();
 };
@@ -4768,6 +4771,7 @@ document.addEventListener('keydown', e => {
 <script src="assets/js/conversation-reads.js?v=20261011-1"></script>
 <script src="assets/js/header-account.js?v=20261011-1"></script>
 <script src="assets/js/ticket-follow-up.js?v=20261116-polish-1"></script>
+<script src="assets/js/error-journal.js?v=20261119-errors-1"></script>
 <script src="assets/js/ticket-satisfaction.js?v=20261117-csat-1"></script>
 <script src="assets/js/canned-replies.js?v=20261117-canned-2"></script>
 <script src="assets/js/knowledge-base.js?v=20261117-kb-1"></script>
