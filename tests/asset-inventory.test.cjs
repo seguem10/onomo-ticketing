@@ -69,11 +69,11 @@ test('the page lists escaped equipment, filters it, and is refused to non-IT use
 test('equipment is created and updated with clean values; name and hotel are required',async()=>{
   const h=load({fetch:(path,options)=>[{id:'n1',...JSON.parse(options.body)}]});h.api._set([],[]);
   h.api.edit('new');
-  Object.assign(h.values,{invName:'',invHotel:'Onomo Dakar',invType:'pc',invStatus:'in_service',invLocation:'',invModel:'',invSerial:'',invPurchased:'',invWarranty:'',invNotes:''});
+  Object.assign(h.values,{invName:'',invHotel:'Onomo Dakar',invDomain:'it',invType:'pc',invSubtype:'',invStatus:'in_service',invLocation:'',invModel:'',invSerial:'',invQuantity:'',invDocuments:'',invPurchased:'',invWarranty:'',invNotes:''});
   assert.equal(await h.api.save(),false);assert.equal(h.calls.length,0);assert.equal(h.toasts[0][1],'err');
   Object.assign(h.values,{invName:'  PC Bar  ',invType:'hack',invLocation:' Bar ',invWarranty:'2027-01-31'});
   assert.equal(await h.api.save(),true);
-  assert.deepEqual(h.calls[0],['assets','POST',{name:'PC Bar',hotel:'Onomo Dakar',type:'other',status:'in_service',location:'Bar',brand_model:null,serial:null,purchased_on:null,warranty_until:'2027-01-31',notes:null}]);
+  assert.deepEqual(h.calls[0],['assets','POST',{name:'PC Bar',hotel:'Onomo Dakar',domain:'it',type:'other',subtype:null,status:'in_service',location:'Bar',brand_model:null,serial:null,quantity:1,documents:null,purchased_on:null,warranty_until:'2027-01-31',notes:null}]);
   h.api.edit('n1');Object.assign(h.values,{invName:'PC Bar',invType:'pc',invStatus:'repair'});
   assert.equal(await h.api.save(),true);
   assert.equal(h.calls[1][0],'assets?id=eq.n1');assert.equal(h.calls[1][1],'PATCH');assert.equal(h.calls[1][2].status,'repair');
