@@ -42,6 +42,9 @@
  }
  const decodeXml=s=>String(s).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(_,d)=>String.fromCharCode(Number(d))).replace(/&amp;/g,'&');
  const colIndex=ref=>{let n=0;for(const ch of ref.replace(/\d+/g,''))n=n*26+ch.charCodeAt(0)-64;return n-1;};
+ // Text of the <t> runs of a cell or shared string, decoded once. Values are
+ // only ever shown through esc(), never inserted as HTML.
+ const textOf=xml=>decodeXml([...String(xml).matchAll(/<t\b[^>]*>([^<]*)<\/t>/g)].map(m=>m[1]).join(''));
  function sheetRows(xml,shared){
   const rows=[];
   for(const row of xml.match(/<row\b[\s\S]*?<\/row>/g)||[]){
@@ -49,10 +52,9 @@
    for(const c of row.match(/<c\b[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g)||[]){
     const ref=(c.match(/\br="([A-Z]+\d+)"/)||[])[1];if(!ref)continue;
     const type=(c.match(/\bt="([^"]+)"/)||[])[1];
-    let v=(c.match(/<v>([\s\S]*?)<\/v>/)||[])[1];
-    if(type==='s')v=shared[Number(v)];
-    else if(type==='inlineStr'||v===undefined)v=((c.match(/<t\b[^>]*>[\s\S]*?<\/t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,'')).join(''));
-    cells[colIndex(ref)]=decodeXml(v??'').trim();
+    const raw=(c.match(/<v>([^<]*)<\/v>/)||[])[1];
+    const v=type==='s'?shared[Number(raw)]:(type==='inlineStr'||raw===undefined)?textOf(c):decodeXml(raw);
+    cells[colIndex(ref)]=String(v??'').trim();
    }
    rows.push(Array.from(cells,v=>v??''));
   }
@@ -61,7 +63,7 @@
  async function readXlsx(buffer){
   const files=await unzip(buffer,name=>/^xl\/(workbook\.xml|_rels\/workbook\.xml\.rels|sharedStrings\.xml|worksheets\/[^/]+\.xml)$/.test(name));
   if(!files['xl/workbook.xml'])throw new Error('Ce fichier n’est pas un classeur Excel (.xlsx)');
-  const shared=(files['xl/sharedStrings.xml']?.match(/<si>[\s\S]*?<\/si>/g)||[]).map(si=>decodeXml((si.match(/<t\b[^>]*>[\s\S]*?<\/t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,'')).join('')));
+  const shared=(files['xl/sharedStrings.xml']?.match(/<si>[\s\S]*?<\/si>/g)||[]).map(textOf);
   const rels=Object.fromEntries([...(files['xl/_rels/workbook.xml.rels']||'').matchAll(/<Relationship\b[^>]*\bId="([^"]+)"[^>]*\bTarget="([^"]+)"/g)].map(m=>[m[1],m[2]]));
   const sheets=[];
   for(const m of files['xl/workbook.xml'].matchAll(/<sheet\b[^>]*\bname="([^"]+)"[^>]*\br:id="([^"]+)"/g)){
@@ -146,7 +148,7 @@
      break;}
     case 'pabx':out.push(item({type:'phone',name:B,quantity:qty(G),subtype:'PABX'}));break;
     case 'camera':out.push(item({type:'camera',name:B,quantity:qty(G)}));break;
-    case 'wifi':out.push(item({type:/^ap\b|borne/.test(norm(B))?'wifi':'network',name:B,quantity:qty(G),subtype:'Wi-Fi'}));break;
+    case 'wifi':out.push(item({type:(/^ap\b/.test(norm(B))||/borne/.test(norm(B)))?'wifi':'network',name:B,quantity:qty(G),subtype:'Wi-Fi'}));break;
     default:break;
    }
   }

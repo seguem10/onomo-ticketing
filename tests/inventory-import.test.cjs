@@ -81,6 +81,16 @@ test('the .xlsx reader returns each tab with its rows and shared strings',async(
   await assert.rejects(api.readXlsx(new Uint8Array([1,2,3]).buffer),/archive invalide/);
 });
 
+test('rich text runs are joined and escaped characters are decoded once',async()=>{
+  const api=loadImporter();
+  const files={'xl/workbook.xml':'<workbook xmlns:r="r"><sheets><sheet name="05. IT" sheetId="1" r:id="rId1"/></sheets></workbook>',
+    'xl/_rels/workbook.xml.rels':'<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>',
+    'xl/sharedStrings.xml':'<sst><si><r><rPr><b/></rPr><t>Canon </t></r><r><t xml:space="preserve">&amp;lt;i-sensys&amp;gt; &amp; Co</t></r></si></sst>',
+    'xl/worksheets/sheet1.xml':'<worksheet><sheetData><row r="1"><c r="B1" t="s"><v>0</v></c><c r="C1" t="inlineStr"><is><t>A &amp; B</t></is></c><c r="D1"><v>42</v></c></row></sheetData></worksheet>'};
+  const sheets=await api.readXlsx(zip(files));
+  assert.deepEqual(plain(sheets[0].rows[0]),['','Canon &lt;i-sensys&gt; & Co','A & B','42']);
+});
+
 test('the IT tab sections become typed rows: PCs with their screens, bulk quantities, racks as locations',()=>{
   const api=loadImporter();
   const rows=plain(api.parseItSheet(itRows));
