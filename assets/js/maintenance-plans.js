@@ -26,7 +26,14 @@
  const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
  const ticketNumber=id=>{const list=typeof tickets!=='undefined'&&Array.isArray(tickets)?tickets:[];return list.find(t=>String(t.id)===String(id))?.numero||'';};
 
- let plans=[],loaded=false,loading=null,editing=null,ran=false;
+ let plans=[],loaded=false,loading=null,editing=null,ran=false,templating=null;
+ const catalogue=()=>window.MaintenanceTemplates||globalThis.MaintenanceTemplates;
+ const TPL={
+  fr:{button:'Modèles prêts à l’emploi',title:'Modèles de maintenance',intro:'Cochez les tâches qui concernent l’hôtel. Chacune devient un plan modifiable ; les premières échéances sont espacées d’un jour.',hotel:'Hôtel',start:'À partir du',already:'déjà en place',all:'Tout cocher',none:'Tout décocher',create:n=>`Créer ${n} plan(s)`,created:n=>`${n} plan(s) de maintenance créé(s)`,choose:'Choisissez l’hôtel'},
+  en:{button:'Ready-made templates',title:'Maintenance templates',intro:'Tick the tasks that apply to the hotel. Each becomes an editable plan; the first due dates are spread one day apart.',hotel:'Hotel',start:'Starting on',already:'already in place',all:'Tick all',none:'Untick all',create:n=>`Create ${n} plan(s)`,created:n=>`${n} maintenance plan(s) created`,choose:'Choose the hotel'},
+  ar:{button:'نماذج جاهزة',title:'نماذج الصيانة',intro:'اختر المهام التي تخص الفندق. تصبح كل مهمة خطة قابلة للتعديل.',hotel:'الفندق',start:'ابتداءً من',already:'موجودة',all:'تحديد الكل',none:'إلغاء التحديد',create:n=>`إنشاء ${n} خطة`,created:n=>`تم إنشاء ${n} خطة صيانة`,choose:'اختر الفندق'}
+ };
+ const tpl=()=>TPL[document.getElementById('languageSelector-app')?.value]||TPL.fr;
 
  function load(force){
   if(loading&&!force)return loading;
@@ -95,10 +102,11 @@
   const t=text();
   if(!isStaff())return `<div class="empty-state"><i class="ti ti-lock"></i><p>${escape(t.denied)}</p></div>`;
   if(editing)return `<div class="mp-page">${formHtml(editing==='new'?null:plans.find(p=>String(p.id)===String(editing)))}</div>`;
+  if(templating)return `<div class="mp-page">${templatesHtml()}</div>`;
   const body=!loaded?`<div class="loading-state"><i class="ti ti-loader-2 spin"></i> ${escape(t.loading)}</div>`
    :!plans.length?`<div class="empty-state"><i class="ti ti-calendar-repeat"></i><p>${escape(t.none)}</p></div>`
    :`<div class="card mp-table-wrap"><table class="mp-table"><thead><tr><th>${escape(t.task)}</th><th>${escape(t.hotel)}</th><th>${escape(t.frequency)}</th><th>${escape(t.next)}</th><th>${escape(t.lastTicket)}</th><th></th></tr></thead><tbody>${plans.map(planHtml).join('')}</tbody></table></div>`;
-  return `<div class="mp-page"><div class="mp-top"><p>${escape(t.intro)}</p><div class="mp-actions"><button type="button" class="btn btn-outline" onclick="MaintenancePlans.runDue()"><i class="ti ti-player-play"></i>${escape(t.run)}</button><button type="button" class="btn btn-gold" onclick="MaintenancePlans.edit('new')"><i class="ti ti-plus"></i>${escape(t.add)}</button></div></div>${body}</div>`;
+  return `<div class="mp-page"><div class="mp-top"><p>${escape(t.intro)}</p><div class="mp-actions">${catalogue()?`<button type="button" class="btn btn-outline" onclick="MaintenancePlans.openTemplates()"><i class="ti ti-template"></i>${escape(tpl().button)}</button>`:''}<button type="button" class="btn btn-outline" onclick="MaintenancePlans.runDue()"><i class="ti ti-player-play"></i>${escape(t.run)}</button><button type="button" class="btn btn-gold" onclick="MaintenancePlans.edit('new')"><i class="ti ti-plus"></i>${escape(t.add)}</button></div></div>${body}</div>`;
  }
  function render(){
   const host=document.getElementById('mainContent');if(!host)return;
@@ -142,5 +150,45 @@
   }catch(error){console.error('Maintenance planifiée',error);toast(t.failed,'err');return false;}
  }
 
- window.MaintenancePlans={load,render,runDue,runOnce,edit,cancel,save,toggleActive,remove,title:()=>text().title,_set:value=>{plans=value;loaded=true;}};
+ // ---- Ready-made templates ----
+ const frequencyLabel=f=>text().frequencies[f]||f;
+ function templatesHtml(){
+  const t=text(),k=tpl(),cat=catalogue(),hotels=myHotels();
+  const taken=new Set(plans.filter(p=>p.hotel===templating.hotel).map(p=>String(p.title).trim().toLowerCase()));
+  const count=cat.build([...templating.selected],templating.hotel,templating.start,plans).length;
+  const groups=Object.entries(cat.GROUPS).map(([group,label])=>{
+   const items=cat.TEMPLATES.filter(x=>x.group===group);
+   return `<fieldset class="mp-tpl-group"><legend>${escape(label)} <button type="button" class="mp-link" data-group="${escape(group)}" onclick="MaintenancePlans.selectGroup(this.dataset.group,true)">${escape(k.all)}</button> · <button type="button" class="mp-link" data-group="${escape(group)}" onclick="MaintenancePlans.selectGroup(this.dataset.group,false)">${escape(k.none)}</button></legend>
+    ${items.map(x=>{const done=templating.hotel&&taken.has(x.title.toLowerCase());return `<label class="mp-tpl${done?' done':''}"><input type="checkbox" data-key="${escape(x.key)}" onchange="MaintenancePlans.toggleTemplate(this.dataset.key)"${templating.selected.has(x.key)&&!done?' checked':''}${done?' disabled':''}><span><strong>${escape(x.title)}</strong><small>${escape(frequencyLabel(x.frequency))} · ${escape(x.priority)}${done?` · ${escape(k.already)}`:''}</small><em>${escape(x.description)}</em></span></label>`;}).join('')}</fieldset>`;
+  }).join('');
+  return `<div class="card mp-form"><h3 class="mp-tpl-title"><i class="ti ti-template"></i> ${escape(k.title)}</h3><p class="mp-tpl-intro">${escape(k.intro)}</p>
+   <div class="mp-grid"><div class="form-g"><label class="field-lbl" for="mpTplHotel">${escape(k.hotel)}</label><select id="mpTplHotel" class="field-ctrl" onchange="MaintenancePlans.setTemplateField('hotel',this.value)"><option value="">${escape(k.choose)}</option>${hotels.map(h=>`<option value="${escape(h)}"${h===templating.hotel?' selected':''}>${escape(h)}</option>`).join('')}</select></div>
+   <div class="form-g"><label class="field-lbl" for="mpTplStart">${escape(k.start)}</label><input id="mpTplStart" type="date" class="field-ctrl" value="${escape(templating.start)}" onchange="MaintenancePlans.setTemplateField('start',this.value)"></div></div>
+   ${groups}
+   <div class="mp-actions"><button type="button" class="btn btn-outline btn-sm" onclick="MaintenancePlans.closeTemplates()">${escape(t.cancel)}</button><button type="button" class="btn btn-gold btn-sm" onclick="MaintenancePlans.applyTemplates()"${!templating.hotel||!count||templating.busy?' disabled':''}><i class="ti ti-check"></i>${escape(k.create(count))}</button></div></div>`;
+ }
+ function openTemplates(){
+  if(!catalogue())return;
+  const hotels=myHotels();
+  templating={hotel:hotels.length===1?hotels[0]:'',start:today(),selected:new Set(catalogue().TEMPLATES.filter(x=>x.group==='it').map(x=>x.key)),busy:false};
+  render();
+  if(!loaded)load().then(()=>{if(templating)render();});
+ }
+ function closeTemplates(){templating=null;render();}
+ function setTemplateField(key,val){if(!templating)return;templating[key]=String(val||'');if(key==='start'&&!/^\d{4}-\d{2}-\d{2}$/.test(templating.start))templating.start=today();render();}
+ function toggleTemplate(key){if(!templating)return;if(templating.selected.has(key))templating.selected.delete(key);else templating.selected.add(key);render();}
+ function selectGroup(group,on){if(!templating)return;for(const x of catalogue().TEMPLATES.filter(x=>x.group===group)){if(on)templating.selected.add(x.key);else templating.selected.delete(x.key);}render();}
+ async function applyTemplates(){
+  const t=text();if(!templating?.hotel)return false;
+  const rows=catalogue().build([...templating.selected],templating.hotel,templating.start,plans);
+  if(!rows.length)return false;
+  templating.busy=true;render();
+  try{
+   const saved=await window.sbFetch('maintenance_plans',{method:'POST',body:JSON.stringify(rows)});
+   if(!Array.isArray(saved)||saved.length!==rows.length)throw new Error('Création refusée');
+   saved.forEach(upsert);templating=null;render();toast(tpl().created(saved.length),'ok');return true;
+  }catch(error){console.error('Maintenance planifiée',error);if(templating)templating.busy=false;render();toast(t.failed,'err');return false;}
+ }
+
+ window.MaintenancePlans={load,render,runDue,runOnce,edit,cancel,save,toggleActive,remove,openTemplates,closeTemplates,setTemplateField,toggleTemplate,selectGroup,applyTemplates,title:()=>text().title,_set:value=>{plans=value;loaded=true;},_templating:()=>templating};
 })();

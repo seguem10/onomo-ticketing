@@ -6333,3 +6333,33 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 .mp-check{display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0 8px}
 @media(max-width:900px){.mp-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.mp-grid{grid-template-columns:1fr}.mp-top{flex-direction:column}}
+
+/* Inventory import and domains */
+.inv-filters{grid-template-columns:2fr repeat(4,1fr)}
+.inv-top .inv-actions{margin-top:0}
+.inv-top label.btn{cursor:pointer}
+.inv-qty{text-align:right;font-variant-numeric:tabular-nums}
+.inv-import{padding:16px}
+.inv-import h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.inv-import h3 small{font-size:12px;font-weight:400;color:var(--tx3)}
+.inv-import-tabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px;margin-bottom:12px}
+.inv-check{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.inv-check small{color:var(--tx3);margin-left:auto;text-align:right}
+.inv-import-summary{font-size:13px;font-weight:600;margin:4px 0 10px}
+.inv-import .inv-table-wrap{max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+@media(max-width:900px){.inv-filters{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.inv-filters{grid-template-columns:1fr}}
+
+/* Maintenance templates */
+.mp-tpl-title{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+.mp-tpl-intro{margin:0 0 12px;font-size:13px;color:var(--tx2)}
+.mp-tpl-group{border:1px solid var(--border);border-radius:10px;padding:8px 12px 10px;margin:0 0 12px}
+.mp-tpl-group legend{font-size:13px;font-weight:700;padding:0 6px}
+.mp-link{border:0;background:none;color:#155eef;cursor:pointer;font-size:12px;font-weight:400;padding:0}
+.mp-tpl{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
+.mp-tpl:first-of-type{border-top:0}
+.mp-tpl input{margin-top:3px}
+.mp-tpl span{display:grid;gap:2px}
+.mp-tpl small{font-size:11px;color:var(--tx3)}
+.mp-tpl em{font-style:normal;font-size:12px;color:var(--tx2)}
+.mp-tpl.done{opacity:.55}
