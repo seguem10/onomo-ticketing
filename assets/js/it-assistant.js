@@ -5,7 +5,40 @@
   'use strict';
   const state={conversationId:null,domain:'general',messages:[],lastAnswer:null,conversations:[],photos:[],uploadedPhotos:[]};
   const domainKeys=['microsoft365','sage1000','citrix','opera','pos','network','maintenance','general'];
-  const domainLabels={microsoft365:'Microsoft 365',sage1000:'Sage 1000',citrix:'Citrix',opera:'OPERA PMS',pos:'POS',network:'IT / Réseau',maintenance:'Maintenance',general:'Support IT'};
+  const DOMAIN_LABELS={
+    fr:{microsoft365:'Microsoft 365',sage1000:'Sage 1000',citrix:'Citrix',opera:'OPERA PMS',pos:'Caisse / POS',network:'IT / Réseau',maintenance:'Maintenance',general:'Support IT'},
+    en:{microsoft365:'Microsoft 365',sage1000:'Sage 1000',citrix:'Citrix',opera:'OPERA PMS',pos:'Till / POS',network:'IT / Network',maintenance:'Maintenance',general:'IT support'},
+    ar:{microsoft365:'Microsoft 365',sage1000:'Sage 1000',citrix:'Citrix',opera:'OPERA PMS',pos:'نقطة البيع',network:'الشبكة',maintenance:'الصيانة',general:'دعم تقنية المعلومات'}
+  };
+  // Labels follow the page language (kept as an object for existing callers).
+  const domainLabels=new Proxy({},{get:(_,key)=>(DOMAIN_LABELS[window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr']||DOMAIN_LABELS.fr)[key]});
+  // Common hotel problems, one click to ask them.
+  const SUGGESTIONS=[
+    {domain:'microsoft365',icon:'ti-mail',fr:'Outlook ne s’ouvre pas ou n’envoie plus mes e-mails',en:'Outlook does not open or no longer sends my e-mails',ar:'Outlook لا يفتح أو لا يرسل رسائلي'},
+    {domain:'network',icon:'ti-wifi',fr:'Un client n’arrive pas à se connecter au Wi-Fi',en:'A guest cannot connect to the Wi-Fi',ar:'نزيل لا يستطيع الاتصال بشبكة Wi-Fi'},
+    {domain:'maintenance',icon:'ti-key',fr:'La carte de chambre d’un client ne fonctionne pas',en:'A guest’s key card does not work',ar:'بطاقة غرفة النزيل لا تعمل'},
+    {domain:'pos',icon:'ti-cash-register',fr:'La caisse Micros est figée ou très lente',en:'The Micros till is frozen or very slow',ar:'صندوق Micros متوقف أو بطيء جدًا'},
+    {domain:'opera',icon:'ti-building',fr:'Je n’arrive pas à me connecter à Opera',en:'I cannot sign in to Opera',ar:'لا أستطيع تسجيل الدخول إلى Opera'},
+    {domain:'maintenance',icon:'ti-printer',fr:'L’imprimante n’imprime plus',en:'The printer no longer prints',ar:'الطابعة لا تطبع'},
+    {domain:'microsoft365',icon:'ti-device-mobile',fr:'J’ai changé de téléphone et la double authentification ne marche plus',en:'I changed phone and two-step verification no longer works',ar:'غيّرت هاتفي ولم تعد المصادقة الثنائية تعمل'},
+    {domain:'general',icon:'ti-alert-triangle',fr:'J’ai reçu un e-mail suspect',en:'I received a suspicious e-mail',ar:'تلقيت رسالة بريد مشبوهة'}
+  ];
+  // When the user leaves "IT support", the domain is guessed from the question.
+  const DOMAIN_HINTS=[
+    ['pos',/\b(micros|simphony|caisse|till|pos|tpe|ticket de caisse|receipt)\b/i],
+    ['opera',/\b(opera|pms|fidelio|check.?in|check.?out|folio)\b/i],
+    ['sage1000',/\b(sage|comptab\w*|accounting|ecritures?)\b/i],
+    ['citrix',/\b(citrix|workspace|storefront)\b/i],
+    ['microsoft365',/\b(outlook|teams|onedrive|sharepoint|office ?365|365|e-?mails?|mails?|messagerie|mfa|authenticator)\b/i],
+    ['network',/\b(wi-?fi|wifi|réseau|reseau|network|internet|vpn|switch|connexion)\b/i],
+    ['maintenance',/\b(imprimante|printer|scanner|copieur|écran|ecran|screen|clavier|souris|tv|télé|carte de chambre|key card|vingcard|serrure|lock)\b/i]
+  ];
+  const detectDomain=text=>{for(const [domain,pattern] of DOMAIN_HINTS)if(pattern.test(String(text||'')))return domain;return 'general';};
+  const uxTranslations={
+    fr:{assistant_quick_start:'Questions fréquentes',assistant_resolved:'C’est résolu',assistant_still_blocked:'Toujours bloqué',assistant_resolved_thanks:'Parfait, problème résolu. Merci !',assistant_still_blocked_hint:'Précisez ce qui ne marche toujours pas, ou créez un ticket prérempli.',assistant_copy:'Copier',assistant_copied:'Réponse copiée',assistant_copy_failed:'Copie impossible',assistant_typing:'L’assistant analyse votre demande…',assistant_send_hint:'Ctrl + Entrée pour envoyer',assistant_domain_detected:'Domaine détecté'},
+    en:{assistant_quick_start:'Frequent questions',assistant_resolved:'It’s solved',assistant_still_blocked:'Still stuck',assistant_resolved_thanks:'Great, problem solved. Thank you!',assistant_still_blocked_hint:'Say what still does not work, or create a pre-filled ticket.',assistant_copy:'Copy',assistant_copied:'Answer copied',assistant_copy_failed:'Copy failed',assistant_typing:'The assistant is analysing your request…',assistant_send_hint:'Ctrl + Enter to send',assistant_domain_detected:'Detected area'},
+    ar:{assistant_quick_start:'أسئلة متكررة',assistant_resolved:'تم الحل',assistant_still_blocked:'ما زالت المشكلة قائمة',assistant_resolved_thanks:'ممتاز، تم حل المشكلة. شكرًا!',assistant_still_blocked_hint:'وضّح ما الذي لا يزال لا يعمل، أو أنشئ تذكرة معبأة مسبقًا.',assistant_copy:'نسخ',assistant_copied:'تم نسخ الإجابة',assistant_copy_failed:'تعذر النسخ',assistant_typing:'يحلل المساعد طلبك…',assistant_send_hint:'Ctrl + Enter للإرسال',assistant_domain_detected:'المجال المكتشف'}
+  };
   const PHOTO_TYPES=new Set(['image/jpeg','image/png','image/webp']);
   const PHOTO_MAX_BYTES=5*1024*1024;
   const esc=value=>window.esc?window.esc(value):String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -17,7 +50,8 @@
   const tr=(key,fallback,values={})=>{
     const translate=window.OnomoI18n?.translate;
     const text=translate?translate(key,window.OnomoI18n?.language,values):(window.OnomoI18n?.t?.(key)||key);
-    return text===key?(photoTranslations[window.OnomoI18n?.language||'fr']?.[key]||fallback):text;
+    const lang=window.OnomoI18n?.language||'fr';
+    return text===key?(photoTranslations[lang]?.[key]||uxTranslations[lang]?.[key]||uxTranslations.fr[key]||fallback):text;
   };
   const language=()=>window.OnomoI18n?.language||localStorage.getItem('onomo_language')||'fr';
   const isTechnician=()=>Boolean(window.canManageTickets?.(window.currentUser));
@@ -114,7 +148,7 @@
     const seen=new Set(),articles=[...(Array.isArray(answer.kb_articles)?answer.kb_articles:[]),...local].filter(a=>a&&!seen.has(String(a.id))&&seen.add(String(a.id))).slice(0,3);
     const kbHtml=articles.length?`<section class="assistant-block assistant-kb"><h4><i class="ti ti-book"></i> ${esc(kb?.relatedTitle?.()||tr('assistant_kb_articles','Fiches de la base de connaissances'))}</h4>${articles.map(article=>`<button type="button" class="assistant-kb-link" data-kb-id="${esc(article.id)}" onclick="window.KnowledgeBase?.open(this.dataset.kbId)"><strong>${esc(article.title)}</strong>${article.category?`<small>${esc(article.category)}</small>`:''}<i class="ti ti-arrow-right"></i></button>`).join('')}</section>`:'';
     const similar=Array.isArray(answer.similar_tickets)&&answer.similar_tickets.length?`<section class="assistant-block"><h4>${esc(tr('assistant_similar_tickets','Incidents similaires trouvés'))}</h4>${answer.similar_tickets.map(ticket=>`<div class="assistant-similar-ticket"><strong>${esc(ticket.numero)} · ${esc(ticket.titre)}</strong><small>${esc(ticket.categorie||'')} · ${esc(ticket.statut||'')}</small></div>`).join('')}</section>`:'';
-    return `<article class="assistant-answer"><div class="assistant-answer-title"><i class="ti ${isProcedureGuide?'ti-notebook':'ti-sparkles'}"></i>${esc(isProcedureGuide?tr('assistant_guided_response','Diagnostic guidé — modèle IT'):tr('assistant_response','Proposition de l’assistant'))}</div><p>${esc(answer.answer)}</p>${list(tr('assistant_causes','Causes possibles'),answer.causes)}${list(tr('assistant_questions','Questions à préciser'),answer.questions,'assistant-questions')}${list(tr('assistant_checks','Vérifications recommandées'),answer.checks)}${list(tr('assistant_solution','Solution proposée'),answer.solution)}${list(tr('assistant_validation','Critères de validation'),answer.validation)}${list(tr('assistant_assumptions','Hypothèses'),answer.assumptions,'assistant-assumptions')}${kbHtml}${similar}${sourceHtml}<div class="assistant-disclaimer"><i class="ti ti-user-check"></i>${esc(isProcedureGuide?tr('assistant_template_review','Modèle de diagnostic : à faire valider par l’équipe IT avant toute action en production.'):tr('assistant_human_review','Conseil généré par IA : validez la procédure avant toute action en production.'))}</div></article>`;
+    return `<article class="assistant-answer"><div class="assistant-answer-title"><i class="ti ${isProcedureGuide?'ti-notebook':'ti-sparkles'}"></i>${esc(isProcedureGuide?tr('assistant_guided_response','Diagnostic guidé — modèle IT'):tr('assistant_response','Proposition de l’assistant'))}<button type="button" class="assistant-copy" title="${esc(tr('assistant_copy','Copier'))}" onclick="ITAssistant.copyAnswer(this)"><i class="ti ti-copy"></i>${esc(tr('assistant_copy','Copier'))}</button></div><p>${esc(answer.answer)}</p>${list(tr('assistant_causes','Causes possibles'),answer.causes)}${list(tr('assistant_questions','Questions à préciser'),answer.questions,'assistant-questions')}${list(tr('assistant_checks','Vérifications recommandées'),answer.checks)}${list(tr('assistant_solution','Solution proposée'),answer.solution)}${list(tr('assistant_validation','Critères de validation'),answer.validation)}${list(tr('assistant_assumptions','Hypothèses'),answer.assumptions,'assistant-assumptions')}${kbHtml}${similar}${sourceHtml}<div class="assistant-disclaimer"><i class="ti ti-user-check"></i>${esc(isProcedureGuide?tr('assistant_template_review','Modèle de diagnostic : à faire valider par l’équipe IT avant toute action en production.'):tr('assistant_human_review','Conseil généré par IA : validez la procédure avant toute action en production.'))}</div></article>`;
   }
   async function loadConversations(){
     if(typeof window.sbFetch!=='function')return [];
@@ -129,9 +163,12 @@
       renderAssistantView();
     }catch(error){window.showToast?.(tr('assistant_conversation_unavailable','Conversation indisponible.'),'err');}
   }
-  function conversationMessage(message){
+  function conversationMessage(message,index,all){
     const isAssistant=message.author==='assistant';
-    return `<div class="assistant-message ${isAssistant?'assistant-message-ai':'assistant-message-user'}"><div class="assistant-message-author">${esc(isAssistant?tr('assistant_name','Assistant IT'):tr('assistant_you','Vous'))}</div>${isAssistant&&message.metadata?answerCard(message.metadata,message.metadata.sources||[]):`<p>${esc(message.content)}</p>`}</div>`;
+    // Feedback on the latest answer only.
+    const isLast=isAssistant&&Array.isArray(all)&&index===all.length-1&&message.metadata;
+    const feedback=isLast&&!state.feedback?`<div class="assistant-feedback"><button type="button" class="btn btn-outline btn-sm" onclick="ITAssistant.markResolved()"><i class="ti ti-circle-check"></i>${esc(tr('assistant_resolved','C’est résolu'))}</button><button type="button" class="btn btn-outline btn-sm" onclick="ITAssistant.stillBlocked()"><i class="ti ti-alert-circle"></i>${esc(tr('assistant_still_blocked','Toujours bloqué'))}</button></div>`:isLast&&state.feedback==='resolved'?`<div class="assistant-feedback done"><i class="ti ti-circle-check"></i>${esc(tr('assistant_resolved_thanks','Parfait, problème résolu. Merci !'))}</div>`:'';
+    return `<div class="assistant-message ${isAssistant?'assistant-message-ai':'assistant-message-user'}"><div class="assistant-message-author">${esc(isAssistant?tr('assistant_name','Assistant IT'):tr('assistant_you','Vous'))}</div>${isAssistant&&message.metadata?answerCard(message.metadata,message.metadata.sources||[]):`<p>${esc(message.content)}</p>`}${feedback}</div>`;
   }
   async function renderAssistantView(){
     const target=document.getElementById('mainContent');if(!target)return;
@@ -154,23 +191,52 @@
       state.conversations=[];
     }
     const domainOptions=domainKeys.map(key=>`<option value="${key}" ${state.domain===key?'selected':''}>${esc(domainLabels[key])}</option>`).join('');
-    const messages=state.messages.length?state.messages.map(conversationMessage).join(''):`<div class="assistant-empty"><i class="ti ti-message-chatbot"></i><h3>${esc(tr('assistant_start_title','Comment puis-je vous aider ?'))}</h3><p>${esc(tr('assistant_start_description','Choisissez un domaine, décrivez le problème et l’assistant vous guidera sans créer de ticket.'))}</p></div>`;
-    try{target.innerHTML=`<div class="assistant-page"><header class="assistant-header"><div><span class="assistant-kicker"><i class="ti ti-sparkles"></i>${esc(tr('assistant_name','Assistant IT'))}</span><h1>${esc(tr('assistant_title','Diagnostic IT guidé'))}</h1><p>${esc(tr('assistant_subtitle','Conseils pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance.'))}</p></div><button class="btn btn-outline" onclick="ITAssistant.startConversation()"><i class="ti ti-plus"></i>${esc(tr('assistant_new_conversation','Nouvelle conversation'))}</button></header><div class="assistant-layout"><aside class="assistant-history"><div class="assistant-history-title">${esc(tr('assistant_conversations','Mes conversations'))}</div>${state.conversations.length?state.conversations.map(item=>`<button class="assistant-history-item ${item.id===state.conversationId?'active':''}" onclick="ITAssistant.openConversation('${item.id}')"><i class="ti ti-message"></i><span>${esc(item.title||domainLabels[item.domain]||tr('assistant_name','Assistant IT'))}</span></button>`).join(''):`<p>${esc(tr('assistant_no_conversations','Aucune conversation enregistrée.'))}</p>`}</aside><main class="assistant-chat"><div class="assistant-safety"><i class="ti ti-shield-lock"></i>${esc(tr('assistant_safety','Ne saisissez jamais de mot de passe, clé API, jeton ou donnée client.'))}</div><div id="assistantMessages" class="assistant-messages">${messages}</div>${state.lastAnswer?.suggested_ticket?.title?`<div class="assistant-ticket-cta"><div><strong>${esc(tr('assistant_ticket_offer','Le problème persiste ?'))}</strong><span>${esc(tr('assistant_ticket_offer_description','Créez un ticket prérempli avec le résumé des vérifications.'))}</span></div><button class="btn btn-gold" onclick="ITAssistant.createTicketFromConversation()"><i class="ti ti-ticket"></i>${esc(tr('assistant_create_ticket','Créer un ticket à partir de cette conversation'))}</button></div>`:''}<form class="assistant-composer" onsubmit="ITAssistant.sendMessage(event)"><select id="assistantDomain" aria-label="${esc(tr('assistant_domain','Domaine IT'))}" onchange="ITAssistant.changeDomain(this.value)">${domainOptions}</select><textarea id="assistantInput" rows="3" maxlength="6000" placeholder="${esc(tr('assistant_placeholder','Décrivez le symptôme, le poste concerné et ce qui a déjà été essayé…'))}" required></textarea><div class="assistant-photo-controls"><label class="assistant-photo-button" for="assistantPhotos"><i class="ti ti-camera"></i>${esc(tr('assistant_add_photo','Ajouter des photos'))}<input id="assistantPhotos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onchange="ITAssistant.selectPhotos(this.files)"></label><span>${esc(tr('assistant_photo_help','JPG, PNG ou WebP — 5 Mo maximum par photo.'))}</span><div id="assistantPhotoTray" class="assistant-photo-tray">${photoTray()}</div></div><button class="btn btn-gold" id="assistantSendBtn" type="submit"><i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}</button></form></main></div></div>`;}catch(error){console.error('Assistant IT: rendu impossible',error);target.innerHTML=`<div class="assistant-page"><div class="assistant-service-error"><i class="ti ti-alert-circle"></i><strong>${esc(tr('assistant_unavailable_title','Assistant IT indisponible'))}</strong><p>${esc(tr('assistant_render_failed','Impossible d’afficher l’assistant. Veuillez réessayer.'))}</p></div></div>`;}
+    const messages=state.messages.length?state.messages.map((message,index,all)=>conversationMessage(message,index,all)).join(''):`<div class="assistant-empty"><i class="ti ti-message-chatbot"></i><h3>${esc(tr('assistant_start_title','Comment puis-je vous aider ?'))}</h3><p>${esc(tr('assistant_start_description','Choisissez un domaine, décrivez le problème et l’assistant vous guidera sans créer de ticket.'))}</p><div class="assistant-suggestions" aria-label="${esc(tr('assistant_quick_start','Questions fréquentes'))}"><span>${esc(tr('assistant_quick_start','Questions fréquentes'))}</span>${SUGGESTIONS.map((item,index)=>`<button type="button" class="assistant-suggestion" onclick="ITAssistant.askSuggestion(${index})"><i class="ti ${item.icon}"></i>${esc(item[language()]||item.fr)}</button>`).join('')}</div></div>`;
+    try{target.innerHTML=`<div class="assistant-page"><header class="assistant-header"><div><span class="assistant-kicker"><i class="ti ti-sparkles"></i>${esc(tr('assistant_name','Assistant IT'))}</span><h1>${esc(tr('assistant_title','Diagnostic IT guidé'))}</h1><p>${esc(tr('assistant_subtitle','Conseils pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance.'))}</p></div><button class="btn btn-outline" onclick="ITAssistant.startConversation()"><i class="ti ti-plus"></i>${esc(tr('assistant_new_conversation','Nouvelle conversation'))}</button></header><div class="assistant-layout"><aside class="assistant-history"><div class="assistant-history-title">${esc(tr('assistant_conversations','Mes conversations'))}</div>${state.conversations.length?state.conversations.map(item=>`<button class="assistant-history-item ${item.id===state.conversationId?'active':''}" onclick="ITAssistant.openConversation('${item.id}')"><i class="ti ti-message"></i><span>${esc(item.title||domainLabels[item.domain]||tr('assistant_name','Assistant IT'))}</span></button>`).join(''):`<p>${esc(tr('assistant_no_conversations','Aucune conversation enregistrée.'))}</p>`}</aside><main class="assistant-chat"><div class="assistant-safety"><i class="ti ti-shield-lock"></i>${esc(tr('assistant_safety','Ne saisissez jamais de mot de passe, clé API, jeton ou donnée client.'))}</div><div id="assistantMessages" class="assistant-messages">${messages}</div>${state.lastAnswer?.suggested_ticket?.title&&state.feedback!=='resolved'?`<div class="assistant-ticket-cta"><div><strong>${esc(tr('assistant_ticket_offer','Le problème persiste ?'))}</strong><span>${esc(tr('assistant_ticket_offer_description','Créez un ticket prérempli avec le résumé des vérifications.'))}</span></div><button class="btn btn-gold" onclick="ITAssistant.createTicketFromConversation()"><i class="ti ti-ticket"></i>${esc(tr('assistant_create_ticket','Créer un ticket à partir de cette conversation'))}</button></div>`:''}<form class="assistant-composer" onsubmit="ITAssistant.sendMessage(event)"><select id="assistantDomain" aria-label="${esc(tr('assistant_domain','Domaine IT'))}" onchange="ITAssistant.changeDomain(this.value)">${domainOptions}</select><textarea id="assistantInput" rows="3" maxlength="6000" placeholder="${esc(tr('assistant_placeholder','Décrivez le symptôme, le poste concerné et ce qui a déjà été essayé…'))}" title="${esc(tr('assistant_send_hint','Ctrl + Entrée pour envoyer'))}" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();ITAssistant.sendMessage(event);}" required></textarea><div class="assistant-photo-controls"><label class="assistant-photo-button" for="assistantPhotos"><i class="ti ti-camera"></i>${esc(tr('assistant_add_photo','Ajouter des photos'))}<input id="assistantPhotos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onchange="ITAssistant.selectPhotos(this.files)"></label><span>${esc(tr('assistant_photo_help','JPG, PNG ou WebP — 5 Mo maximum par photo.'))}</span><div id="assistantPhotoTray" class="assistant-photo-tray">${photoTray()}</div></div><button class="btn btn-gold" id="assistantSendBtn" type="submit"><i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}</button></form></main></div></div>`;}catch(error){console.error('Assistant IT: rendu impossible',error);target.innerHTML=`<div class="assistant-page"><div class="assistant-service-error"><i class="ti ti-alert-circle"></i><strong>${esc(tr('assistant_unavailable_title','Assistant IT indisponible'))}</strong><p>${esc(tr('assistant_render_failed','Impossible d’afficher l’assistant. Veuillez réessayer.'))}</p></div></div>`;}
     refreshPhotoTray();
     const messagesNode=document.getElementById('assistantMessages');if(messagesNode)messagesNode.scrollTop=messagesNode.scrollHeight;
   }
   async function sendMessage(event){
-    event?.preventDefault(); const input=document.getElementById('assistantInput');const button=document.getElementById('assistantSendBtn');const message=input?.value.trim();if(!message)return;
+    event?.preventDefault(); const input=document.getElementById('assistantInput');const button=document.getElementById('assistantSendBtn');const message=input?.value.trim();if(!message||button?.disabled)return;
     if(button){button.disabled=true;button.innerHTML=`<i class="ti ti-loader-2 spin"></i>${esc(tr('assistant_thinking','Analyse…'))}`;}
+    // Guess the area when the user left the generic one.
+    if(state.domain==='general'){const guessed=detectDomain(message);if(guessed!=='general'){state.domain=guessed;const select=document.getElementById('assistantDomain');if(select)select.value=guessed;}}
+    // Show the question and a waiting indicator straight away.
+    const messagesNode=document.getElementById('assistantMessages');
+    if(messagesNode){messagesNode.querySelector('.assistant-empty')?.remove();messagesNode.insertAdjacentHTML('beforeend',`<div class="assistant-message assistant-message-user assistant-pending"><div class="assistant-message-author">${esc(tr('assistant_you','Vous'))}</div><p>${esc(message)}</p></div><div class="assistant-message assistant-message-ai assistant-pending"><div class="assistant-typing"><span></span><span></span><span></span>${esc(tr('assistant_typing','L’assistant analyse votre demande…'))}</div></div>`);messagesNode.scrollTop=messagesNode.scrollHeight;}
+    if(input)input.value='';
+    state.feedback=null;
     try{
       const result=await request({action:'chat',conversation_id:state.conversationId,domain:state.domain,message});
       const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[],kb_articles:result.kb_articles||[],kb_query:message};state.conversationId=result.conversation_id;await uploadPhotos(result.conversation_id);state.messages.push({author:'user',content:message},{author:'assistant',content:result.answer.answer,metadata});state.lastAnswer=metadata;
       renderAssistantView();
-    }catch(error){window.showToast?.(error.message||tr('assistant_unavailable','Le service Assistant IT est temporairement indisponible.'),'err');if(button){button.disabled=false;button.innerHTML=`<i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}`;}}
+    }catch(error){window.showToast?.(error.message||tr('assistant_unavailable','Le service Assistant IT est temporairement indisponible.'),'err');document.querySelectorAll('.assistant-pending').forEach(node=>node.remove());if(input&&!input.value)input.value=message;if(button){button.disabled=false;button.innerHTML=`<i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}`;}}
+  }
+  function askSuggestion(index){
+    const item=SUGGESTIONS[index];if(!item)return;
+    state.domain=domainsSafe(item.domain);
+    const select=document.getElementById('assistantDomain');if(select)select.value=state.domain;
+    const input=document.getElementById('assistantInput');if(!input)return;
+    input.value=item[language()]||item.fr;
+    sendMessage();
+  }
+  function markResolved(){state.feedback='resolved';window.showToast?.(tr('assistant_resolved_thanks','Parfait, problème résolu. Merci !'),'ok');renderAssistantView();}
+  function stillBlocked(){
+    state.feedback='blocked';
+    if(state.lastAnswer?.suggested_ticket?.title){createTicketFromConversation();return;}
+    window.showToast?.(tr('assistant_still_blocked_hint','Précisez ce qui ne marche toujours pas, ou créez un ticket prérempli.'),'ok');
+    document.getElementById('assistantInput')?.focus();
+  }
+  // Plain-text copy of an answer, to paste into a ticket or an e-mail.
+  async function copyAnswer(button){
+    const card=button?.closest?.('.assistant-answer');if(!card)return false;
+    const clone=card.cloneNode(true);clone.querySelectorAll('.assistant-copy,.assistant-kb,.assistant-disclaimer,button').forEach(node=>node.remove());
+    const text=Array.from(clone.querySelectorAll('.assistant-answer-title, p, h4, li')).map(node=>node.tagName==='LI'?`- ${node.textContent.trim()}`:node.tagName==='H4'?`\n${node.textContent.trim()}`:node.textContent.trim()).filter(Boolean).join('\n');
+    try{await navigator.clipboard.writeText(text);window.showToast?.(tr('assistant_copied','Réponse copiée'),'ok');return true;}catch(_){window.showToast?.(tr('assistant_copy_failed','Copie impossible'),'err');return false;}
   }
   function changeDomain(domain){state.domain=domainsSafe(domain);}
   function domainsSafe(domain){return domainKeys.includes(domain)?domain:'general';}
-  function startConversation(){state.photos.forEach(photo=>photo.preview&&URL.revokeObjectURL(photo.preview));state.conversationId=null;state.domain='general';state.messages=[];state.lastAnswer=null;state.photos=[];state.uploadedPhotos=[];renderAssistantView();}
+  function startConversation(){state.photos.forEach(photo=>photo.preview&&URL.revokeObjectURL(photo.preview));state.conversationId=null;state.domain='general';state.messages=[];state.lastAnswer=null;state.feedback=null;state.photos=[];state.uploadedPhotos=[];renderAssistantView();}
   function createTicketFromConversation(){
     const suggested=state.lastAnswer?.suggested_ticket;if(!suggested)return;
     const checks=(state.lastAnswer.checks||[]).map(item=>`- ${item}`).join('\n');
@@ -209,5 +275,5 @@
     }catch(error){window.showToast?.(tr('assistant_save_failed','Impossible d’enregistrer la solution.'),'err');}
   }
   function closeTicketAssistant(){document.getElementById('ticketAssistantModal')?.remove();}
-  window.ITAssistant={renderAssistantView,sendMessage,startConversation,openConversation:loadConversation,changeDomain,selectPhotos,removePhoto,analyzePhotos,createTicketFromConversation,openTicketAssistant,saveTicketSolution,closeTicketAssistant};
+  window.ITAssistant={renderAssistantView,sendMessage,askSuggestion,markResolved,stillBlocked,copyAnswer,detectDomain,startConversation,openConversation:loadConversation,changeDomain,selectPhotos,removePhoto,analyzePhotos,createTicketFromConversation,openTicketAssistant,saveTicketSolution,closeTicketAssistant};
 })();
