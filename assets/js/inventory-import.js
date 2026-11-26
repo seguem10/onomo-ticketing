@@ -104,60 +104,120 @@
   return out;
  }
 
- // IT tab: B=1 … I=8.
+ // IT tab (« 05. IT », « IT », « Feuil1 », « Sheet 1 »…): sections, each with
+ // its own header row. The hotels' files share the template but not the exact
+ // columns (French or English labels, a quantity in column A, the user in
+ // column C, the screen and the purchase date in different places), so the
+ // columns are read from each section's header.
  const SECTION_RULES=[
-  [n=>n==='ordinateurs','pc'],[n=>n==='laptop'||n==='laptops','laptop'],[n=>n==='tablette'||n==='tablettes','tablet'],
-  [n=>n==='serveur'||n==='serveurs','server'],[n=>n==='onduleur'||n==='onduleurs','ups'],[n=>n.startsWith('imprimante -')||n==='imprimantes','printer'],
-  [n=>n.startsWith('caisses'),'pos'],[n=>n.startsWith('encodeur'),'access'],[n=>n.startsWith('switching'),'switch'],
-  [n=>n==='pabx','pabx'],[n=>n.startsWith('nvr'),'camera'],[n=>n==='wifi'||n==='wi-fi','wifi']
+  [n=>/^(ordinateurs|computers?)$/.test(n),'pc'],
+  [n=>/^laptops?$/.test(n),'laptop'],
+  [n=>/^(tablettes?|tablets?)$/.test(n),'tablet'],
+  [n=>/^(serveurs?|servers?)$/.test(n),'server'],
+  [n=>/^(onduleurs?|inverters?|ups)\b/.test(n)&&!n.includes(' - '),'ups'],
+  [n=>/^(imprimantes?|printers?)( -|$)/.test(n),'printer'],
+  [n=>/^(caisses?|cash registers?)\b/.test(n),'pos'],
+  [n=>/(encodeurs?|encoders?)\b/.test(n),'access'],
+  [n=>/^swit/.test(n),'switch'],
+  [n=>/^hard drives?$/.test(n),'skip'],
+  [n=>/^(pabx|telephon)/.test(n),'pabx'],
+  [n=>/^(nvr|dvr|cctv|cameras?|video)/.test(n),'camera'],
+  [n=>/^wi-?fi$/.test(n),'wifi']
  ];
  const sectionOf=title=>{const n=norm(title);for(const [test,key] of SECTION_RULES)if(test(n))return key;return null;};
- const isHeader=r=>r.some(c=>/^(num\.? ?serie|model|marque|mar\.)/i.test(String(c).trim()));
- function parseItSheet(rows){
-  const out=[];let section=null,place=null;
+ const LABEL=/^(qty|qte|quantite|total|service|departments?|departement|position|location|username|user|name|nom|server|serveur|serial|num\.? ?serie|mar\.|marque|make|brand|models?|modele|screen|ecran|date|purchase|type|computer room|salle informatique|s\. repartiteur)/;
+ const isHeader=r=>r.filter(c=>LABEL.test(norm(c))).length>=2;
+ const numberOf=v=>{const s=String(v??'').trim();return /^\d{1,6}$/.test(s)?Number(s):null;};
+ const looksSerial=v=>/^[a-z0-9][a-z0-9-]{5,}$/i.test(String(v??'').trim())&&/\d/.test(String(v));
+ function columns(header){
+  const h=header.map(norm),find=(re,from=0)=>h.findIndex((v,i)=>i>=from&&re.test(v));
+  const screen=h.findIndex((v,i)=>i>=2&&/ecran|screen/.test(v));
+  const serials=h.map((v,i)=>/(serial|num\.? ?serie)/.test(v)&&!/model/.test(v)?i:-1).filter(i=>i>=0);
+  const device=serials.find(i=>screen<0||i<screen)??-1,screenSerial=screen>=0?(serials.find(i=>i>screen)??-1):-1;
+  const dates=h.map((v,i)=>/(date|purchase|achat)/.test(v)?i:-1).filter(i=>i>=0);
+  const date=dates.find(i=>screen<0||i<screen)??(screen<0?-1:dates[0]??-1);
+  const person=find(/^(name of|username|user\b|utilisateur|nom)/,2);
+  const total=find(/^(total|qty|qte|quantite)/,1);
+  const last=h.reduce((m,v,i)=>v?i:m,1);
+  return {screen,device,screenSerial,date,person,total,last,labelled:new Set(h.map((v,i)=>v?i:-1).filter(i=>i>=0))};
+ }
+ const KIND=/^(micros|imprimante|printer|tablette|tablet|caisse)/;
+ function parseItSheet(input){
+  // Some files start in column A instead of B: shift them back into place.
+  const firstTitle=input.find(r=>{const f=r.filter(Boolean);return f.length===1&&sectionOf(f[0]);});
+  const rows=firstTitle&&firstTitle[0]&&sectionOf(firstTitle[0])?input.map(r=>['',...r]):input;
+  const out=[];let section=null,cols=null,place=null;
   for(const r of rows){
    const filled=r.map((v,i)=>v?i:-1).filter(i=>i>=0);
    if(!filled.length)continue;
-   // A line with only column B is a section title.
-   if(filled.length===1&&filled[0]===1){section=sectionOf(r[1]);place=null;continue;}
-   if(isHeader(r)){if(section==='switch'&&r[1]&&!/^(service|position)$/i.test(r[1]))place=r[1];continue;}
-   const B=r[1],C=r[2],D=r[3],E=r[4],F=r[5],G=r[6],H=r[7],I=r[8];
+   // A section title: a known section name, alone or followed only by column
+   // labels (« Computers … Screen Make »). Other lone cells (« Cloud »,
+   // « CCTV BRAND: DAHUA »…) are ignored.
+   const next=sectionOf(r[filled[0]]);
+   if(next&&!filled.some(i=>/(serial|num.? ?serie)/.test(norm(r[i])))&&filled.slice(1).every(i=>LABEL.test(norm(r[i]))||/screen make|ecran/.test(norm(r[i])))){section=next;cols=null;place=null;continue;}
+   if(filled.length===1)continue;
+   if(isHeader(r)){
+    cols=columns(r);
+    if(section==='switch'&&r[1]&&!/^(service|position|location|model)/.test(norm(r[1])))place=r[1];
+    continue;
+   }
+   if(!section||section==='skip')continue;
+   const c=cols||{screen:-1,device:-1,screenSerial:-1,date:-1,person:-1,total:-1,last:5,labelled:new Set()};
+   // A label that is only a number (a quantity typed in the wrong column) is not a name.
+   const label=numberOf(r[1])?'':(clean(r[1],120)||'');
+   let person=c.person>=0?r[c.person]:(['pc','laptop','tablet'].includes(section)&&!c.labelled.has(2)?r[2]:'');
+   if(isNo(person))person='';
+   let serial=c.device>=0?r[c.device]:'';
+   const used=new Set([0,1,c.person,c.device,c.screen,c.screenSerial,c.date,c.total].filter(i=>i>=0));
+   if(!['pc','laptop','tablet'].includes(section)||c.labelled.has(2))used.delete(2);
+   if(c.person>=0)used.add(c.person);else if(['pc','laptop','tablet'].includes(section)&&!c.labelled.has(2))used.add(2);
+   // A serial typed one or two columns too far right (seen in several files).
+   if(isNo(serial)&&c.device>=0)for(const i of [c.device+1,c.device+2]){if(!used.has(i)&&looksSerial(r[i])){serial=r[i];used.add(i);break;}}
+   const parts=[];for(let i=2;i<=Math.max(c.last,section==='printer'?5:3);i++)if(!used.has(i)&&r[i]&&!isNo(r[i])&&!numberOf(r[i]))parts.push(r[i]);
+   const make=parts.join(' ').trim();
+   const quantity=numberOf(c.total>=0?r[c.total]:null)||numberOf(r[0])||(cols?null:r.slice(2,9).map(numberOf).find(n=>n))||1;
+   const year=c.date>=0&&/^(19|20)\d{2}/.test(String(r[c.date]||''))?String(r[c.date]).slice(0,4):null;
+   const notes=year?`Achat : ${year}`:null;
+   const screenMake=c.screen>=0&&!isNo(r[c.screen])?r[c.screen]:'',screenSerial=c.screenSerial>=0?r[c.screenSerial]:'';
+   if(!label&&!make&&isNo(serial)&&!screenMake)continue;
+   const who=label&&person&&norm(person)!==norm(label)?`${label} – ${person}`:(label||person);
    switch(section){
-    case 'pc':{
-     if(!(isNo(E)&&isNo(F)))out.push(item({type:'pc',name:`PC ${B}`,location:B,brand_model:isNo(E)?null:E,serial:F}));
-     if(H&&!isNo(H))out.push(item({type:'monitor',name:`Écran ${B}`,location:B,brand_model:H,serial:I}));
+    case 'pc':case 'laptop':case 'tablet':{
+     const prefix={pc:'PC',laptop:'Laptop',tablet:'Tablette'}[section];
+     if(make||!isNo(serial))out.push(item({type:section,name:`${prefix} ${who}`.trim(),location:label,brand_model:make,serial,quantity,notes}));
+     if(screenMake&&!/all in one|aio/.test(norm(screenMake)))out.push(item({type:'monitor',name:`Écran ${who}`.trim(),location:label,brand_model:screenMake,serial:screenSerial,notes}));
      break;}
-    case 'laptop':out.push(item({type:'laptop',name:`Laptop ${B}`,location:B,brand_model:E,serial:F}));break;
-    case 'tablet':out.push(item({type:'tablet',name:`Tablette ${B}`,location:B,brand_model:E,serial:F}));break;
     case 'server':{
-     out.push(item({type:'server',name:`Serveur ${B}`,brand_model:C,serial:F,location:'Salle informatique'}));
-     if(H&&!isNo(H))out.push(item({type:'monitor',name:`Écran serveur ${B}`,brand_model:H,serial:I,location:'Salle informatique'}));
+     out.push(item({type:'server',name:`Serveur ${label}`.trim(),brand_model:make,serial,location:'Salle informatique',notes}));
+     if(screenMake)out.push(item({type:'monitor',name:`Écran serveur ${label}`.trim(),brand_model:screenMake,serial:screenSerial,location:'Salle informatique',notes}));
      break;}
-    case 'ups':out.push(item({type:'ups',name:`Onduleur ${B}`,location:B,brand_model:C,serial:F}));break;
-    case 'printer':out.push(item({type:'printer',name:`${C||'Imprimante'} ${B}`,location:B,brand_model:D,serial:F||E}));break;
+    case 'ups':if(make||!isNo(serial))out.push(item({type:'ups',name:`Onduleur ${label}`.trim(),location:label,brand_model:make,serial,quantity,notes}));break;
+    case 'printer':out.push(item({type:'printer',name:/^(fax|imprimante|printer)/.test(norm(parts[0]||''))?`${parts[0]} ${label}`:`Imprimante ${label}`,location:label,brand_model:make,serial,quantity,notes}));break;
     case 'pos':{
-     const kind=norm(B);
-     out.push(item({type:/micros/.test(kind)?'pos':/tablette/.test(kind)?'tablet':/imprimante/.test(kind)?'printer':'other',name:B,brand_model:C,serial:D,subtype:'Micros'}));
+     const kind=norm(`${label} ${make}`);
+     const type=/micros|eclipse|workstation|posiflex|caisse|610|9007/.test(kind)?'pos':/tablette|tablet/.test(kind)?'tablet':/imprimante|printer|epson|tm-?u?\d/.test(kind)?'printer':'pos';
+     const isKind=KIND.test(norm(label));
+     out.push(item({type,name:isKind?label:`${make||'Caisse'}`,location:isKind?null:label,brand_model:isKind?make:make,serial,quantity,subtype:'Micros',notes}));
      break;}
-    case 'access':out.push(item({type:'access',name:B,brand_model:C,serial:D,subtype:'VingCard'}));break;
+    case 'access':out.push(item({type:'access',name:label||make,location:/^encod/.test(norm(label))?null:label,brand_model:make,serial,quantity,subtype:'VingCard',notes}));break;
     case 'switch':{
-     const n=norm(B);
-     // Switches are listed under their rack (Salle Informatique, S. Repartiteur…);
-     // the other network devices (load balancer, NAS, firewall) sit in the server room.
-     out.push(item({type:/nas/.test(n)?'server':'network',name:B,brand_model:C,serial:D||F,location:(/^switch/.test(n)&&place)||'Salle informatique'}));
+     const n=norm(label);
+     out.push(item({type:/nas|synology/.test(n)?'server':'network',name:label,brand_model:make,serial,quantity,location:(/^switch/.test(n)&&place)||'Salle informatique',notes}));
      break;}
-    case 'pabx':out.push(item({type:'phone',name:B,quantity:qty(G),subtype:'PABX'}));break;
-    case 'camera':out.push(item({type:'camera',name:B,quantity:qty(G)}));break;
-    case 'wifi':out.push(item({type:(/^ap\b/.test(norm(B))||/borne/.test(norm(B)))?'wifi':'network',name:B,quantity:qty(G),subtype:'Wi-Fi'}));break;
+    case 'pabx':out.push(item({type:'phone',name:label||make,brand_model:label?make:null,quantity,subtype:'PABX'}));break;
+    case 'camera':out.push(item({type:'camera',name:label||make,brand_model:label?make:null,serial:null,quantity}));break;
+    case 'wifi':out.push(item({type:/^ap|\bap\b|borne|access point|outdoor/.test(norm(label))?'wifi':'network',name:label||make,brand_model:label?make:null,quantity,subtype:'Wi-Fi'}));break;
     default:break;
    }
   }
   return out.filter(row=>row.name);
  }
+ // A tab with an unrecognised name is the IT tab when it contains the IT sections.
+ const looksLikeIt=rows=>rows.some(r=>{const f=r.filter(Boolean);return f.length>=1&&f.length<=2&&sectionOf(f[0])==='pc';});
  function parseWorkbook(sheets){
   const result=[];
   for(const sheet of sheets||[]){
-   const domain=domainOf(sheet.name);if(!domain)continue;
+   const domain=domainOf(sheet.name)||(looksLikeIt(sheet.rows)?'it':null);if(!domain)continue;
    const rows=domain==='it'?parseItSheet(sheet.rows):parseTechnicalSheet(sheet.rows,domain);
    if(rows.length)result.push({sheet:sheet.name,domain,rows});
   }
@@ -177,9 +237,22 @@
   return {fresh,skipped};
  }
  // "Inventaire Materiels IT - Terminus.xlsx" → the hotel whose name contains "Terminus".
+ // The hotel matching the most words wins; a tie ("abidjan" alone fits two
+ // hotels) gives no answer, so the user chooses. Short names used in the
+ // files' titles are expanded first.
+ const ALIASES={iots:'inn on the square',occc:'casa city center'};
+ const aliasHotel=(base,hotels)=>{const words=base.split(/[^a-z0-9]+/);for(const [k,v] of Object.entries(ALIASES))if(words.includes(k))return (hotels||[]).find(h=>norm(h).includes(v))||'';return '';};
  function guessHotel(fileName,hotels){
-  const words=norm(String(fileName||'').replace(/\.[a-z0-9]+$/i,'')).split(/[^a-z0-9]+/).filter(w=>w.length>=4&&!['inventaire','materiels','materiel','hotel','onomo'].includes(w));
-  return (hotels||[]).find(h=>words.some(w=>norm(h).includes(w)))||'';
+  const base=norm(String(fileName||'').replace(/\.[a-z0-9]+$/i,'')).replace(/\bo'/g,' ');
+  const alias=aliasHotel(base,hotels);if(alias)return alias;
+  const words=base.split(/[^a-z0-9]+/).flatMap(w=>ALIASES[w]?ALIASES[w].split(' '):[w])
+   .filter(w=>w.length>=4&&!['inventaire','inventory','materiels','materiel','hotel','onomo','town','cape'].includes(w));
+  let best='',score=0,tie=false;
+  for(const h of hotels||[]){
+   const name=norm(h),s=words.filter(w=>new RegExp(`\\b${w}\\b`).test(name)).length;
+   if(s>score){best=h;score=s;tie=false;}else if(s&&s===score)tie=true;
+  }
+  return score&&!tie?best:'';
  }
 
  root.InventoryImport={readXlsx,parseWorkbook,parseItSheet,parseTechnicalSheet,domainOf,plan,guessHotel};

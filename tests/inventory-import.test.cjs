@@ -157,6 +157,72 @@ test('the inventory page previews an import, then sends only the new rows for th
   assert.match(toasts.at(-1)[0],/15 équipement\(s\) importé\(s\)/);
 });
 
+test('other hotels’ variants: English labels, a quantity column, users, purchase years and a file shifted to column A',async()=>{
+  const api=loadImporter();
+  const english=[
+    ['','','"O\'Hotel" IT Equipment Inventory'],
+    ['','Computers, Server, Laptop & Tablet'],
+    ['','Computers','','','','','','','','Screen Make'],
+    ['Qty','Username','Name of the person in charge','','Make','Serial No.','Purchase Date','','','Screen Make','Serial No.','','Date of purchase'],
+    ['','hotela','Miskha','','LENOVO 10TX000LSA','YL009LRC',2019,'','','Lenovo','VKW41571','',2019],
+    ['','maint','Franco','','HP ProOne 600 G2','CZC7097HQP',2017,'All in one'],
+    ['1','','','','','',''],
+    ['','SERVER'],
+    ['','Server','Brand','','','Serial No.','','Screen','Serial No.','','Date of purchase'],
+    ['1','Host 1','Dell PowerEdge R540','','','1MSM9W2','','LG','603NTBK4K573','',2019],
+    ['','Inverter - Fax - Printer & Photocopier'],
+    ['','INVERTER\\UPS'],
+    ['','LOCATION','BRAND','','','SERIAL NUMBER'],
+    ['','IT ROOM','RIELLO UPS MST 10 S2','','','MZ10UT220470002'],
+    ['','SWITSCHES\\ROUTERS'],
+    ['','SERVER ROOM','MODEL','SERIAL NUMBER'],
+    ['1','Switch HP','HPE 1920-8G-PoE+','','CN73GP2194'],
+    ['','PABX'],
+    ['','Model','','Total'],
+    ['','Yealink T41S','',16],
+    ['','Cloud'],
+    ['','DVR-NVR & Camera'],
+    ['','Name','Serial number / Model','Total'],
+    ['','CCTV BRAND: DAHUA'],
+    ['','Dahua 2MP Dome','IPC-HDBW2231R-ZS',53],
+    ['','WiFi'],
+    ['','Model','','Total'],
+    ['','Aruba 207 AP','',50],
+    ['','APG Outdoor unifi','',4]
+  ];
+  const shifted=[
+    ['Ordinateurs, Serveur , Laptop & Tab'],
+    ['Ordinateurs'],
+    ['Service','','','Mar. U. Central','Num. Serie','','Mar. Ecran','Num. Serie'],
+    ['reception 1','','','delle','','','delle',''],
+    ['Onduleur'],
+    ['Position','Marque Onduleur','','','Num. Serie'],
+    ['Bureaux','APC BV650I','','','']
+  ];
+  const parsed=plain(api.parseWorkbook(await api.readXlsx(workbook({' Sheet 1':english,'Feuil1':shifted}))));
+  assert.deepEqual(parsed.map(p=>[p.sheet,p.domain]),[[' Sheet 1','it'],['Feuil1','it']]);
+  const rows=parsed[0].rows,by=name=>rows.find(r=>r.name===name);
+  assert.deepEqual([by('PC hotela – Miskha').serial,by('PC hotela – Miskha').notes,by('Écran hotela – Miskha').serial],['YL009LRC','Achat : 2019','VKW41571']);
+  assert.equal(rows.filter(r=>r.name.startsWith('Écran maint')).length,0,'an all-in-one has no separate screen');
+  assert.deepEqual([by('Serveur Host 1').serial,by('Écran serveur Host 1').serial],['1MSM9W2','603NTBK4K573']);
+  assert.deepEqual([by('Onduleur IT ROOM').brand_model,by('Onduleur IT ROOM').serial],['RIELLO UPS MST 10 S2','MZ10UT220470002']);
+  assert.deepEqual([by('Switch HP').serial,by('Switch HP').location],['CN73GP2194','SERVER ROOM'],'a serial typed one column too far right');
+  assert.deepEqual([by('Yealink T41S').quantity,by('Dahua 2MP Dome').quantity,by('Dahua 2MP Dome').brand_model],[16,53,'IPC-HDBW2231R-ZS']);
+  assert.deepEqual([by('Aruba 207 AP').type,by('Aruba 207 AP').quantity,by('APG Outdoor unifi').type],['wifi',50,'wifi']);
+  assert.ok(!rows.some(r=>r.name==='Cloud'||/CCTV BRAND/.test(r.name)));
+  const left=parsed[1].rows;
+  assert.deepEqual(plain(left.map(r=>[r.name,r.brand_model])),[['PC reception 1','delle'],['Écran reception 1','delle'],['Onduleur Bureaux','APC BV650I']]);
+});
+
+test('file names map to hotels, with short names and ambiguous names left to the user',()=>{
+  const api=loadImporter();
+  const hotels=['ONOMO Allure Abidjan Baobab','ONOMO Hotel Abidjan Airport','ONOMO Hotel Cape Town - Inn On The Square','Le Square by ONOMO Collection','ONOMO Hotel CASA CITY CENTER','ONOMO Hotel Dar Es Salaam','ONOMO Hotel Cape Town Foreshore'];
+  const cases=[['Inventaire Materiels IT -Abidjan Airport.xlsx','ONOMO Hotel Abidjan Airport'],['Inventaire Materiels IT -Abidjan Allure Baobab.xlsx','ONOMO Allure Abidjan Baobab'],
+    ['Inventaire Materiels IT-abidjan.xlsx',''],['IT Inventory - IOTS.xlsx','ONOMO Hotel Cape Town - Inn On The Square'],['Inventaire Materiels IT- OCCC.xlsx','ONOMO Hotel CASA CITY CENTER'],
+    ["Inventaire Materiels IT O'Dar es Salaam.xlsx",'ONOMO Hotel Dar Es Salaam'],['IT Inventory - Foreshore.xlsx','ONOMO Hotel Cape Town Foreshore'],['Inventaire Materiels IT -MIDP.xlsx','']];
+  for(const [file,hotel] of cases)assert.equal(api.guessHotel(file,hotels),hotel,file);
+});
+
 test('the database accepts the workbook fields and the new IT types',()=>{
   const sql=fs.readFileSync('supabase/migrations/20261125090000_assets_domains.sql','utf8');
   for(const fragment of ["check (domain in ('it', 'mechanical', 'electrical', 'plumbing', 'fire', 'elevator', 'kitchen', 'architecture', 'other'))",
