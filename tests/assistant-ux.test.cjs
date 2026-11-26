@@ -60,3 +60,46 @@ test('after an answer: copy, "solved" hides the ticket offer, "still stuck" open
   h.api.stillBlocked();
   assert.equal(h.opened.length,1);assert.equal(h.opened[0].titre,'Imprimante');
 });
+
+test('feedback is saved once per conversation, IT staff see the 30-day summary, history can be searched',async()=>{
+  const calls=[];
+  const h=load();
+  h.ctx.window.canManageTickets=()=>true;h.ctx.window.currentUser={role:'it_hotel'};
+  h.ctx.window.sbFetch=async(path,options={})=>{calls.push([path,options.method||'GET',options.prefer,options.body?JSON.parse(options.body):null]);
+    if(path.startsWith('it_ai_conversations'))return [{id:'c9',title:'Imprimante <bar>',updated_at:'2026-11-20T10:00:00Z'},{id:'c8',title:'Outlook',updated_at:'2026-11-19T10:00:00Z'},{id:'c7',title:'Wi-Fi',updated_at:'2026-11-18T10:00:00Z'},{id:'c6',title:'Opera',updated_at:'2026-11-17T10:00:00Z'}];
+    if(path==='rpc/it_ai_feedback_summary')return [{conversations:12,answered:5,resolved:4,blocked:1}];
+    return [];};
+  await h.api.renderAssistantView();
+  let out=h.main.innerHTML;
+  assert.ok(out.includes('<b>12</b> conversations'));assert.ok(out.includes('<b>4</b> résolus sans ticket'));assert.ok(out.includes('<b>80 %</b>'));
+  assert.ok(out.includes('class="assistant-history-search"'));
+  assert.ok(out.includes('Imprimante &lt;bar&gt;'));assert.ok(!out.includes('Imprimante <bar>'));
+  assert.ok(out.includes('data-conversation-id="c9"'),'conversation ids are passed as data, not inside the handler');
+  const input={value:'imprimante'},button={disabled:false,innerHTML:''},list={innerHTML:'',scrollTop:0,scrollHeight:0,querySelector:()=>null,insertAdjacentHTML(){}};
+  Object.assign(h.nodes,{assistantInput:input,assistantSendBtn:button,assistantMessages:list});
+  await h.api.sendMessage();await new Promise(resolve=>setTimeout(resolve,20));
+  h.api.markResolved();await new Promise(resolve=>setTimeout(resolve,20));
+  const save=calls.find(c=>c[0].startsWith('it_ai_feedback'));
+  assert.deepEqual(save,['it_ai_feedback?on_conflict=conversation_id','POST','resolution=merge-duplicates,return=minimal',{conversation_id:'c1',resolved:true}]);
+});
+
+test('a requester sees no statistics and dictation is offered only when the browser supports it',async()=>{
+  const h=load();
+  await h.api.renderAssistantView();
+  assert.ok(!h.main.innerHTML.includes('assistant-stats'));
+  assert.ok(!h.main.innerHTML.includes('assistantDictate'));
+  const v=load();v.ctx.window.webkitSpeechRecognition=function(){};
+  await v.api.renderAssistantView();
+  assert.ok(v.main.innerHTML.includes('id="assistantDictate"'));
+});
+
+test('without an AI answer, the server answers from the best matching published article',()=>{
+  const fn=fs.readFileSync('supabase/functions/ai-it-assistant/index.ts','utf8');
+  assert.ok(fn.includes("const topArticle=kbArticles[0]&&kbArticles[0].score>=3?kbArticles[0]:null;"));
+  assert.ok(fn.includes("const answer=topArticle?kbAnswer(topArticle):procedureGuide(domain,message,language);"));
+  assert.ok(fn.includes("providerUnavailable?(topArticle?kbAnswer(topArticle):fallbackAnswer(domain,message,language))"));
+  assert.ok(fn.includes("provider:topArticle?'knowledge-base':'procedure-guide'"));
+  const sql=fs.readFileSync('supabase/migrations/20261126120000_ai_assistant_feedback.sql','utf8');
+  assert.ok(sql.includes("where public.has_permission('ticket:update:all');"),'the summary is for technicians only');
+  assert.ok(sql.includes("and exists (select 1 from public.it_ai_conversations c where c.id = conversation_id and c.user_id = (select auth.uid()))"));
+});

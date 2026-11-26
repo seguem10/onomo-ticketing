@@ -6394,3 +6394,17 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 [dir="rtl"] .assistant-copy{margin-left:0;margin-right:auto}
 [dir="rtl"] .assistant-suggestion{text-align:right}
 @media(max-width:640px){.assistant-suggestions{grid-template-columns:1fr}}
+
+/* Assistant: statistics, history search, dictation */
+.assistant-stats{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-bottom:8px;padding:5px 10px;border-radius:999px;background:rgba(21,94,239,.07);color:var(--tx2);font-size:12px}
+.assistant-stats i{color:#155eef}
+.assistant-stats b{color:var(--tx)}
+.assistant-header>div>.assistant-stats+.assistant-kicker{display:flex}
+.assistant-history-search{width:100%;margin:0 0 8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--tx);font-size:12px}
+.assistant-history-item span{display:grid;gap:1px;min-width:0}
+.assistant-history-item small{font-size:10px;color:var(--tx3);font-weight:400}
+.assistant-history-item[hidden]{display:none}
+.assistant-dictate{background:none;font-family:inherit}
+.assistant-dictate.active{background:#fee4e2;color:#b42318}
+.assistant-dictate.active i{animation:assistantDot 1.2s infinite}
+@media (prefers-reduced-motion:reduce){.assistant-dictate.active i{animation:none}}
