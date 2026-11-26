@@ -371,6 +371,19 @@ Deno.serve(async req=>{
       const {data}=await query;similarTickets=(data??[]).map(item=>({...item,description:clean(item.description,700)}));
     }
   }
+  // Published knowledge base articles related to the request, read with the
+  // caller's own rights (drafts stay hidden). They inform the answer and are
+  // listed under it.
+  let kbArticles:any[]=[];
+  const kbTerms=[...new Set(clean(ticket?`${ticket.titre} ${ticket.description??''}`:message,400).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9]+/).filter(word=>word.length>=4))].slice(0,5);
+  if(kbTerms.length){
+    const filter=kbTerms.map(word=>`title.ilike.*${word}*,body.ilike.*${word}*,title_en.ilike.*${word}*,body_en.ilike.*${word}*`).join(',');
+    const {data}=await userClient.from('kb_articles').select('id,title,title_en,body,body_en,category').eq('published',true).or(filter).limit(12);
+    const score=(article:any)=>kbTerms.reduce((sum,word)=>sum+(`${article.title} ${article.title_en??''}`.toLowerCase().includes(word)?3:0)+(`${article.body} ${article.body_en??''}`.toLowerCase().includes(word)?1:0),0);
+    kbArticles=(data??[]).map(article=>({...article,score:score(article)})).sort((a,b)=>b.score-a.score).slice(0,3);
+  }
+  const kbForClient=kbArticles.map(article=>({id:article.id,title:language==='en'&&article.title_en?article.title_en:article.title,category:article.category}));
+  const kbContext=kbArticles.map(article=>`[${article.title}]\n${clean(language==='en'&&article.body_en?article.body_en:article.body,1500)}`).join('\n\n');
   // When no provider is configured, retain useful, repeatable and safe local
   // guidance. With Gemini/OpenAI/Anthropic configured, continue below so the
   // provider can produce a response specific to this conversation or ticket.
@@ -380,7 +393,7 @@ Deno.serve(async req=>{
     const sources=[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
     await service.from('it_ai_messages').insert([
       {conversation_id:conversation.id,author:'user',content:message,metadata:{}},
-      {conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}
+      {conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,kb_articles:kbForClient}}
     ]);
     await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
     return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,provider:'procedure-guide'});
@@ -394,7 +407,7 @@ Deno.serve(async req=>{
   const context=action==='ticket'?`Ticket ${ticket.numero}: ${ticket.titre}\nDescription: ${clean(ticket.description,5000)}\nCatégorie: ${ticket.categorie}; priorité: ${ticket.priorite}; statut: ${ticket.statut}; hôtel: ${ticket.hotel}`:`Domaine: ${domain}\nConversation précédente:\n${history.map(item=>`${item.author}: ${item.content}`).join('\n')}\nNouvelle demande: ${message}`;
   const prompt=`Tu es l’assistant IT interne d’un groupe hôtelier. Réponds en ${language==='ar'?'arabe':language==='en'?'anglais':'français'}.
 Tu conseilles seulement : ne demande jamais ni n’affiche mots de passe, clés, jetons, données clients ou données de carte bancaire. N’affirme jamais qu’une procédure non citée est validée. Si les informations sont insuffisantes, pose au maximum trois questions ciblées à la fois. Pour Sage 1000, Citrix, OPERA PMS, POS, Microsoft 365 et réseau, ne fabrique jamais de commandes, paramètres ou procédures propres au client. Privilégie l’interface graphique. Si une commande est utile, précise son objectif, le résultat attendu et l’action suivante. Pour Sage, OPERA, POS et opérations de production, rappelle le risque, la sauvegarde et la validation humaine avant une action à impact. Ne propose jamais une action destructive ni un changement automatique.
-Procédures internes validées (elles seules peuvent être décrites comme validées) :\n${procedureContext||'Aucune procédure validée applicable.'}\n\nIncidents similaires visibles pour cet utilisateur :\n${similarTickets.map(item=>`${item.numero} | ${item.titre} | ${item.categorie} | ${item.statut}\n${item.description}`).join('\n')||'Aucun incident similaire exploitable.'}\n\nContexte :\n${context}\n\nRéponds uniquement avec JSON : {"answer":"résumé du problème","causes":["causes probables"],"questions":["..."],"checks":["Vérification — résultat attendu — action suivante"],"solution":["..."],"validation":["..."],"assumptions":["..."],"suggested_ticket":{"title":"...","description":"résumé, diagnostic et vérifications déjà réalisées","category":"catégorie existante la plus proche","priority":"P1/P2/P3/P4 ou Urgente/Haute/Normale/Basse"}}.`;
+Procédures internes validées (elles seules peuvent être décrites comme validées) :\n${procedureContext||'Aucune procédure validée applicable.'}\n\nIncidents similaires visibles pour cet utilisateur :\n${similarTickets.map(item=>`${item.numero} | ${item.titre} | ${item.categorie} | ${item.statut}\n${item.description}`).join('\n')||'Aucun incident similaire exploitable.'}\n\nFiches de la base de connaissances ONOMO (publiées par l’équipe IT ; reprends leurs étapes et cite leur titre quand elles s’appliquent) :\n${kbContext||'Aucune fiche liée.'}\n\nContexte :\n${context}\n\nRéponds uniquement avec JSON : {"answer":"résumé du problème","causes":["causes probables"],"questions":["..."],"checks":["Vérification — résultat attendu — action suivante"],"solution":["..."],"validation":["..."],"assumptions":["..."],"suggested_ticket":{"title":"...","description":"résumé, diagnostic et vérifications déjà réalisées","category":"catégorie existante la plus proche","priority":"P1/P2/P3/P4 ou Urgente/Haute/Normale/Basse"}}.`;
   try{
     const providerName=GEMINI_KEY?'gemini':OPENAI_KEY?'openai':'anthropic';
     let response=GEMINI_KEY
@@ -423,10 +436,10 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     const answer=providerUnavailable?fallbackAnswer(domain,message,language):parseAnswer(String(providerText));
     const sources=(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
-      await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources}}]);
+      await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,kb_articles:kbForClient}}]);
       await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
-      return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets});
+      return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});
     }
-    return send(req,{ticket_id:ticket.id,answer,sources,similar_tickets:similarTickets});
-  }catch(error){console.error('ai-it-assistant',error);const answer=fallbackAnswer(domain,message,language);const sources=[];if(conversation){await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,fallback:true}}]);return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets});}return send(req,{ticket_id:ticket?.id,answer,sources,similar_tickets:similarTickets});}
+    return send(req,{ticket_id:ticket.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});
+  }catch(error){console.error('ai-it-assistant',error);const answer=fallbackAnswer(domain,message,language);const sources=[];if(conversation){await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,fallback:true}}]);return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});}return send(req,{ticket_id:ticket?.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});}
 });

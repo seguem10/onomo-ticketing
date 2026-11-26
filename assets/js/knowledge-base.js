@@ -8,9 +8,9 @@
 (function(){
  'use strict';
  const L={
-  fr:{title:'Base de connaissances',intro:'Solutions aux problèmes courants. Essayez-les avant de créer un ticket.',search:'Rechercher une solution…',all:'Toutes',add:'Nouvelle fiche',edit:'Modifier',remove:'Supprimer',publish:'Publier',unpublish:'Dépublier',draft:'Brouillon',fTitle:'Titre',fCategory:'Catégorie',fBody:'Contenu (une étape par ligne)',fPublished:'Publiée (visible par tous)',save:'Enregistrer',cancel:'Annuler',none:'Aucune fiche pour le moment.',noMatch:'Aucune fiche ne correspond à votre recherche.',confirm:'Supprimer cette fiche ?',saved:'Fiche enregistrée',removed:'Fiche supprimée',failed:'Action impossible',required:'Le titre (3 caractères minimum) et le contenu sont obligatoires',loading:'Chargement…',suggest:'Ces fiches peuvent résoudre votre problème :',stillTicket:'Toujours bloqué ? Continuez la création du ticket.',updated:'Mise à jour'},
-  en:{title:'Knowledge base',intro:'Solutions to common problems. Try them before creating a ticket.',search:'Search a solution…',all:'All',add:'New article',edit:'Edit',remove:'Delete',publish:'Publish',unpublish:'Unpublish',draft:'Draft',fTitle:'Title',fCategory:'Category',fBody:'Content (one step per line)',fPublished:'Published (visible to everyone)',save:'Save',cancel:'Cancel',none:'No article yet.',noMatch:'No article matches your search.',confirm:'Delete this article?',saved:'Article saved',removed:'Article deleted',failed:'Action failed',required:'Title (at least 3 characters) and content are required',loading:'Loading…',suggest:'These articles may solve your problem:',stillTicket:'Still stuck? Carry on creating the ticket.',updated:'Updated'},
-  ar:{title:'قاعدة المعرفة',intro:'حلول للمشاكل الشائعة. جرّبها قبل إنشاء تذكرة.',search:'ابحث عن حل…',all:'الكل',add:'مقالة جديدة',edit:'تعديل',remove:'حذف',publish:'نشر',unpublish:'إلغاء النشر',draft:'مسودة',fTitle:'العنوان',fCategory:'الفئة',fBody:'المحتوى (خطوة في كل سطر)',fPublished:'منشورة (مرئية للجميع)',save:'حفظ',cancel:'إلغاء',none:'لا توجد مقالات بعد.',noMatch:'لا توجد مقالة مطابقة لبحثك.',confirm:'حذف هذه المقالة؟',saved:'تم حفظ المقالة',removed:'تم حذف المقالة',failed:'تعذر تنفيذ الإجراء',required:'العنوان (3 أحرف على الأقل) والمحتوى مطلوبان',loading:'جارٍ التحميل…',suggest:'قد تحل هذه المقالات مشكلتك:',stillTicket:'ما زالت المشكلة قائمة؟ تابع إنشاء التذكرة.',updated:'تحديث'}
+  fr:{title:'Base de connaissances',intro:'Solutions aux problèmes courants. Essayez-les avant de créer un ticket.',search:'Rechercher une solution…',all:'Toutes',add:'Nouvelle fiche',edit:'Modifier',remove:'Supprimer',publish:'Publier',unpublish:'Dépublier',draft:'Brouillon',fTitle:'Titre',fCategory:'Catégorie',fBody:'Contenu (une étape par ligne)',fPublished:'Publiée (visible par tous)',fTitleEn:'Titre en anglais (facultatif)',fBodyEn:'Contenu en anglais (facultatif)',related:'Fiches de la base de connaissances',save:'Enregistrer',cancel:'Annuler',none:'Aucune fiche pour le moment.',noMatch:'Aucune fiche ne correspond à votre recherche.',confirm:'Supprimer cette fiche ?',saved:'Fiche enregistrée',removed:'Fiche supprimée',failed:'Action impossible',required:'Le titre (3 caractères minimum) et le contenu sont obligatoires',loading:'Chargement…',suggest:'Ces fiches peuvent résoudre votre problème :',stillTicket:'Toujours bloqué ? Continuez la création du ticket.',updated:'Mise à jour'},
+  en:{title:'Knowledge base',intro:'Solutions to common problems. Try them before creating a ticket.',search:'Search a solution…',all:'All',add:'New article',edit:'Edit',remove:'Delete',publish:'Publish',unpublish:'Unpublish',draft:'Draft',fTitle:'Title',fCategory:'Category',fBody:'Content (one step per line)',fPublished:'Published (visible to everyone)',fTitleEn:'English title (optional)',fBodyEn:'English content (optional)',related:'Knowledge base articles',save:'Save',cancel:'Cancel',none:'No article yet.',noMatch:'No article matches your search.',confirm:'Delete this article?',saved:'Article saved',removed:'Article deleted',failed:'Action failed',required:'Title (at least 3 characters) and content are required',loading:'Loading…',suggest:'These articles may solve your problem:',stillTicket:'Still stuck? Carry on creating the ticket.',updated:'Updated'},
+  ar:{title:'قاعدة المعرفة',intro:'حلول للمشاكل الشائعة. جرّبها قبل إنشاء تذكرة.',search:'ابحث عن حل…',all:'الكل',add:'مقالة جديدة',edit:'تعديل',remove:'حذف',publish:'نشر',unpublish:'إلغاء النشر',draft:'مسودة',fTitle:'العنوان',fCategory:'الفئة',fBody:'المحتوى (خطوة في كل سطر)',fPublished:'منشورة (مرئية للجميع)',fTitleEn:'العنوان بالإنجليزية (اختياري)',fBodyEn:'المحتوى بالإنجليزية (اختياري)',related:'مقالات قاعدة المعرفة',save:'حفظ',cancel:'إلغاء',none:'لا توجد مقالات بعد.',noMatch:'لا توجد مقالة مطابقة لبحثك.',confirm:'حذف هذه المقالة؟',saved:'تم حفظ المقالة',removed:'تم حذف المقالة',failed:'تعذر تنفيذ الإجراء',required:'العنوان (3 أحرف على الأقل) والمحتوى مطلوبان',loading:'جارٍ التحميل…',suggest:'قد تحل هذه المقالات مشكلتك:',stillTicket:'ما زالت المشكلة قائمة؟ تابع إنشاء التذكرة.',updated:'تحديث'}
  };
  const text=()=>L[document.getElementById('languageSelector-app')?.value]||L.fr;
  const escape=value=>typeof esc==='function'?esc(value):String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -27,20 +27,25 @@
  function load(force){
   if(loading&&!force)return loading;
   if(typeof window.sbOK!=='function'||!window.sbOK()||typeof window.sbFetch!=='function'){loaded=true;return Promise.resolve(rows);}
-  loading=window.sbFetch('kb_articles?select=id,title,body,category,published,updated_at&order=title.asc&limit=1000')
+  loading=window.sbFetch('kb_articles?select=id,title,body,title_en,body_en,category,published,updated_at&order=title.asc&limit=1000')
    .then(result=>{rows=Array.isArray(result)?result:[];loaded=true;return rows;})
    .catch(error=>{console.warn('Base de connaissances indisponible',error);loaded=true;return rows;})
    .finally(()=>{loading=null;});
   return loading;
  }
 
- // Accent- and case-insensitive word search; the title weighs more.
+ // French is the reference text; the English version is shown when the app is
+ // in English and the article has one.
+ const english=()=>document.getElementById('languageSelector-app')?.value==='en';
+ const titleOf=row=>english()&&row.title_en?row.title_en:row.title;
+ const bodyOf=row=>english()&&row.body_en?row.body_en:row.body;
+ // Accent- and case-insensitive word search in both languages; the title weighs more.
  const STOP=new Set(['les','des','une','est','pas','sur','dans','pour','avec','que','qui','mon','mes','ma','plus','the','and','not','my','is','ne','je','il','elle','de','du','la','le','un','et']);
  // "Wi-Fi", "wi fi" and "wifi" must meet: hyphenated words are joined.
  const normalize=value=>String(value??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/([a-z0-9])-(?=[a-z0-9])/g,'$1').replace(/\bwi fi\b/g,'wifi');
  const words=value=>normalize(value).split(/[^a-z0-9]+/).filter(word=>word.length>=3&&!STOP.has(word));
  function score(row,terms){
-  const title=normalize(row.title),body=normalize(`${row.category} ${row.body}`);
+  const title=normalize(`${row.title} ${row.title_en||''}`),body=normalize(`${row.category} ${row.body} ${row.body_en||''}`);
   return terms.reduce((sum,term)=>sum+(title.includes(term)?3:0)+(body.includes(term)?1:0),0);
  }
  function search(value,list=rows){
@@ -58,13 +63,15 @@
  function articleHtml(row){
   const t=text(),open=String(openId)===String(row.id);
   const staffActions=isStaff()?`<div class="kb-actions"><button type="button" class="btn btn-outline btn-sm" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.edit(this.dataset.kbId)"><i class="ti ti-edit"></i>${escape(t.edit)}</button><button type="button" class="btn btn-outline btn-sm" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.togglePublished(this.dataset.kbId)"><i class="ti ti-${row.published===false?'eye':'eye-off'}"></i>${escape(row.published===false?t.publish:t.unpublish)}</button><button type="button" class="btn btn-outline btn-sm kb-danger" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.remove(this.dataset.kbId)"><i class="ti ti-trash"></i>${escape(t.remove)}</button></div>`:'';
-  return `<article class="kb-article${open?' open':''}"><button type="button" class="kb-head" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggle(this.dataset.kbId)"><span class="kb-cat">${escape(row.category||'')}</span><strong>${escape(row.title)}</strong>${row.published===false?`<span class="kb-draft">${escape(t.draft)}</span>`:''}<i class="ti ti-chevron-down"></i></button>${open?`<div class="kb-body">${bodyHtml(row.body)}${staffActions}</div>`:''}</article>`;
+  return `<article class="kb-article${open?' open':''}"><button type="button" class="kb-head" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggle(this.dataset.kbId)"><span class="kb-cat">${escape(row.category||'')}</span><strong>${escape(titleOf(row))}</strong>${row.published===false?`<span class="kb-draft">${escape(t.draft)}</span>`:''}<i class="ti ti-chevron-down"></i></button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}${staffActions}</div>`:''}</article>`;
  }
  function formHtml(row){
   const t=text(),cats=categories();
   return `<div class="card kb-form"><div class="form-g"><label class="field-lbl" for="kbTitle">${escape(t.fTitle)}</label><input id="kbTitle" class="field-ctrl" maxlength="150" value="${escape(row?.title||'')}"></div>
    <div class="form-g"><label class="field-lbl" for="kbCategory">${escape(t.fCategory)}</label><input id="kbCategory" class="field-ctrl" maxlength="60" list="kbCategories" value="${escape(row?.category||'Général')}"><datalist id="kbCategories">${cats.map(c=>`<option value="${escape(c)}">`).join('')}</datalist></div>
    <div class="form-g"><label class="field-lbl" for="kbBody">${escape(t.fBody)}</label><textarea id="kbBody" class="field-ctrl" rows="8" maxlength="8000">${escape(row?.body||'')}</textarea></div>
+   <div class="form-g"><label class="field-lbl" for="kbTitleEn">${escape(t.fTitleEn)}</label><input id="kbTitleEn" class="field-ctrl" maxlength="150" value="${escape(row?.title_en||'')}"></div>
+   <div class="form-g"><label class="field-lbl" for="kbBodyEn">${escape(t.fBodyEn)}</label><textarea id="kbBodyEn" class="field-ctrl" rows="6" maxlength="8000">${escape(row?.body_en||'')}</textarea></div>
    <label class="kb-check"><input type="checkbox" id="kbPublished"${row?.published===false?'':' checked'}> ${escape(t.fPublished)}</label>
    <div class="kb-actions"><button type="button" class="btn btn-outline btn-sm" onclick="KnowledgeBase.cancel()">${escape(t.cancel)}</button><button type="button" class="btn btn-gold btn-sm" onclick="KnowledgeBase.save()"><i class="ti ti-device-floppy"></i>${escape(t.save)}</button></div></div>`;
  }
@@ -99,6 +106,9 @@
  async function save(){
   const t=text();
   const title=(document.getElementById('kbTitle')?.value||'').trim().slice(0,150);
+  const titleEn=(document.getElementById('kbTitleEn')?.value||'').trim().slice(0,150);
+  const bodyEn=(document.getElementById('kbBodyEn')?.value||'').trim().slice(0,8000);
+  const title_en=titleEn.length>=3?titleEn:null,body_en=bodyEn||null;
   const category=(document.getElementById('kbCategory')?.value||'').trim().slice(0,60)||'Général';
   const body=(document.getElementById('kbBody')?.value||'').trim().slice(0,8000);
   const published=document.getElementById('kbPublished')?.checked!==false;
@@ -106,8 +116,8 @@
   const id=editing==='new'?null:editing;
   try{
    const saved=id
-    ?await window.sbFetch(`kb_articles?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({title,category,body,published})})
-    :await window.sbFetch('kb_articles',{method:'POST',body:JSON.stringify({title,category,body,published})});
+    ?await window.sbFetch(`kb_articles?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({title,category,body,title_en,body_en,published})})
+    :await window.sbFetch('kb_articles',{method:'POST',body:JSON.stringify({title,category,body,title_en,body_en,published})});
    const row=Array.isArray(saved)&&saved[0];
    if(!row)throw new Error('Aucune ligne enregistrée');
    upsertRow(row);editing=null;openId=row.id;render();toast(t.saved,'ok');return true;
@@ -138,7 +148,7 @@
   const terms=words(value);if(!terms.length)return '';
   const matches=search(value,rows.filter(row=>row.published!==false)).slice(0,3);
   if(!matches.length)return '';
-  return `<div class="kb-suggest"><p><i class="ti ti-bulb"></i> ${escape(t.suggest)}</p>${matches.map(row=>{const open=String(suggestOpen)===String(row.id);return `<div class="kb-suggest-item"><button type="button" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggleSuggestion(this.dataset.kbId)"><i class="ti ti-book"></i> ${escape(row.title)}</button>${open?`<div class="kb-body">${bodyHtml(row.body)}<small>${escape(t.stillTicket)}</small></div>`:''}</div>`;}).join('')}</div>`;
+  return `<div class="kb-suggest"><p><i class="ti ti-bulb"></i> ${escape(t.suggest)}</p>${matches.map(row=>{const open=String(suggestOpen)===String(row.id);return `<div class="kb-suggest-item"><button type="button" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggleSuggestion(this.dataset.kbId)"><i class="ti ti-book"></i> ${escape(titleOf(row))}</button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}<small>${escape(t.stillTicket)}</small></div>`:''}</div>`;}).join('')}</div>`;
  }
  let lastSubject='';
  function suggest(value){
@@ -150,5 +160,16 @@
  function toggleSuggestion(id){suggestOpen=String(suggestOpen)===String(id)?null:id;suggest(lastSubject);}
  function resetSuggestions(){suggestOpen=null;lastSubject='';const host=document.getElementById('kbSuggest');if(host)host.innerHTML='';}
 
- window.KnowledgeBase={load,render,search:setQuery,find:search,filter,toggle,edit,cancel,save,togglePublished,remove,suggest,toggleSuggestion,resetSuggestions,title:()=>text().title,_setRows:value=>{rows=value;loaded=true;},_words:words};
+ // For the IT assistant: published articles related to a question, in the
+ // current language, and a way to open one in the knowledge base page.
+ function related(value,limit=3){
+  if(!words(value).length)return [];
+  return search(value,rows.filter(row=>row.published!==false)).slice(0,limit).map(row=>({id:row.id,title:titleOf(row),category:row.category}));
+ }
+ function open(id){
+  openId=id;query='';category='';editing=null;
+  if(typeof switchView==='function')switchView('knowledge',document.querySelector('[data-view="knowledge"]'));else render();
+ }
+
+ window.KnowledgeBase={load,render,search:setQuery,find:search,related,open,filter,toggle,edit,cancel,save,togglePublished,remove,suggest,toggleSuggestion,resetSuggestions,title:()=>text().title,relatedTitle:()=>text().related,_setRows:value=>{rows=value;loaded=true;},_words:words};
 })();
