@@ -39,6 +39,13 @@
  const english=()=>document.getElementById('languageSelector-app')?.value==='en';
  const titleOf=row=>english()&&row.title_en?row.title_en:row.title;
  const bodyOf=row=>english()&&row.body_en?row.body_en:row.body;
+ // Categories are stored in French (they are also the filter values) and
+ // shown in the page's language; an unknown category is shown as typed.
+ const CATEGORY_LABELS={
+  en:{'accès':'Access','caisse':'POS','logiciels':'Software','matériel':'Hardware','messagerie':'E-mail','réseau':'Network','sécurité':'Security','serrures':'Door locks','téléphonie':'Telephony','général':'General'},
+  ar:{'accès':'الوصول','caisse':'نقطة البيع','logiciels':'البرمجيات','matériel':'العتاد','messagerie':'البريد الإلكتروني','réseau':'الشبكة','sécurité':'الأمان','serrures':'الأقفال','téléphonie':'الهاتف','général':'عام'}
+ };
+ const categoryLabel=value=>{const lang=document.getElementById('languageSelector-app')?.value;return CATEGORY_LABELS[lang]?.[String(value||'').trim().toLowerCase()]||value||'';};
  // Accent- and case-insensitive word search in both languages; the title weighs more.
  const STOP=new Set(['les','des','une','est','pas','sur','dans','pour','avec','que','qui','mon','mes','ma','plus','the','and','not','my','is','ne','je','il','elle','de','du','la','le','un','et']);
  // "Wi-Fi", "wi fi" and "wifi" must meet: hyphenated words are joined.
@@ -63,7 +70,7 @@
  function articleHtml(row){
   const t=text(),open=String(openId)===String(row.id);
   const staffActions=isStaff()?`<div class="kb-actions"><button type="button" class="btn btn-outline btn-sm" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.edit(this.dataset.kbId)"><i class="ti ti-edit"></i>${escape(t.edit)}</button><button type="button" class="btn btn-outline btn-sm" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.togglePublished(this.dataset.kbId)"><i class="ti ti-${row.published===false?'eye':'eye-off'}"></i>${escape(row.published===false?t.publish:t.unpublish)}</button><button type="button" class="btn btn-outline btn-sm kb-danger" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.remove(this.dataset.kbId)"><i class="ti ti-trash"></i>${escape(t.remove)}</button></div>`:'';
-  return `<article class="kb-article${open?' open':''}"><button type="button" class="kb-head" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggle(this.dataset.kbId)"><span class="kb-cat">${escape(row.category||'')}</span><strong>${escape(titleOf(row))}</strong>${row.published===false?`<span class="kb-draft">${escape(t.draft)}</span>`:''}<i class="ti ti-chevron-down"></i></button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}${staffActions}</div>`:''}</article>`;
+  return `<article class="kb-article${open?' open':''}"><button type="button" class="kb-head" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggle(this.dataset.kbId)"><span class="kb-cat">${escape(categoryLabel(row.category))}</span><strong>${escape(titleOf(row))}</strong>${row.published===false?`<span class="kb-draft">${escape(t.draft)}</span>`:''}<i class="ti ti-chevron-down"></i></button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}${staffActions}</div>`:''}</article>`;
  }
  function formHtml(row){
   const t=text(),cats=categories();
@@ -86,7 +93,7 @@
  }
  function pageHtml(){
   const t=text(),cats=categories();
-  const chips=[['',t.all],...cats.map(c=>[c,c])].map(([value,label])=>`<button type="button" class="kb-chip${category===value?' active':''}" data-kb-category="${escape(value)}" onclick="KnowledgeBase.filter(this.dataset.kbCategory)">${escape(label)}</button>`).join('');
+  const chips=[['',t.all],...cats.map(c=>[c,categoryLabel(c)])].map(([value,label])=>`<button type="button" class="kb-chip${category===value?' active':''}" data-kb-category="${escape(value)}" onclick="KnowledgeBase.filter(this.dataset.kbCategory)">${escape(label)}</button>`).join('');
   return `<div class="kb-page"><div class="kb-top"><div><p class="kb-intro">${escape(t.intro)}</p></div>${isStaff()&&!editing?`<button type="button" class="btn btn-gold" onclick="KnowledgeBase.edit('new')"><i class="ti ti-plus"></i>${escape(t.add)}</button>`:''}</div>
    ${editing?formHtml(editing==='new'?null:rows.find(row=>String(row.id)===String(editing))):`<div class="kb-search"><i class="ti ti-search"></i><input id="kbSearch" type="search" class="field-ctrl" placeholder="${escape(t.search)}" value="${escape(query)}" oninput="KnowledgeBase.search(this.value)"></div><div class="kb-chips">${chips}</div><div id="kbList" class="kb-list">${listHtml()}</div>`}</div>`;
  }
@@ -164,7 +171,7 @@
  // current language, and a way to open one in the knowledge base page.
  function related(value,limit=3){
   if(!words(value).length)return [];
-  return search(value,rows.filter(row=>row.published!==false)).slice(0,limit).map(row=>({id:row.id,title:titleOf(row),category:row.category}));
+  return search(value,rows.filter(row=>row.published!==false)).slice(0,limit).map(row=>({id:row.id,title:titleOf(row),category:categoryLabel(row.category)}));
  }
  function open(id){
   openId=id;query='';category='';editing=null;

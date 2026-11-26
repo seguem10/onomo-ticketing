@@ -128,7 +128,10 @@ test('articles show their English version in English, are found in both language
   api.render();api.toggle('b1');
   let out=elements.mainContent.innerHTML;
   assert.ok(out.includes('Printer is stuck'));assert.ok(out.includes('Switch it off for 30 seconds.'));assert.ok(out.includes('Wi-Fi clients'),'no English version: French shown');
-  assert.deepEqual(JSON.parse(JSON.stringify(api.related('my printer does not print'))),[{id:'b1',title:'Printer is stuck',category:'Matériel'}]);
+  assert.ok(out.includes('>Hardware</button>')&&out.includes('>Network</button>'),'category chips in English');
+  assert.ok(out.includes('<span class="kb-cat">Hardware</span>'),'category badge in English');
+  assert.ok(out.includes('data-kb-category="Matériel"'),'the filter keeps the stored value');
+  assert.deepEqual(JSON.parse(JSON.stringify(api.related('my printer does not print'))),[{id:'b1',title:'Printer is stuck',category:'Hardware'}]);
   lang.value='fr';
   assert.deepEqual(JSON.parse(JSON.stringify(api.related('imprimante'))).map(r=>r.title),['Imprimante bloquée'],'drafts are never suggested');
   assert.equal(api.related('de la').length,0);
