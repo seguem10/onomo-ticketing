@@ -60,10 +60,10 @@ test('an article is created, then updated; incomplete forms are refused',async()
   assert.equal(await h.api.save(),false);assert.equal(h.calls.length,0);assert.equal(h.toasts[0][1],'err');
   h.elements.kbTitle.value='  VPN  ';h.elements.kbCategory.value='';h.elements.kbBody.value=' Lancez le client VPN. ';h.elements.kbPublished.checked=false;
   assert.equal(await h.api.save(),true);
-  assert.deepEqual(h.calls[0],['kb_articles','POST',{title:'VPN',category:'Général',body:'Lancez le client VPN.',published:false}]);
+  assert.deepEqual(h.calls[0],['kb_articles','POST',{title:'VPN',category:'Général',body:'Lancez le client VPN.',title_en:null,body_en:null,published:false}]);
   h.api.edit('n1');h.elements.kbTitle.value='VPN';h.elements.kbCategory.value='Réseau';h.elements.kbBody.value='Étape 1';h.elements.kbPublished.checked=true;
   assert.equal(await h.api.save(),true);
-  assert.deepEqual(h.calls[1],['kb_articles?id=eq.n1','PATCH',{title:'VPN',category:'Réseau',body:'Étape 1',published:true}]);
+  assert.deepEqual(h.calls[1],['kb_articles?id=eq.n1','PATCH',{title:'VPN',category:'Réseau',body:'Étape 1',title_en:null,body_en:null,published:true}]);
 });
 
 test('publishing toggles, and a refused delete is reported',async()=>{
@@ -113,4 +113,23 @@ test('the page, its menu entry and the ticket form are wired',()=>{
   assert.ok(html.includes('function onTitreInput(v){\n  globalThis.KnowledgeBase?.suggest(v);'));
   assert.ok(html.includes('globalThis.KnowledgeBase?.resetSuggestions();'));
   assert.ok(html.includes('<script src="assets/js/knowledge-base.js?v='));
+});
+
+test('articles show their English version in English, are found in both languages, and relate to assistant questions',()=>{
+  const lang={value:'en'};
+  const elements={mainContent:{innerHTML:''},kbSuggest:{innerHTML:''},'languageSelector-app':lang};
+  const ctx={console:{error(){},warn(){},log(){}},Promise,encodeURIComponent,JSON,String,Array,Set,
+    currentUser:{auth_user_id:'u1',role:'demandeur'},currentView:'knowledge',showToast(){},
+    document:{getElementById:id=>elements[id]||null},window:{sbOK:()=>true,sbFetch:async()=>[]}};
+  vm.createContext(ctx);vm.runInContext(source,ctx);
+  const api=ctx.window.KnowledgeBase;
+  api._setRows([{id:'b1',title:'Imprimante bloquée',body:'Éteignez-la 30 secondes.',title_en:'Printer is stuck',body_en:'Switch it off for 30 seconds.',category:'Matériel',published:true},
+    {id:'b2',title:'Wi-Fi clients',body:'Code du jour.',category:'Réseau',published:true},{id:'b3',title:'Brouillon imprimante',body:'x',category:'Matériel',published:false}]);
+  api.render();api.toggle('b1');
+  let out=elements.mainContent.innerHTML;
+  assert.ok(out.includes('Printer is stuck'));assert.ok(out.includes('Switch it off for 30 seconds.'));assert.ok(out.includes('Wi-Fi clients'),'no English version: French shown');
+  assert.deepEqual(JSON.parse(JSON.stringify(api.related('my printer does not print'))),[{id:'b1',title:'Printer is stuck',category:'Matériel'}]);
+  lang.value='fr';
+  assert.deepEqual(JSON.parse(JSON.stringify(api.related('imprimante'))).map(r=>r.title),['Imprimante bloquée'],'drafts are never suggested');
+  assert.equal(api.related('de la').length,0);
 });

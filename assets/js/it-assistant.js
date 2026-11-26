@@ -107,8 +107,14 @@
     if(!answer)return'';
     const isProcedureGuide=answer.mode==='procedure';
     const sourceHtml=sources.length?`<section class="assistant-block assistant-sources"><h4>${esc(isProcedureGuide?tr('assistant_guide_source','Guide de diagnostic utilisé'):tr('assistant_sources','Procédures internes utilisées'))}</h4>${sources.map(source=>`<div><strong>${esc(source.title)}</strong><small>${esc(source.source)} · ${esc(source.date)}</small></div>`).join('')}</section>`:`<div class="assistant-disclaimer">${esc(tr('assistant_no_validated_source','Aucune procédure interne validée n’a été utilisée. Cette réponse doit être vérifiée par un humain.'))}</div>`;
+    // Knowledge base articles: those returned by the server, otherwise the
+    // published articles matching the question (or the answer) in this page.
+    const kb=window.KnowledgeBase;
+    const local=kb?.related?.(answer.kb_query||`${answer.suggested_ticket?.title||''} ${answer.answer||''}`,3)||[];
+    const seen=new Set(),articles=[...(Array.isArray(answer.kb_articles)?answer.kb_articles:[]),...local].filter(a=>a&&!seen.has(String(a.id))&&seen.add(String(a.id))).slice(0,3);
+    const kbHtml=articles.length?`<section class="assistant-block assistant-kb"><h4><i class="ti ti-book"></i> ${esc(kb?.relatedTitle?.()||tr('assistant_kb_articles','Fiches de la base de connaissances'))}</h4>${articles.map(article=>`<button type="button" class="assistant-kb-link" data-kb-id="${esc(article.id)}" onclick="window.KnowledgeBase?.open(this.dataset.kbId)"><strong>${esc(article.title)}</strong>${article.category?`<small>${esc(article.category)}</small>`:''}<i class="ti ti-arrow-right"></i></button>`).join('')}</section>`:'';
     const similar=Array.isArray(answer.similar_tickets)&&answer.similar_tickets.length?`<section class="assistant-block"><h4>${esc(tr('assistant_similar_tickets','Incidents similaires trouvés'))}</h4>${answer.similar_tickets.map(ticket=>`<div class="assistant-similar-ticket"><strong>${esc(ticket.numero)} · ${esc(ticket.titre)}</strong><small>${esc(ticket.categorie||'')} · ${esc(ticket.statut||'')}</small></div>`).join('')}</section>`:'';
-    return `<article class="assistant-answer"><div class="assistant-answer-title"><i class="ti ${isProcedureGuide?'ti-notebook':'ti-sparkles'}"></i>${esc(isProcedureGuide?tr('assistant_guided_response','Diagnostic guidé — modèle IT'):tr('assistant_response','Proposition de l’assistant'))}</div><p>${esc(answer.answer)}</p>${list(tr('assistant_causes','Causes possibles'),answer.causes)}${list(tr('assistant_questions','Questions à préciser'),answer.questions,'assistant-questions')}${list(tr('assistant_checks','Vérifications recommandées'),answer.checks)}${list(tr('assistant_solution','Solution proposée'),answer.solution)}${list(tr('assistant_validation','Critères de validation'),answer.validation)}${list(tr('assistant_assumptions','Hypothèses'),answer.assumptions,'assistant-assumptions')}${similar}${sourceHtml}<div class="assistant-disclaimer"><i class="ti ti-user-check"></i>${esc(isProcedureGuide?tr('assistant_template_review','Modèle de diagnostic : à faire valider par l’équipe IT avant toute action en production.'):tr('assistant_human_review','Conseil généré par IA : validez la procédure avant toute action en production.'))}</div></article>`;
+    return `<article class="assistant-answer"><div class="assistant-answer-title"><i class="ti ${isProcedureGuide?'ti-notebook':'ti-sparkles'}"></i>${esc(isProcedureGuide?tr('assistant_guided_response','Diagnostic guidé — modèle IT'):tr('assistant_response','Proposition de l’assistant'))}</div><p>${esc(answer.answer)}</p>${list(tr('assistant_causes','Causes possibles'),answer.causes)}${list(tr('assistant_questions','Questions à préciser'),answer.questions,'assistant-questions')}${list(tr('assistant_checks','Vérifications recommandées'),answer.checks)}${list(tr('assistant_solution','Solution proposée'),answer.solution)}${list(tr('assistant_validation','Critères de validation'),answer.validation)}${list(tr('assistant_assumptions','Hypothèses'),answer.assumptions,'assistant-assumptions')}${kbHtml}${similar}${sourceHtml}<div class="assistant-disclaimer"><i class="ti ti-user-check"></i>${esc(isProcedureGuide?tr('assistant_template_review','Modèle de diagnostic : à faire valider par l’équipe IT avant toute action en production.'):tr('assistant_human_review','Conseil généré par IA : validez la procédure avant toute action en production.'))}</div></article>`;
   }
   async function loadConversations(){
     if(typeof window.sbFetch!=='function')return [];
@@ -132,6 +138,9 @@
     // Give the route immediate visible feedback.  This also prevents a failed
     // history request from leaving the previous dashboard in place.
     target.innerHTML=`<div class="assistant-page assistant-page-loading"><div class="assistant-loading"><i class="ti ti-loader-2 spin"></i>${esc(tr('assistant_loading','Chargement de l’Assistant IT…'))}</div></div>`;
+    // Knowledge base articles are shown next to each answer; load them without
+    // ever blocking the assistant on them.
+    try{await Promise.race([window.KnowledgeBase?.load?.(),new Promise(resolve=>setTimeout(resolve,2500))]);}catch(_){}
     // History is secondary. A slow or unavailable PostgREST request must never
     // leave the user on the dashboard after selecting Assistant IT.
     try{
@@ -155,7 +164,7 @@
     if(button){button.disabled=true;button.innerHTML=`<i class="ti ti-loader-2 spin"></i>${esc(tr('assistant_thinking','Analyse…'))}`;}
     try{
       const result=await request({action:'chat',conversation_id:state.conversationId,domain:state.domain,message});
-      const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[]};state.conversationId=result.conversation_id;await uploadPhotos(result.conversation_id);state.messages.push({author:'user',content:message},{author:'assistant',content:result.answer.answer,metadata});state.lastAnswer=metadata;
+      const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[],kb_articles:result.kb_articles||[],kb_query:message};state.conversationId=result.conversation_id;await uploadPhotos(result.conversation_id);state.messages.push({author:'user',content:message},{author:'assistant',content:result.answer.answer,metadata});state.lastAnswer=metadata;
       renderAssistantView();
     }catch(error){window.showToast?.(error.message||tr('assistant_unavailable','Le service Assistant IT est temporairement indisponible.'),'err');if(button){button.disabled=false;button.innerHTML=`<i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}`;}}
   }
@@ -176,7 +185,7 @@
     try{
       const result=await request({action:'ticket',ticket_id:ticket.id,domain:ticket.categorie==='Maintenance'?'maintenance':'general'});
       const existing=await loadTicketSolution(ticket.id);const draft=existing?.proposal||result.answer;
-      renderTicketAssistant({...result.answer,similar_tickets:result.similar_tickets||[]},result.sources||[],existing);
+      renderTicketAssistant({...result.answer,similar_tickets:result.similar_tickets||[],kb_articles:result.kb_articles||[],kb_query:`${ticket.titre||""} ${ticket.description||""}`},result.sources||[],existing);
       if(!existing)state.ticketProposal={ticketId:ticket.id,proposal:draft};
     }catch(error){const body=document.getElementById('ticketAssistantBody');if(body)body.innerHTML=`<div class="assistant-service-error"><i class="ti ti-alert-circle"></i><strong>${esc(tr('assistant_unavailable_title','Assistant IT indisponible'))}</strong><p>${esc(error.message||tr('assistant_unavailable','Le service Assistant IT est temporairement indisponible.'))}</p></div>`;}
   }

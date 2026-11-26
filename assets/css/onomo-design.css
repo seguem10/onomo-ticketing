@@ -6363,3 +6363,12 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 .mp-tpl small{font-size:11px;color:var(--tx3)}
 .mp-tpl em{font-style:normal;font-size:12px;color:var(--tx2)}
 .mp-tpl.done{opacity:.55}
+
+/* Assistant: related knowledge base articles */
+.assistant-kb h4{display:flex;align-items:center;gap:6px}
+.assistant-kb-link{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:8px 10px;margin-top:6px;cursor:pointer;color:var(--tx)}
+.assistant-kb-link strong{flex:1;font-size:13px}
+.assistant-kb-link small{font-size:11px;color:var(--tx3)}
+.assistant-kb-link .ti-arrow-right{color:#155eef}
+.assistant-kb-link:hover{border-color:#155eef}
+[dir="rtl"] .assistant-kb-link{text-align:right}
