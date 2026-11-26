@@ -384,25 +384,50 @@ Deno.serve(async req=>{
   }
   const kbForClient=kbArticles.map(article=>({id:article.id,title:language==='en'&&article.title_en?article.title_en:article.title,category:article.category}));
   const kbContext=kbArticles.map(article=>`[${article.title}]\n${clean(language==='en'&&article.body_en?article.body_en:article.body,1500)}`).join('\n\n');
+  // Without an AI answer (no provider, provider down or failing), a clearly
+  // matching published article gives a better answer than a generic guide:
+  // its numbered steps become the checks and the solution.
+  const topArticle=kbArticles[0]&&kbArticles[0].score>=3?kbArticles[0]:null;
+  const kbAnswer=(article:any)=>{
+    const en=language==='en',ar=language==='ar';
+    const title=en&&article.title_en?article.title_en:article.title;
+    const lines=clean(en&&article.body_en?article.body_en:article.body,4000).split(/\s*\n\s*|(?=\s\d+[.)]\s)/).map((line:string)=>line.trim()).filter(Boolean);
+    const isStep=(line:string)=>/^\d+[.)]\s/.test(line);
+    const steps=lines.filter(isStep).map((line:string)=>line.replace(/^\d+[.)]\s*/,''));
+    const notes=lines.filter((line:string)=>!isStep(line));
+    const category=/mat[ée]riel/i.test(article.category||'')?'Maintenance':'IT / Réseau';
+    return {
+      mode:'knowledge',
+      answer:ar?`حسب مقالة قاعدة المعرفة «${title}»: اتبع الخطوات أدناه بالترتيب.`:en?`From the knowledge base article “${title}”: follow the steps below in order.`:`D’après la fiche « ${title} » de la base de connaissances : suivez les étapes ci-dessous dans l’ordre.`,
+      causes:[],
+      questions:[],
+      checks:steps.length>1?steps.slice(0,-1):steps,
+      solution:[...(steps.length>1?[steps[steps.length-1]]:[]),...notes].slice(0,6),
+      validation:[ar?'تعمل الخدمة من جديد للمستخدم المعني.':en?'The service works again for the affected user.':'Le service refonctionne pour l’utilisateur concerné.'],
+      assumptions:[ar?'هذه الإجابة مأخوذة من مقالة منشورة من فريق IT، وليس من نموذج ذكاء اصطناعي.':en?'This answer comes from an article published by the IT team, not from an AI model.':'Cette réponse provient d’une fiche publiée par l’équipe IT, pas d’un modèle d’IA.'],
+      suggested_ticket:{title:clean(message,100),description:`${en?'Request':'Demande'} : ${message}\n\n${en?'Steps already followed (article':'Étapes déjà suivies (fiche'} « ${title} ») :\n${steps.map((step:string)=>`- ${step}`).join('\n')}`,category,priority:'Normale'}
+    };
+  };
+  const kbSources=topArticle?[{id:topArticle.id,title:language==='en'&&topArticle.title_en?topArticle.title_en:topArticle.title,source:language==='en'?'ONOMO knowledge base':language==='ar'?'قاعدة معرفة ONOMO':'Base de connaissances ONOMO',date:new Date().toISOString().slice(0,10),url:null,status:'kb'}]:null;
   // When no provider is configured, retain useful, repeatable and safe local
   // guidance. With Gemini/OpenAI/Anthropic configured, continue below so the
   // provider can produce a response specific to this conversation or ticket.
   const hasProvider=Boolean(GEMINI_KEY||OPENAI_KEY||ANTHROPIC_KEY);
   if(action==='chat'&&!hasProvider){
-    const answer=procedureGuide(domain,message,language);
-    const sources=[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
+    const answer=topArticle?kbAnswer(topArticle):procedureGuide(domain,message,language);
+    const sources=kbSources??[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
     await service.from('it_ai_messages').insert([
       {conversation_id:conversation.id,author:'user',content:message,metadata:{}},
       {conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,kb_articles:kbForClient}}
     ]);
     await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
-    return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,provider:'procedure-guide'});
+    return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient,provider:topArticle?'knowledge-base':'procedure-guide'});
   }
   if(action==='ticket'&&!hasProvider){
     const ticketDomain=ticket.categorie==='Maintenance'?'maintenance':domain;
-    const answer=procedureGuide(ticketDomain,`${ticket.titre}\n${ticket.description??''}`,language);
-    const sources=[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
-    return send(req,{ticket_id:ticket.id,answer,sources,similar_tickets:similarTickets,provider:'procedure-guide'});
+    const answer=topArticle?kbAnswer(topArticle):procedureGuide(ticketDomain,`${ticket.titre}\n${ticket.description??''}`,language);
+    const sources=kbSources??[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}];
+    return send(req,{ticket_id:ticket.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient,provider:topArticle?'knowledge-base':'procedure-guide'});
   }
   const context=action==='ticket'?`Ticket ${ticket.numero}: ${ticket.titre}\nDescription: ${clean(ticket.description,5000)}\nCatégorie: ${ticket.categorie}; priorité: ${ticket.priorite}; statut: ${ticket.statut}; hôtel: ${ticket.hotel}`:`Domaine: ${domain}\nConversation précédente:\n${history.map(item=>`${item.author}: ${item.content}`).join('\n')}\nNouvelle demande: ${message}`;
   const prompt=`Tu es l’assistant IT interne d’un groupe hôtelier. Réponds en ${language==='ar'?'arabe':language==='en'?'anglais':'français'}.
@@ -433,13 +458,13 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     // JSON produced by an external model is untrusted input. If it cannot be
     // parsed into the expected answer contract, return the safe structured
     // fallback rather than displaying provider JSON to the end user.
-    const answer=providerUnavailable?fallbackAnswer(domain,message,language):parseAnswer(String(providerText));
-    const sources=(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
+    const answer=providerUnavailable?(topArticle?kbAnswer(topArticle):fallbackAnswer(domain,message,language)):parseAnswer(String(providerText));
+    const sources=providerUnavailable&&kbSources?kbSources:(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
       await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,kb_articles:kbForClient}}]);
       await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
       return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});
     }
     return send(req,{ticket_id:ticket.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});
-  }catch(error){console.error('ai-it-assistant',error);const answer=fallbackAnswer(domain,message,language);const sources=[];if(conversation){await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,fallback:true}}]);return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});}return send(req,{ticket_id:ticket?.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});}
+  }catch(error){console.error('ai-it-assistant',error);const answer=topArticle?kbAnswer(topArticle):fallbackAnswer(domain,message,language);const sources=topArticle&&kbSources?kbSources:[];if(conversation){await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,fallback:true}}]);return send(req,{conversation_id:conversation.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});}return send(req,{ticket_id:ticket?.id,answer,sources,similar_tickets:similarTickets,kb_articles:kbForClient});}
 });
