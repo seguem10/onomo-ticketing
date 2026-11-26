@@ -6408,3 +6408,6 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 .assistant-dictate.active{background:#fee4e2;color:#b42318}
 .assistant-dictate.active i{animation:assistantDot 1.2s infinite}
 @media (prefers-reduced-motion:reduce){.assistant-dictate.active i{animation:none}}
+
+/* Problem search: matched words */
+.kb-article mark,.kb-suggest mark{background:#fef0c7;color:inherit;border-radius:3px;padding:0 2px}

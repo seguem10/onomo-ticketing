@@ -55,7 +55,13 @@
   const title=normalize(`${row.title} ${row.title_en||''}`),body=normalize(`${row.category} ${row.body} ${row.body_en||''}`);
   return terms.reduce((sum,term)=>sum+(title.includes(term)?3:0)+(body.includes(term)?1:0),0);
  }
+ // The shared problem search engine (synonyms, word roots, typos, coverage)
+ // when it is loaded; the simple word search otherwise.
+ const engine=()=>window.ProblemSearch||globalThis.ProblemSearch;
+ const fieldsOf=row=>({title:`${row.title} ${row.title_en||''}`,body:`${row.category||''} ${row.body} ${row.body_en||''}`});
+ const mark=(text,value)=>engine()&&String(value||'').trim()?engine().highlight(escape(text),value):escape(text);
  function search(value,list=rows){
+  if(engine())return engine().rank(value,list,fieldsOf);
   const terms=words(value);
   if(!terms.length)return list.slice();
   return list.map(row=>({row,s:score(row,terms)})).filter(item=>item.s>0).sort((a,b)=>b.s-a.s||String(a.row.title).localeCompare(String(b.row.title))).map(item=>item.row);
@@ -70,7 +76,7 @@
  function articleHtml(row){
   const t=text(),open=String(openId)===String(row.id);
   const staffActions=isStaff()?`<div class="kb-actions"><button type="button" class="btn btn-outline btn-sm" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.edit(this.dataset.kbId)"><i class="ti ti-edit"></i>${escape(t.edit)}</button><button type="button" class="btn btn-outline btn-sm" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.togglePublished(this.dataset.kbId)"><i class="ti ti-${row.published===false?'eye':'eye-off'}"></i>${escape(row.published===false?t.publish:t.unpublish)}</button><button type="button" class="btn btn-outline btn-sm kb-danger" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.remove(this.dataset.kbId)"><i class="ti ti-trash"></i>${escape(t.remove)}</button></div>`:'';
-  return `<article class="kb-article${open?' open':''}"><button type="button" class="kb-head" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggle(this.dataset.kbId)"><span class="kb-cat">${escape(categoryLabel(row.category))}</span><strong>${escape(titleOf(row))}</strong>${row.published===false?`<span class="kb-draft">${escape(t.draft)}</span>`:''}<i class="ti ti-chevron-down"></i></button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}${staffActions}</div>`:''}</article>`;
+  return `<article class="kb-article${open?' open':''}"><button type="button" class="kb-head" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggle(this.dataset.kbId)"><span class="kb-cat">${escape(categoryLabel(row.category))}</span><strong>${mark(titleOf(row),query)}</strong>${row.published===false?`<span class="kb-draft">${escape(t.draft)}</span>`:''}<i class="ti ti-chevron-down"></i></button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}${staffActions}</div>`:''}</article>`;
  }
  function formHtml(row){
   const t=text(),cats=categories();
@@ -155,7 +161,7 @@
   const terms=words(value);if(!terms.length)return '';
   const matches=search(value,rows.filter(row=>row.published!==false)).slice(0,3);
   if(!matches.length)return '';
-  return `<div class="kb-suggest"><p><i class="ti ti-bulb"></i> ${escape(t.suggest)}</p>${matches.map(row=>{const open=String(suggestOpen)===String(row.id);return `<div class="kb-suggest-item"><button type="button" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggleSuggestion(this.dataset.kbId)"><i class="ti ti-book"></i> ${escape(titleOf(row))}</button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}<small>${escape(t.stillTicket)}</small></div>`:''}</div>`;}).join('')}</div>`;
+  return `<div class="kb-suggest"><p><i class="ti ti-bulb"></i> ${escape(t.suggest)}</p>${matches.map(row=>{const open=String(suggestOpen)===String(row.id);return `<div class="kb-suggest-item"><button type="button" aria-expanded="${open}" data-kb-id="${escape(row.id)}" onclick="KnowledgeBase.toggleSuggestion(this.dataset.kbId)"><i class="ti ti-book"></i> ${mark(titleOf(row),lastSubject)}</button>${open?`<div class="kb-body">${bodyHtml(bodyOf(row))}<small>${escape(t.stillTicket)}</small></div>`:''}</div>`;}).join('')}</div>`;
  }
  let lastSubject='';
  function suggest(value){

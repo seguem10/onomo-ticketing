@@ -375,11 +375,23 @@ Deno.serve(async req=>{
   // caller's own rights (drafts stay hidden). They inform the answer and are
   // listed under it.
   let kbArticles:any[]=[];
-  const kbTerms=[...new Set(clean(ticket?`${ticket.titre} ${ticket.description??''}`:message,400).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9]+/).filter(word=>word.length>=4))].slice(0,5);
+  // Words of the request reduced to a simple root ("imprimer" → "imprim"),
+  // plus the usual synonyms of hotel staff, so the database search finds
+  // "Imprimante…" for "imprimer" and "Outlook…" for "mail".
+  const KB_SYNONYMS:Record<string,string[]>={mail:['outlook','messag'],email:['outlook','messag'],courriel:['outlook','messag'],mdp:['passe','password'],password:['passe'],
+    rame:['lent','slow'],lent:['slow'],slow:['lent'],plante:['fig','bloqu'],bloque:['fig','plante'],fige:['bloqu','plante'],freeze:['fig','bloqu'],
+    ordi:['ordinateur','poste'],pc:['ordinateur','poste'],badge:['carte','vingcard'],cle:['carte','vingcard'],internet:['wifi','reseau'],arnaque:['hameconnage','suspect'],
+    phishing:['hameconnage','suspect'],printer:['imprim'],imprimer:['imprim'],scan:['numeris','scanner'],tv:['tele','chaine'],tele:['tv','chaine'],guest:['client'],client:['guest']};
+  const KB_SUFFIXES=['ements','ement','ations','ation','antes','ante','ants','ant','ances','ance','ings','ing','ions','ion','eurs','eur','ers','er','ez','es','ed','ee','e','s'];
+  const kbRoot=(word:string)=>{for(const suffix of KB_SUFFIXES)if(word.length-suffix.length>=4&&word.endsWith(suffix))return word.slice(0,-suffix.length);return word;};
+  const kbWords=clean(ticket?`${ticket.titre} ${ticket.description??''}`:message,400).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/([a-z0-9])-(?=[a-z0-9])/g,'$1').split(/[^a-z0-9]+/).filter(word=>word.length>=2);
+  const KB_STOP=new Set(['plus','marche','fonctionne','pas','mon','mes','les','des','une','dans','pour','avec','bonjour','merci','probleme','the','and','not','does','doesnt','work','working','please']);
+  const kbTerms=[...new Set(kbWords.filter(word=>!KB_STOP.has(word)).flatMap(word=>{const root=kbRoot(word);return [...(word.length>=4?[root]:[]),...(KB_SYNONYMS[word]??KB_SYNONYMS[root]??[])];}))].filter(word=>word.length>=3).slice(0,8);
   if(kbTerms.length){
     const filter=kbTerms.map(word=>`title.ilike.*${word}*,body.ilike.*${word}*,title_en.ilike.*${word}*,body_en.ilike.*${word}*`).join(',');
     const {data}=await userClient.from('kb_articles').select('id,title,title_en,body,body_en,category').eq('published',true).or(filter).limit(12);
-    const score=(article:any)=>kbTerms.reduce((sum,word)=>sum+(`${article.title} ${article.title_en??''}`.toLowerCase().includes(word)?3:0)+(`${article.body} ${article.body_en??''}`.toLowerCase().includes(word)?1:0),0);
+    const plain=(text:string)=>text.toLowerCase().normalize('NFD').replace(/\p{M}/gu,'');
+    const score=(article:any)=>kbTerms.reduce((sum,word)=>sum+(plain(`${article.title} ${article.title_en??''}`).includes(word)?3:0)+(plain(`${article.body} ${article.body_en??''}`).includes(word)?1:0),0);
     kbArticles=(data??[]).map(article=>({...article,score:score(article)})).sort((a,b)=>b.score-a.score).slice(0,3);
   }
   const kbForClient=kbArticles.map(article=>({id:article.id,title:language==='en'&&article.title_en?article.title_en:article.title,category:article.category}));
