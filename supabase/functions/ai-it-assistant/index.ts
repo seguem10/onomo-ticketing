@@ -392,7 +392,10 @@ Deno.serve(async req=>{
     const {data}=await userClient.from('kb_articles').select('id,title,title_en,body,body_en,category').eq('published',true).or(filter).limit(12);
     const plain=(text:string)=>text.toLowerCase().normalize('NFD').replace(/\p{M}/gu,'');
     const score=(article:any)=>kbTerms.reduce((sum,word)=>sum+(plain(`${article.title} ${article.title_en??''}`).includes(word)?3:0)+(plain(`${article.body} ${article.body_en??''}`).includes(word)?1:0),0);
-    kbArticles=(data??[]).map(article=>({...article,score:score(article)})).sort((a,b)=>b.score-a.score).slice(0,3);
+    // The domain chosen in the assistant favours its own categories.
+    const DOMAIN_CATEGORIES:Record<string,string[]>={microsoft365:['messagerie','accès','logiciels','sécurité'],sage1000:['sage 1000'],citrix:['citrix'],opera:['opera pms','serrures'],pos:['caisse'],network:['réseau'],maintenance:['matériel','serrures','téléphonie']};
+    const domainCategories=new Set(DOMAIN_CATEGORIES[domain]??[]);
+    kbArticles=(data??[]).map(article=>({...article,score:score(article)+(domainCategories.has(String(article.category??'').toLowerCase())?3:0)})).sort((a,b)=>b.score-a.score).slice(0,3);
   }
   const kbForClient=kbArticles.map(article=>({id:article.id,title:language==='en'&&article.title_en?article.title_en:article.title,category:article.category}));
   const kbContext=kbArticles.map(article=>`[${article.title}]\n${clean(language==='en'&&article.body_en?article.body_en:article.body,1500)}`).join('\n\n');

@@ -15,11 +15,11 @@
  const STOP=new Set(('les des une est pas sur dans pour avec que qui mon mes plus par aux ces cet cette son ses leur nous vous ils elles mais tout tous tres '
   +'bonjour merci svp stp aide besoin probleme problemes souci soucis marche fonctionne fonctionner veut peut faire avoir etre suis ont sont '
   +'the and not for with that this from have has are was were you your our can cant cannot does doesnt dont please help issue problem work working '
-  +'mon ma je il elle de du la le un et ou en au ne').split(/\s+/));
+  +'mon ma je il elle de du la le un et ou en au ne se sa ce on').split(/\s+/));
  // Synonym groups: any word of a group finds the others.
  const GROUPS=[
   'mail email courriel messagerie outlook boite inbox',
-  'mdp motdepasse password passe identifiant login connexion signin',
+  'mdp motdepasse password passe identifiant login connexion connecter signin',
   'imprimante printer impression imprimer print copieur photocopieur',
   'scanner scan numeriser numerisation',
   'wifi internet reseau network connexion sansfil wireless',
@@ -39,11 +39,17 @@
   'opera pms fidelio reservation folio checkin checkout',
   'virus usb cle malware',
   'mise update maj windows redemarrage restart',
-  'client guest hote voyageur'
+  'client guest hote voyageur',
+  'sage comptabilite compta ecriture comptable',
+  'citrix workspace session',
+  'tpe terminal paiement cb',
+  'cloture nightaudit audit',
+  'onduleur ups bip batterie',
+  'partager partage share lien'
  ].map(g=>g.split(/\s+/));
  const normalize=value=>String(value??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
   .replace(/([a-z0-9])-(?=[a-z0-9])/g,'$1').replace(/\bwi fi\b/g,'wifi').replace(/\bmot de passe\b/g,'motdepasse').replace(/\bsans fil\b/g,'sansfil')
-  .replace(/\b(e mail|e-mail)\b/g,'email').replace(/\bcheck (in|out)\b/g,'check$1');
+  .replace(/\b(e mail|e-mail)\b/g,'email').replace(/\bcheck (in|out)\b/g,'check$1').replace(/\bnight audit\b/g,'nightaudit');
  // Light stemming for French and English.
  const SUFFIXES=['issements','issement','ements','ement','ations','ation','ateurs','ateur','atrice','antes','ante','ants','ant','ances','ance','ences','ence','ings','ing','ions','ion','euses','euse','eurs','eur','ables','able','ites','ite','ives','ive','ies','ers','er','ez','es','ed','ee','e','s'];
  function stem(word){
@@ -103,10 +109,13 @@
    const f=fields(item)||{};
    const title=index(f.title),body=index(f.body);
    let score=0,matched=0;
+   // A short title that matches is more general than a long, specific one
+   // ("L'imprimante n'imprime plus" before "Sage 1000 : imprimer un état").
+   const titleWords=Math.max(1,title.words.size);
    for(const term of terms){
     const t=termScore(term,title),b=termScore(term,body);
     if(t||b)matched++;
-    score+=t*3+b;
+    score+=t*3+b+(t?6/titleWords:0);
    }
    if(!matched)continue;
    // Coverage: answering most of the question matters more than repeating one word.

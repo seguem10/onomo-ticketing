@@ -31,7 +31,7 @@ test('the knowledge base migrations add English versions and twenty new draft ar
   assert.ok(content.includes("select v.title, v.title_en, v.category, false, null, null, v.body, v.body_en"),'new articles are drafts');
   assert.equal((content.match(/and title_en is null;/g)||[]).length,5,'the five starter articles get an English version');
   assert.ok(!/mot de passe\s*[:=]|password\s*[:=]/i.test(content),'no credential in the articles');
-  assert.ok(html.includes('assets/js/it-assistant.js?v=20261127-short-1'));
+  assert.ok(html.includes('assets/js/it-assistant.js?v=20261127-domain-1'));
 });
 
 test('a cut or unreadable AI answer is replaced by an article or the domain guide, never by the empty generic text',()=>{
