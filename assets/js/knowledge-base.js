@@ -42,7 +42,7 @@
  // Categories are stored in French (they are also the filter values) and
  // shown in the page's language; an unknown category is shown as typed.
  const CATEGORY_LABELS={
-  en:{'accès':'Access','caisse':'POS','logiciels':'Software','matériel':'Hardware','messagerie':'E-mail','réseau':'Network','sécurité':'Security','serrures':'Door locks','téléphonie':'Telephony','général':'General','guide':'Guide'},
+  en:{'accès':'Access','caisse':'POS','logiciels':'Software','matériel':'Hardware','messagerie':'E-mail','réseau':'Network','sécurité':'Security','serrures':'Door locks','téléphonie':'Telephony','général':'General','guide':'Guide','opera pms':'OPERA PMS','sage 1000':'Sage 1000','citrix':'Citrix'},
   ar:{'accès':'الوصول','caisse':'نقطة البيع','logiciels':'البرمجيات','matériel':'العتاد','messagerie':'البريد الإلكتروني','réseau':'الشبكة','sécurité':'الأمان','serrures':'الأقفال','téléphonie':'الهاتف','général':'عام','guide':'دليل'}
  };
  const categoryLabel=value=>{const lang=document.getElementById('languageSelector-app')?.value;return CATEGORY_LABELS[lang]?.[String(value||'').trim().toLowerCase()]||value||'';};
@@ -175,9 +175,13 @@
 
  // For the IT assistant: published articles related to a question, in the
  // current language, and a way to open one in the knowledge base page.
- function related(value,limit=3){
+ // categories: those of the IT assistant's domain; their articles come first.
+ function related(value,limit=3,categories){
   if(!words(value).length)return [];
-  return search(value,rows.filter(row=>row.published!==false)).slice(0,limit).map(row=>({id:row.id,title:titleOf(row),category:categoryLabel(row.category)}));
+  const found=search(value,rows.filter(row=>row.published!==false));
+  const wanted=new Set((categories||[]).map(c=>String(c).toLowerCase()));
+  const ordered=wanted.size?[...found.filter(row=>wanted.has(String(row.category||'').toLowerCase())),...found.filter(row=>!wanted.has(String(row.category||'').toLowerCase()))]:found;
+  return ordered.slice(0,limit).map(row=>({id:row.id,title:titleOf(row),category:categoryLabel(row.category)}));
  }
  function open(id){
   openId=id;query='';category='';editing=null;

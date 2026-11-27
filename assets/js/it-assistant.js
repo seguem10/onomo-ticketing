@@ -23,6 +23,47 @@
     {domain:'microsoft365',icon:'ti-device-mobile',fr:'J’ai changé de téléphone et la double authentification ne marche plus',en:'I changed phone and two-step verification no longer works',ar:'غيّرت هاتفي ولم تعد المصادقة الثنائية تعمل'},
     {domain:'general',icon:'ti-alert-triangle',fr:'J’ai reçu un e-mail suspect',en:'I received a suspicious e-mail',ar:'تلقيت رسالة بريد مشبوهة'}
   ];
+  // Knowledge base categories of each domain (their articles come first).
+  const DOMAIN_CATEGORIES={microsoft365:['Messagerie','Accès','Logiciels','Sécurité'],sage1000:['Sage 1000'],citrix:['Citrix'],opera:['OPERA PMS','Serrures'],pos:['Caisse'],network:['Réseau'],maintenance:['Matériel','Serrures','Téléphonie'],general:[]};
+  // Frequent questions of each domain, shown when that domain is chosen.
+  const DOMAIN_SUGGESTIONS={
+    microsoft365:[
+      {icon:'ti-mail',fr:'Outlook ne s’ouvre pas ou n’envoie plus mes e-mails',en:'Outlook does not open or no longer sends my e-mails',ar:'Outlook لا يفتح أو لا يرسل رسائلي'},
+      {icon:'ti-inbox',fr:'Je ne vois pas la boîte partagée de la réception',en:'I cannot see the reception shared mailbox',ar:'لا أرى صندوق البريد المشترك للاستقبال'},
+      {icon:'ti-video',fr:'Teams : pas de son ou pas de caméra en réunion',en:'Teams: no sound or no camera in a meeting',ar:'Teams: لا صوت أو لا كاميرا في الاجتماع'},
+      {icon:'ti-device-mobile',fr:'J’ai changé de téléphone et la double authentification ne marche plus',en:'I changed phone and two-step verification no longer works',ar:'غيّرت هاتفي ولم تعد المصادقة الثنائية تعمل'}],
+    sage1000:[
+      {icon:'ti-lock',fr:'Sage 1000 refuse la connexion',en:'Sage 1000 refuses sign-in',ar:'Sage 1000 يرفض تسجيل الدخول'},
+      {icon:'ti-hourglass',fr:'Sage 1000 est bloqué pendant un traitement',en:'Sage 1000 is stuck during a process',ar:'Sage 1000 متوقف أثناء معالجة'},
+      {icon:'ti-printer',fr:'Je n’arrive pas à imprimer un état Sage',en:'I cannot print a Sage report',ar:'لا أستطيع طباعة تقرير Sage'},
+      {icon:'ti-calendar-check',fr:'Préparer la clôture de fin de mois dans Sage',en:'Prepare the month-end closing in Sage',ar:'تحضير إقفال نهاية الشهر في Sage'}],
+    citrix:[
+      {icon:'ti-apps',fr:'Citrix ne s’ouvre pas ou mon application n’apparaît pas',en:'Citrix does not open or my application is missing',ar:'Citrix لا يفتح أو تطبيقي غير ظاهر'},
+      {icon:'ti-plug-connected-x',fr:'Ma session Citrix se déconnecte ou se fige',en:'My Citrix session disconnects or freezes',ar:'جلسة Citrix تنقطع أو تتجمد'},
+      {icon:'ti-printer',fr:'Je n’arrive pas à imprimer depuis Citrix',en:'I cannot print from Citrix',ar:'لا أستطيع الطباعة من Citrix'}],
+    opera:[
+      {icon:'ti-login',fr:'Je n’arrive pas à me connecter à Opera',en:'I cannot sign in to Opera',ar:'لا أستطيع تسجيل الدخول إلى Opera'},
+      {icon:'ti-hourglass',fr:'Opera est lent ou figé',en:'Opera is slow or frozen',ar:'Opera بطيء أو متجمد'},
+      {icon:'ti-moon',fr:'La clôture de nuit (Night Audit) est bloquée',en:'The Night Audit is stuck',ar:'الإقفال الليلي (Night Audit) متوقف'},
+      {icon:'ti-key',fr:'La carte de chambre ne s’encode pas depuis Opera',en:'The key card does not encode from Opera',ar:'بطاقة الغرفة لا تُبرمج من Opera'}],
+    pos:[
+      {icon:'ti-cash-register',fr:'La caisse Micros est figée ou très lente',en:'The Micros till is frozen or very slow',ar:'صندوق Micros متوقف أو بطيء جدًا'},
+      {icon:'ti-credit-card',fr:'Le paiement par carte (TPE) est refusé ou hors ligne',en:'Card payment is declined or the terminal is offline',ar:'الدفع بالبطاقة مرفوض أو الجهاز غير متصل'},
+      {icon:'ti-receipt',fr:'L’imprimante de tickets du bar n’imprime pas',en:'The bar receipt printer does not print',ar:'طابعة إيصالات البار لا تطبع'},
+      {icon:'ti-tag',fr:'Un article ou un prix manque sur la caisse',en:'An item or price is missing on the till',ar:'صنف أو سعر غير موجود في الصندوق'}],
+    network:[
+      {icon:'ti-world',fr:'Internet est lent ou coupé dans tout l’hôtel',en:'Internet is slow or down across the hotel',ar:'الإنترنت بطيء أو مقطوع في كل الفندق'},
+      {icon:'ti-wifi',fr:'Un client n’arrive pas à se connecter au Wi-Fi',en:'A guest cannot connect to the Wi-Fi',ar:'نزيل لا يستطيع الاتصال بشبكة Wi-Fi'},
+      {icon:'ti-network',fr:'Une prise réseau ne fonctionne pas',en:'A network socket does not work',ar:'مقبس الشبكة لا يعمل'},
+      {icon:'ti-lock-access',fr:'Le VPN ne se connecte pas',en:'The VPN does not connect',ar:'VPN لا يتصل'}],
+    maintenance:[
+      {icon:'ti-printer',fr:'L’imprimante n’imprime plus',en:'The printer no longer prints',ar:'الطابعة لا تطبع'},
+      {icon:'ti-battery-charging',fr:'Un onduleur émet des bips',en:'A UPS is beeping',ar:'مزود الطاقة يصدر صفيرًا'},
+      {icon:'ti-device-tv',fr:'La TV d’une chambre n’a plus de chaînes',en:'A room TV has no channels',ar:'تلفاز الغرفة بلا قنوات'},
+      {icon:'ti-phone-off',fr:'Un téléphone fixe n’a plus de tonalité',en:'A desk phone has no dial tone',ar:'هاتف المكتب بلا نغمة'}]
+  };
+  const currentSuggestions=()=>state.domain!=='general'&&DOMAIN_SUGGESTIONS[state.domain]?DOMAIN_SUGGESTIONS[state.domain].map(item=>({...item,domain:state.domain})):SUGGESTIONS;
+  const suggestionsHtml=()=>`<div class="assistant-suggestions" aria-label="${esc(tr('assistant_quick_start','Questions fréquentes'))}"><span>${esc(tr('assistant_quick_start','Questions fréquentes'))}${state.domain!=='general'?` · ${esc(domainLabels[state.domain])}`:''}</span>${currentSuggestions().map((item,index)=>`<button type="button" class="assistant-suggestion" onclick="ITAssistant.askSuggestion(${index})"><i class="ti ${item.icon}"></i>${esc(item[language()]||item.fr)}</button>`).join('')}</div>`;
   // When the user leaves "IT support", the domain is guessed from the question.
   const DOMAIN_HINTS=[
     ['pos',/\b(micros|simphony|caisse|till|pos|tpe|ticket de caisse|receipt)\b/i],
@@ -155,7 +196,7 @@
     // Knowledge base articles: those returned by the server, otherwise the
     // published articles matching the question (or the answer) in this page.
     const kb=window.KnowledgeBase;
-    const local=kb?.related?.(answer.kb_query||`${answer.suggested_ticket?.title||''} ${answer.answer||''}`,3)||[];
+    const local=kb?.related?.(answer.kb_query||`${answer.suggested_ticket?.title||''} ${answer.answer||''}`,3,DOMAIN_CATEGORIES[answer.domain||state.domain]||[])||[];
     const seen=new Set(),articles=[...local,...(Array.isArray(answer.kb_articles)?answer.kb_articles:[])].filter(a=>a&&!seen.has(String(a.id))&&seen.add(String(a.id))).slice(0,3);
     const kbHtml=articles.length?`<section class="assistant-block assistant-kb"><h4><i class="ti ti-book"></i> ${esc(kb?.relatedTitle?.()||tr('assistant_kb_articles','Fiches de la base de connaissances'))}</h4>${articles.map(article=>`<button type="button" class="assistant-kb-link" data-kb-id="${esc(article.id)}" onclick="window.KnowledgeBase?.open(this.dataset.kbId)"><strong>${esc(article.title)}</strong>${article.category?`<small>${esc(article.category)}</small>`:''}<i class="ti ti-arrow-right"></i></button>`).join('')}</section>`:'';
     const similar=Array.isArray(answer.similar_tickets)&&answer.similar_tickets.length?`<section class="assistant-block"><h4>${esc(tr('assistant_similar_tickets','Incidents similaires trouvés'))}</h4>${answer.similar_tickets.map(ticket=>`<div class="assistant-similar-ticket"><strong>${esc(ticket.numero)} · ${esc(ticket.titre)}</strong><small>${esc(ticket.categorie||'')} · ${esc(ticket.statut||'')}</small></div>`).join('')}</section>`:'';
@@ -203,7 +244,7 @@
       state.conversations=[];
     }
     const domainOptions=domainKeys.map(key=>`<option value="${key}" ${state.domain===key?'selected':''}>${esc(domainLabels[key])}</option>`).join('');
-    const messages=state.messages.length?state.messages.map((message,index,all)=>conversationMessage(message,index,all)).join(''):`<div class="assistant-empty"><i class="ti ti-message-chatbot"></i><h3>${esc(tr('assistant_start_title','Comment puis-je vous aider ?'))}</h3><p>${esc(tr('assistant_start_description','Choisissez un domaine, décrivez le problème et l’assistant vous guidera sans créer de ticket.'))}</p><div class="assistant-suggestions" aria-label="${esc(tr('assistant_quick_start','Questions fréquentes'))}"><span>${esc(tr('assistant_quick_start','Questions fréquentes'))}</span>${SUGGESTIONS.map((item,index)=>`<button type="button" class="assistant-suggestion" onclick="ITAssistant.askSuggestion(${index})"><i class="ti ${item.icon}"></i>${esc(item[language()]||item.fr)}</button>`).join('')}</div></div>`;
+    const messages=state.messages.length?state.messages.map((message,index,all)=>conversationMessage(message,index,all)).join(''):`<div class="assistant-empty"><i class="ti ti-message-chatbot"></i><h3>${esc(tr('assistant_start_title','Comment puis-je vous aider ?'))}</h3><p>${esc(tr('assistant_start_description','Choisissez un domaine, décrivez le problème et l’assistant vous guidera sans créer de ticket.'))}</p>${suggestionsHtml()}</div>`;
     try{target.innerHTML=`<div class="assistant-page"><header class="assistant-header"><div>${statsHtml()}<span class="assistant-kicker"><i class="ti ti-sparkles"></i>${esc(tr('assistant_name','Assistant IT'))}</span><h1>${esc(tr('assistant_title','Diagnostic IT guidé'))}</h1><p>${esc(tr('assistant_subtitle','Conseils pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance.'))}</p></div><button class="btn btn-outline" onclick="ITAssistant.startConversation()"><i class="ti ti-plus"></i>${esc(tr('assistant_new_conversation','Nouvelle conversation'))}</button></header><div class="assistant-layout"><aside class="assistant-history"><div class="assistant-history-title">${esc(tr('assistant_conversations','Mes conversations'))}</div>${state.conversations.length>3?`<input type="search" class="assistant-history-search" placeholder="${esc(tr('assistant_history_search','Rechercher une conversation…'))}" value="${esc(state.historyQuery||'')}" oninput="ITAssistant.filterHistory(this.value)">`:''}${state.conversations.length?state.conversations.map(item=>`<button class="assistant-history-item ${item.id===state.conversationId?'active':''}" data-history="${esc(String(item.title||'').toLowerCase())}" onclick="ITAssistant.openConversation(this.dataset.conversationId)" data-conversation-id="${esc(item.id)}"${historyHidden(item)?' hidden':''}><i class="ti ti-message"></i><span>${esc(item.title||domainLabels[item.domain]||tr('assistant_name','Assistant IT'))}<small>${esc(shortDate(item.updated_at))}</small></span></button>`).join(''):`<p>${esc(tr('assistant_no_conversations','Aucune conversation enregistrée.'))}</p>`}</aside><main class="assistant-chat"><div class="assistant-safety"><i class="ti ti-shield-lock"></i>${esc(tr('assistant_safety','Ne saisissez jamais de mot de passe, clé API, jeton ou donnée client.'))}</div><div id="assistantMessages" class="assistant-messages">${messages}</div>${state.lastAnswer?.suggested_ticket?.title&&state.feedback!=='resolved'?`<div class="assistant-ticket-cta"><div><strong>${esc(tr('assistant_ticket_offer','Le problème persiste ?'))}</strong><span>${esc(tr('assistant_ticket_offer_description','Créez un ticket prérempli avec le résumé des vérifications.'))}</span></div><button class="btn btn-gold" onclick="ITAssistant.createTicketFromConversation()"><i class="ti ti-ticket"></i>${esc(tr('assistant_create_ticket','Créer un ticket à partir de cette conversation'))}</button></div>`:''}<form class="assistant-composer" onsubmit="ITAssistant.sendMessage(event)"><select id="assistantDomain" aria-label="${esc(tr('assistant_domain','Domaine IT'))}" onchange="ITAssistant.changeDomain(this.value)">${domainOptions}</select><textarea id="assistantInput" rows="3" maxlength="6000" placeholder="${esc(tr('assistant_placeholder','Décrivez le symptôme, le poste concerné et ce qui a déjà été essayé…'))}" title="${esc(tr('assistant_send_hint','Ctrl + Entrée pour envoyer'))}" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();ITAssistant.sendMessage(event);}" required></textarea><div class="assistant-photo-controls">${dictationAvailable()?`<button type="button" id="assistantDictate" class="assistant-photo-button assistant-dictate${state.dictating?' active':''}" aria-pressed="${state.dictating?'true':'false'}" onclick="ITAssistant.toggleDictation()"><i class="ti ti-microphone"></i>${esc(state.dictating?tr('assistant_dictate_stop','Arrêter la dictée'):tr('assistant_dictate','Dicter'))}</button>`:''}<label class="assistant-photo-button" for="assistantPhotos"><i class="ti ti-camera"></i>${esc(tr('assistant_add_photo','Ajouter des photos'))}<input id="assistantPhotos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onchange="ITAssistant.selectPhotos(this.files)"></label><span>${esc(tr('assistant_photo_help','JPG, PNG ou WebP — 5 Mo maximum par photo.'))}</span><div id="assistantPhotoTray" class="assistant-photo-tray">${photoTray()}</div></div><button class="btn btn-gold" id="assistantSendBtn" type="submit"><i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}</button></form></main></div></div>`;}catch(error){console.error('Assistant IT: rendu impossible',error);target.innerHTML=`<div class="assistant-page"><div class="assistant-service-error"><i class="ti ti-alert-circle"></i><strong>${esc(tr('assistant_unavailable_title','Assistant IT indisponible'))}</strong><p>${esc(tr('assistant_render_failed','Impossible d’afficher l’assistant. Veuillez réessayer.'))}</p></div></div>`;}
     refreshPhotoTray();
     const messagesNode=document.getElementById('assistantMessages');if(messagesNode)messagesNode.scrollTop=messagesNode.scrollHeight;
@@ -220,12 +261,12 @@
     state.feedback=null;
     try{
       const result=await request({action:'chat',conversation_id:state.conversationId,domain:state.domain,message});
-      const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[],kb_articles:result.kb_articles||[],kb_query:message};state.conversationId=result.conversation_id;await uploadPhotos(result.conversation_id);state.messages.push({author:'user',content:message},{author:'assistant',content:result.answer.answer,metadata});state.lastAnswer=metadata;
+      const metadata={...result.answer,sources:result.sources||[],similar_tickets:result.similar_tickets||[],kb_articles:result.kb_articles||[],kb_query:message,domain:state.domain};state.conversationId=result.conversation_id;await uploadPhotos(result.conversation_id);state.messages.push({author:'user',content:message},{author:'assistant',content:result.answer.answer,metadata});state.lastAnswer=metadata;
       renderAssistantView();
     }catch(error){window.showToast?.(error.message||tr('assistant_unavailable','Le service Assistant IT est temporairement indisponible.'),'err');document.querySelectorAll('.assistant-pending').forEach(node=>node.remove());if(input&&!input.value)input.value=message;if(button){button.disabled=false;button.innerHTML=`<i class="ti ti-send"></i>${esc(tr('assistant_send','Envoyer'))}`;}}
   }
   function askSuggestion(index){
-    const item=SUGGESTIONS[index];if(!item)return;
+    const item=currentSuggestions()[index];if(!item)return;
     state.domain=domainsSafe(item.domain);
     const select=document.getElementById('assistantDomain');if(select)select.value=state.domain;
     const input=document.getElementById('assistantInput');if(!input)return;
@@ -282,7 +323,12 @@
     const text=Array.from(clone.querySelectorAll('.assistant-answer-title, p, h4, li')).map(node=>node.tagName==='LI'?`- ${node.textContent.trim()}`:node.tagName==='H4'?`\n${node.textContent.trim()}`:node.textContent.trim()).filter(Boolean).join('\n');
     try{await navigator.clipboard.writeText(text);window.showToast?.(tr('assistant_copied','Réponse copiée'),'ok');return true;}catch(_){window.showToast?.(tr('assistant_copy_failed','Copie impossible'),'err');return false;}
   }
-  function changeDomain(domain){state.domain=domainsSafe(domain);}
+  // Choosing a domain shows its frequent questions on an empty conversation.
+  function changeDomain(domain){
+    state.domain=domainsSafe(domain);
+    const list=document.querySelector?.('.assistant-suggestions');
+    if(list&&!state.messages.length)list.outerHTML=suggestionsHtml();
+  }
   function domainsSafe(domain){return domainKeys.includes(domain)?domain:'general';}
   function startConversation(){state.photos.forEach(photo=>photo.preview&&URL.revokeObjectURL(photo.preview));state.conversationId=null;state.domain='general';state.messages=[];state.lastAnswer=null;state.feedback=null;state.photos=[];state.uploadedPhotos=[];renderAssistantView();}
   function createTicketFromConversation(){
