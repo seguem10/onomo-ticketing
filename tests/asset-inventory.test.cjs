@@ -125,3 +125,19 @@ test('the menu entry, both renderView maps and the ticket page are wired',()=>{
   assert.ok(html.includes(`\${canEdit?'<div id="ticketAsset"></div>':''}`));
   assert.ok(html.includes('if(canEdit)globalThis.AssetInventory?.mountTicket(t);'));
 });
+
+test('the inventory is shown by hotel: folded sections with counts, or one hotel only, remembered',()=>{
+  const h=load({role:'it_regional',hotels:['Onomo Dakar','Onomo Lomé']});
+  h.api._set(assets,[]);h.api.render();
+  let out=h.elements.mainContent.innerHTML;
+  assert.ok(out.includes('Tous les hôtels (3)')&&out.includes('Onomo Dakar (2)')&&out.includes('Onomo Lomé (1)'));
+  assert.equal((out.match(/<details class="card mp-hotel">/g)||[]).length,2,'one folded section per hotel');
+  assert.ok(out.includes('2 équipements')&&out.includes('1 en réparation')&&out.includes('1 garantie expirée'));
+  assert.ok(!out.includes('<th>Hôtel</th>'),'no hotel column inside a hotel');
+  h.api.setFilter('q','imprimante');
+  assert.ok(h.elements.mainContent.innerHTML.includes('<details class="card mp-hotel" open>'),'a search opens the sections');
+  h.api.setFilter('q','');
+  h.api.setFilter('hotel','Onomo Lomé');
+  out=h.elements.mainContent.innerHTML;
+  assert.ok(out.includes('Borne Wi-Fi Lobby')&&!out.includes('PC Réception 1')&&!out.includes('<details'));
+});
