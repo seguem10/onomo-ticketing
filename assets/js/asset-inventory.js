@@ -131,6 +131,19 @@
    ${rows.length?`<div class="hotel-ov-kpis"><span>${escape(t.items(rows.length))}</span>${repair.length?`<span class="mp-badge mp-due">${escape(t.repairCount(repair.length))}</span>`:''}${expired.length?`<span class="mp-badge">${escape(t.expiredCount(expired.length))}</span>`:''}</div>${watch.length?`<div class="hotel-ov-sub">${escape(t.toWatch)}</div>${watch.map(([row,label,kind])=>`<div class="hotel-ov-item"><span>${escape(row.name)}${row.location?`<small>${escape(row.location)}</small>`:''}</span><span class="mp-badge ${kind}">${escape(label)}</span></div>`).join('')}`:''}`:`<p class="hotel-ov-empty">${escape(t.noneHotel)}</p>`}
    <button type="button" class="mp-link hotel-ov-open" data-hotel="${escape(hotel)}" onclick="AssetInventory.openHotel(this.dataset.hotel)">${escape(t.openHotel)} →</button></div>`;
  }
+ // Section of the hotel PDF report: items by type and the items to watch.
+ function hotelPdfHtml(hotel){
+  if(!isStaff()||!loaded)return '';
+  const t=text(),rows=assets.filter(row=>row.hotel===hotel),live=rows.filter(row=>row.status!=='retired');
+  if(!rows.length)return '';
+  const repair=live.filter(row=>row.status==='repair'),expired=live.filter(row=>warrantyState(row)==='expired');
+  const kind=row=>row.domain&&row.domain!=='it'?(t.domains[row.domain]||row.domain):(t.types[row.type]||row.type||'—');
+  const byKind=new Map();for(const row of live){const k=kind(row);byKind.set(k,(byKind.get(k)||0)+(Number(row.quantity)>1?Number(row.quantity):1));}
+  const watch=[...repair.map(row=>[row,t.statuses.repair]),...live.filter(row=>warrantyState(row)==='soon').map(row=>[row,t.soon]),...expired.map(row=>[row,t.expired])];
+  return `<div class="section"><div class="section-title">${escape(t.title)} — ${escape(t.items(rows.length))}${repair.length?` · ${escape(t.repairCount(repair.length))}`:''}${expired.length?` · ${escape(t.expiredCount(expired.length))}`:''}</div>
+   <table><thead><tr><th>${escape(t.type)}</th><th>${escape(t.qty)}</th></tr></thead><tbody>${[...byKind].sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<tr><td>${escape(k)}</td><td>${n}</td></tr>`).join('')}</tbody></table>
+   ${watch.length?`<div class="section-title" style="margin-top:12px">${escape(t.toWatch)}</div><table><thead><tr><th>${escape(t.name)}</th><th>${escape(t.location)}</th><th>${escape(t.model)}</th><th>${escape(t.status)}</th></tr></thead><tbody>${watch.map(([row,label])=>`<tr><td>${escape(row.name)}</td><td>${escape(row.location||'')}</td><td>${escape(row.brand_model||'')}${row.serial?` · ${escape(row.serial)}`:''}</td><td>${escape(label)}${row.warranty_until?` (${escape(row.warranty_until)})`:''}</td></tr>`).join('')}</tbody></table>`:''}</div>`;
+ }
  function openHotel(hotel){
   filters.hotel=String(hotel||'');
   try{localStorage.setItem('invHotelFilter',filters.hotel);}catch{}
@@ -293,5 +306,5 @@
   }catch(error){console.error('Inventaire',error);toast(t.failed,'err');return false;}
  }
 
- window.AssetInventory={load,render,setFilter,hotelCard,openHotel,edit,cancel,save,remove,mountTicket,link,unlink,incidents,warrantyState,topBreakdowns,importFile,setImportHotel,toggleImportDomain,cancelImport,confirmImport,title:()=>text().title,_set:(a,l)=>{assets=a;links=l||[];loaded=true;},_importState:()=>importing};
+ window.AssetInventory={load,render,setFilter,hotelCard,hotelPdfHtml,openHotel,edit,cancel,save,remove,mountTicket,link,unlink,incidents,warrantyState,topBreakdowns,importFile,setImportHotel,toggleImportDomain,cancelImport,confirmImport,title:()=>text().title,_set:(a,l)=>{assets=a;links=l||[];loaded=true;},_importState:()=>importing};
 })();

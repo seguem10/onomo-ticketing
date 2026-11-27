@@ -151,3 +151,11 @@ test('the hotel report shows the hotel inventory: items, in repair, expired warr
   assert.ok(!h.api.hotelCard('Onomo Lomé').includes('garantie'),'retired items are not watched');
   assert.equal(load({role:'demandeur'}).api.hotelCard('Onomo Dakar'),'');
 });
+
+test('the hotel PDF gives the items by type and the items to watch',()=>{
+  const h=load();h.api._set(assets,[]);
+  const pdf=h.api.hotelPdfHtml('Onomo Dakar');
+  assert.ok(pdf.includes('Inventaire — 2 équipements · 1 en réparation · 1 garantie expirée'));
+  assert.ok(pdf.includes('Imprimante &lt;Back&gt;')&&pdf.includes('SN-42')&&pdf.includes('(2020-01-01)'));
+  assert.equal(load({role:'demandeur'}).api.hotelPdfHtml('Onomo Dakar'),'');
+});
