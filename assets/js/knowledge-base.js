@@ -42,8 +42,8 @@
  // Categories are stored in French (they are also the filter values) and
  // shown in the page's language; an unknown category is shown as typed.
  const CATEGORY_LABELS={
-  en:{'accès':'Access','caisse':'POS','logiciels':'Software','matériel':'Hardware','messagerie':'E-mail','réseau':'Network','sécurité':'Security','serrures':'Door locks','téléphonie':'Telephony','général':'General'},
-  ar:{'accès':'الوصول','caisse':'نقطة البيع','logiciels':'البرمجيات','matériel':'العتاد','messagerie':'البريد الإلكتروني','réseau':'الشبكة','sécurité':'الأمان','serrures':'الأقفال','téléphonie':'الهاتف','général':'عام'}
+  en:{'accès':'Access','caisse':'POS','logiciels':'Software','matériel':'Hardware','messagerie':'E-mail','réseau':'Network','sécurité':'Security','serrures':'Door locks','téléphonie':'Telephony','général':'General','guide':'Guide'},
+  ar:{'accès':'الوصول','caisse':'نقطة البيع','logiciels':'البرمجيات','matériel':'العتاد','messagerie':'البريد الإلكتروني','réseau':'الشبكة','sécurité':'الأمان','serrures':'الأقفال','téléphonie':'الهاتف','général':'عام','guide':'دليل'}
  };
  const categoryLabel=value=>{const lang=document.getElementById('languageSelector-app')?.value;return CATEGORY_LABELS[lang]?.[String(value||'').trim().toLowerCase()]||value||'';};
  // Accent- and case-insensitive word search in both languages; the title weighs more.
