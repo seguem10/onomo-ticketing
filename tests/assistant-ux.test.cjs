@@ -103,3 +103,19 @@ test('without an AI answer, the server answers from the best matching published 
   assert.ok(sql.includes("where public.has_permission('ticket:update:all');"),'the summary is for technicians only');
   assert.ok(sql.includes("and exists (select 1 from public.it_ai_conversations c where c.id = conversation_id and c.user_id = (select auth.uid()))"));
 });
+
+test('answers are short first: one sentence, at most three steps and two questions, the rest folded',async()=>{
+  const h=load({response:{conversation_id:'c1',answer:{answer:'Outlook ne s’ouvre pas.',checks:['Fermez Outlook — il se ferme — rouvrez-le','Redémarrez le poste','Testez Outlook sur le web','Videz le cache'],solution:['Redémarrez le poste','Créez un ticket'],questions:['Depuis quand ?','Un seul poste ?','Quel message ?'],causes:['Profil Outlook'],validation:['Outlook s’ouvre'],assumptions:['Compte actif']},sources:[],similar_tickets:[],kb_articles:[]}});
+  const input={value:'outlook'},button={disabled:false,innerHTML:''},list={innerHTML:'',scrollTop:0,scrollHeight:0,querySelector:()=>null,insertAdjacentHTML(){}};
+  Object.assign(h.nodes,{assistantInput:input,assistantSendBtn:button,assistantMessages:list});
+  await h.api.renderAssistantView();Object.assign(h.nodes,{assistantInput:input,assistantSendBtn:button,assistantMessages:list});
+  await h.api.sendMessage();await new Promise(resolve=>setTimeout(resolve,20));
+  const out=h.main.innerHTML;
+  const steps=out.slice(out.indexOf('<ol class="assistant-steps">'),out.indexOf('</ol>'));
+  assert.equal((steps.match(/<li>/g)||[]).length,3);
+  assert.ok(steps.includes('<li>Fermez Outlook</li>'),'only the action of an AI check');
+  assert.equal((steps.match(/Redémarrez le poste/g)||[]).length,1,'no duplicated step');
+  assert.ok(out.includes('Depuis quand ? · Un seul poste ?')&&!out.includes('Un seul poste ? · Quel message ?'));
+  assert.ok(out.includes('<details class="assistant-details"><summary>Voir le diagnostic complet</summary>'));
+  assert.ok(out.indexOf('Profil Outlook')>out.indexOf('<details'),'causes are in the folded part');
+});

@@ -6411,3 +6411,18 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 
 /* Problem search: matched words */
 .kb-article mark,.kb-suggest mark{background:#fef0c7;color:inherit;border-radius:3px;padding:0 2px}
+
+/* Assistant: short answer first, full diagnosis folded */
+.assistant-lead{font-size:14px;color:var(--tx);margin:6px 0 10px}
+.assistant-steps-title{font-size:12px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
+.assistant-steps{list-style:none;counter-reset:step;margin:0 0 10px;padding:0;display:grid;gap:8px}
+.assistant-steps li{counter-increment:step;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--tx);line-height:1.45}
+.assistant-steps li::before{content:counter(step);flex:none;width:24px;height:24px;border-radius:50%;background:#155eef;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.assistant-ask{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--tx2);background:rgba(245,158,11,.08);border-radius:8px;padding:8px 10px;margin-bottom:10px}
+.assistant-ask i{color:#b54708;margin-top:2px}
+.assistant-details{margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+.assistant-details>summary{cursor:pointer;font-size:13px;font-weight:600;color:#155eef;list-style:none;display:flex;align-items:center;gap:6px}
+.assistant-details>summary::-webkit-details-marker{display:none}
+.assistant-details>summary::before{content:'▸';transition:transform .15s}
+.assistant-details[open]>summary::before{transform:rotate(90deg)}
+.assistant-details[open]>summary{margin-bottom:8px}
