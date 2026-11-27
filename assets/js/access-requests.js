@@ -18,7 +18,7 @@
   if(error?.code==='40001')return 'Cette étape a déjà été traitée. Actualisez la demande.';
   return error?.message||'Impossible de charger les demandes. Réessayez.';
  }
- function header(){return `<div class="page-head"><div><h1>Demandes d’accès</h1><p>OPERA et Microsoft 365 · IT → Directeur de l’hôtel → RH Régional</p></div></div>
+ function header(){return `<div class="page-head"><div><h1>Demandes d’accès</h1><p>Opera Cloud et Microsoft 365 · IT → Directeur de l’hôtel → RH Régional</p></div></div>
  <div class="alert alert-warning" role="note">Circuit en cours de vérification : tests multi-comptes et notifications encore à réaliser. Aucun accès n’est créé automatiquement.</div>`;}
  function hotels(){const u=profile();if(!u)return [];
   const values=u.role==='admin'?(typeof HOTELS!=='undefined'?HOTELS.map(h=>h.nom):[]):[u.hotel,...(Array.isArray(u.hotels)?u.hotels:[])];
@@ -92,7 +92,7 @@
   const run=++epoch,user=identity();busy=false;const allowed=hotels();
   host().innerHTML=header()+`<section class="card" style="padding:20px"><h2>Nouvelle demande</h2><p>Ne saisissez aucun mot de passe ni donnée client. Après soumission, les détails ne sont plus modifiables.</p>
    <form data-access-form="new"><div class="form-g"><label for="accessHotel" class="field-lbl">Hôtel</label><select name="hotel" id="accessHotel" class="field-ctrl" required><option value="">Sélectionner</option>${allowed.map(h=>`<option value="${escape(h)}">${escape(h)}</option>`).join('')}</select></div>
-   <div class="form-g"><label for="accessSystem" class="field-lbl">Système</label><select name="system" id="accessSystem" class="field-ctrl"><option>OPERA</option><option>Microsoft 365</option></select></div>
+   <div class="form-g"><label for="accessSystem" class="field-lbl">Système</label><select name="system" id="accessSystem" class="field-ctrl"><option>Opera Cloud</option><option>Microsoft 365</option></select></div>
    <div class="form-g"><label for="accessTitle" class="field-lbl">Objet</label><input name="title" id="accessTitle" class="field-ctrl" required minlength="3" maxlength="160"></div>
    <div class="form-g"><label for="accessDetails" class="field-lbl">Besoin et droits demandés</label><textarea name="details" id="accessDetails" class="field-ctrl" required minlength="10" maxlength="4000" rows="5"></textarea></div>
    <div data-access-error role="alert"></div><div style="display:flex;gap:10px"><button type="submit" class="btn btn-gold" ${allowed.length?'':'disabled'}>Soumettre à l’IT</button><button type="button" class="btn btn-outline" data-access-action="back">Annuler</button></div></form></section>`;

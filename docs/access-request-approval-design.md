@@ -4,7 +4,7 @@
 
 ## Décision utilisateur
 
-Pour OPERA et Microsoft 365, trois validations sont obligatoires :
+Pour Opera Cloud et Microsoft 365, trois validations sont obligatoires :
 
 1. IT Hôtel OU IT Régional couvrant l'hôtel ;
 2. DG : Directeur de l'hôtel ;
@@ -25,7 +25,7 @@ Le demandeur ne peut jamais valider sa propre demande.
 - Enregistrer les décisions dans un historique append-only, horodaté serveur.
 - Lier chaque décision à la demande, au groupe de validation et à auth.uid().
 - Verrouiller la demande pendant une décision pour éviter les doubles accords concurrents.
-- Une approbation IT ne crée aucun accès automatiquement dans OPERA ou Microsoft 365.
+- Une approbation IT ne crée aucun accès automatiquement dans Opera Cloud ou Microsoft 365.
 - Ne permettre l'exécution IT qu'après les trois accords requis.
 - Ne jamais stocker de mot de passe dans une demande ou une notification.
 - Restreindre lecture et approbation aux acteurs autorisés pour cette demande.
@@ -46,7 +46,7 @@ Le demandeur ne peut jamais valider sa propre demande.
 - Règles de transition : module préparé et testé, non connecté à la production.
 - Tables, contrôles RLS et API de décision : migration appliquée ; vérification
   des accès anonymes, de l'absence de session et des écritures directes effectuée.
-- Interface demandes : formulaire OPERA/Microsoft 365, liste paginée,
+- Interface demandes : formulaire Opera Cloud/Microsoft 365, liste paginée,
   détails, justification obligatoire et historique ajoutés. Avertissement de
   vérification en cours conservé jusqu'aux tests réels.
 - Test complet SQL : non exécuté, car le contrôle de sécurité a refusé une
