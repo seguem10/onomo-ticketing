@@ -6356,7 +6356,8 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 @media(max-width:560px){.mp-grid{grid-template-columns:1fr}.mp-top{flex-direction:column}}
 
 /* Inventory import and domains */
-.inv-filters{grid-template-columns:2fr repeat(4,1fr)}
+.inv-filters{grid-template-columns:minmax(0,2fr) repeat(4,minmax(0,1fr))}
+.inv-filters .field-ctrl{min-width:0}
 .inv-top .inv-actions{margin-top:0}
 .inv-top label.btn{cursor:pointer}
 .inv-qty{text-align:right;font-variant-numeric:tabular-nums}

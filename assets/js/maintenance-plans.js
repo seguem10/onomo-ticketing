@@ -134,6 +134,14 @@
    ${list.length?`<div class="hotel-ov-kpis"><span>${escape(t.tasks(list.length))}</span>${due?`<span class="mp-badge mp-due">${escape(t.dueCount(due))}</span>`:''}</div><div class="hotel-ov-sub">${escape(t.upcoming)}</div>${items}`:`<p class="hotel-ov-empty">${escape(t.noneHotel)}</p>`}
    <button type="button" class="mp-link hotel-ov-open" data-hotel="${escape(hotel)}" onclick="MaintenancePlans.openHotel(this.dataset.hotel)">${escape(t.openHotel)} →</button></div>`;
  }
+ // Section of the hotel PDF report: every plan of the hotel, by next date.
+ function hotelPdfHtml(hotel){
+  if(!isStaff()||!loaded)return '';
+  const t=text(),list=plans.filter(p=>p.hotel===hotel).sort((a,b)=>(a.active===false)-(b.active===false)||String(a.next_due).localeCompare(String(b.next_due)));
+  if(!list.length)return '';
+  const due=list.filter(isDue).length;
+  return `<div class="section"><div class="section-title">${escape(t.title)} — ${escape(t.tasks(list.length))}${due?` · ${escape(t.dueCount(due))}`:''}</div><table><thead><tr><th>${escape(t.task)}</th><th>${escape(t.frequency)}</th><th>${escape(t.next)}</th><th>${escape(t.priority)}</th></tr></thead><tbody>${list.map(p=>`<tr><td>${escape(p.title)}</td><td>${escape(t.frequencies[p.frequency]||p.frequency)}</td><td>${p.active===false?escape(t.paused):`${escape(p.next_due)}${isDue(p)?` <span class="badge b-haute">${escape(t.overdue)}</span>`:''}`}</td><td>${escape(p.priority||'')}</td></tr>`).join('')}</tbody></table></div>`;
+ }
  function openHotel(hotel){
   hotelFilter=String(hotel||'');
   try{localStorage.setItem('mpHotelFilter',hotelFilter);}catch{}
@@ -231,5 +239,5 @@
   }catch(error){console.error('Maintenance planifiée',error);if(templating)templating.busy=false;render();toast(t.failed,'err');return false;}
  }
 
- window.MaintenancePlans={load,render,setHotel,hotelCard,openHotel,runDue,runOnce,edit,cancel,save,toggleActive,remove,openTemplates,closeTemplates,setTemplateField,toggleTemplate,selectGroup,applyTemplates,title:()=>text().title,_set:value=>{plans=value;loaded=true;},_templating:()=>templating};
+ window.MaintenancePlans={load,render,setHotel,hotelCard,hotelPdfHtml,openHotel,runDue,runOnce,edit,cancel,save,toggleActive,remove,openTemplates,closeTemplates,setTemplateField,toggleTemplate,selectGroup,applyTemplates,title:()=>text().title,_set:value=>{plans=value;loaded=true;},_templating:()=>templating};
 })();

@@ -128,3 +128,14 @@ test('the hotel report shows the hotel maintenance: tasks, tasks due, next tasks
   const html=require('node:fs').readFileSync('index.html','utf8');
   assert.ok(html.includes('${hotelOverviewHTML(sel)}'));
 });
+
+test('the hotel PDF lists every plan of the hotel, due and paused ones flagged',()=>{
+  const h=load();h.api._set(plans);
+  const pdf=h.api.hotelPdfHtml('Onomo Dakar');
+  assert.ok(pdf.includes('Maintenance planifiée — 2 tâches · 1 échue'));
+  assert.ok(pdf.includes('Vérifier les sauvegardes &lt;NAS&gt;')&&pdf.includes('Tester les onduleurs')&&pdf.includes('En pause'));
+  assert.equal(h.api.hotelPdfHtml('Onomo Lomé'),'');
+  assert.equal(load({role:'demandeur'}).api.hotelPdfHtml('Onomo Dakar'),'');
+  const html=require('node:fs').readFileSync('index.html','utf8');
+  assert.ok(html.includes("if(type==='hotel'&&hotelFilter)html += (globalThis.MaintenancePlans?.hotelPdfHtml?.(hotelFilter)||'') + (globalThis.AssetInventory?.hotelPdfHtml?.(hotelFilter)||'');"));
+});
