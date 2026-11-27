@@ -6323,6 +6323,19 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 .mp-table td small{display:block;font-size:11px;color:var(--tx3)}
 .mp-table a{color:#155eef}
 .mp-paused td{opacity:.6}
+.mp-filter{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13px;font-weight:600}
+.mp-filter label{display:flex;align-items:center;gap:6px;color:var(--tx2)}
+.mp-filter select{max-width:360px}
+.mp-hotel{padding:0;margin:0 0 10px;overflow:hidden}
+.mp-hotel summary{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:12px 16px;cursor:pointer;list-style:none}
+.mp-hotel summary::-webkit-details-marker{display:none}
+.mp-hotel summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--tx3);border-bottom:2px solid var(--tx3);transform:rotate(-45deg);transition:transform .15s;flex:none}
+.mp-hotel[open] summary::before{transform:rotate(45deg)}
+.mp-hotel[open] summary{border-bottom:1px solid var(--border)}
+.mp-hotel-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.mp-hotel-name{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px}
+.mp-hotel-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--tx3);flex:1}
+.mp-hotel summary .mp-link{margin-left:auto}
 .mp-badge{font-size:11px;font-weight:600;border-radius:6px;padding:2px 8px;background:var(--surface2);color:var(--tx2)}
 .mp-badge.mp-due{background:#fef0c7;color:#b54708}
 .mp-row-actions{white-space:nowrap}
