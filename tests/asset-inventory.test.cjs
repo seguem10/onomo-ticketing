@@ -141,3 +141,13 @@ test('the inventory is shown by hotel: folded sections with counts, or one hotel
   out=h.elements.mainContent.innerHTML;
   assert.ok(out.includes('Borne Wi-Fi Lobby')&&!out.includes('PC Réception 1')&&!out.includes('<details'));
 });
+
+test('the hotel report shows the hotel inventory: items, in repair, expired warranties',()=>{
+  const h=load();h.api._set(assets,[]);
+  const card=h.api.hotelCard('Onomo Dakar');
+  assert.ok(card.includes('2 équipements')&&card.includes('1 en réparation')&&card.includes('1 garantie expirée'));
+  assert.ok(card.includes('Imprimante &lt;Back&gt;')&&card.includes('PC Réception 1'));
+  assert.ok(card.includes('AssetInventory.openHotel'));
+  assert.ok(!h.api.hotelCard('Onomo Lomé').includes('garantie'),'retired items are not watched');
+  assert.equal(load({role:'demandeur'}).api.hotelCard('Onomo Dakar'),'');
+});

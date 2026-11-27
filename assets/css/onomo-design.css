@@ -6323,6 +6323,14 @@ html[dir="rtl"] .mfa-step .mfa-code{justify-content:flex-end}
 .mp-table td small{display:block;font-size:11px;color:var(--tx3)}
 .mp-table a{color:#155eef}
 .mp-paused td{opacity:.6}
+.hotel-ov{display:flex;flex-direction:column}
+.hotel-ov-kpis{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:13px;font-weight:600;margin:0 0 10px}
+.hotel-ov-sub{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--tx3);margin:0 0 4px}
+.hotel-ov-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+.hotel-ov-item small{display:block;font-size:11px;color:var(--tx3)}
+.hotel-ov-item>span:last-child{white-space:nowrap}
+.hotel-ov-empty{margin:0 0 8px;font-size:13px;color:var(--tx2)}
+.hotel-ov-open{margin-top:auto;padding-top:10px;align-self:flex-start;font-size:13px}
 .mp-filter{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13px;font-weight:600}
 .mp-filter label{display:flex;align-items:center;gap:6px;color:var(--tx2)}
 .mp-filter select{max-width:360px}
