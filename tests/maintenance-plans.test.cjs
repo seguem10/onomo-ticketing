@@ -115,3 +115,16 @@ test('plans are shown by hotel: a selector, one folded section per hotel, or one
   h.api.edit('new');
   assert.match(h.elements.mainContent.innerHTML,/<option value="Onomo Abidjan" selected/,'a new plan starts on the chosen hotel');
 });
+
+test('the hotel report shows the hotel maintenance: tasks, tasks due, next tasks and a link',()=>{
+  const h=load();h.api._set(plans);
+  const card=h.api.hotelCard('Onomo Dakar');
+  assert.ok(card.includes('2 tâches')&&card.includes('1 échue'));
+  assert.ok(card.includes('Vérifier les sauvegardes &lt;NAS&gt;'));
+  assert.ok(!card.includes('Tester les onduleurs'),'paused plans are not listed as next tasks');
+  assert.ok(card.includes('MaintenancePlans.openHotel'));
+  assert.ok(h.api.hotelCard('Onomo Lomé').includes('Aucun plan de maintenance pour cet hôtel.'));
+  assert.equal(load({role:'demandeur'}).api.hotelCard('Onomo Dakar'),'','IT team only');
+  const html=require('node:fs').readFileSync('index.html','utf8');
+  assert.ok(html.includes('${hotelOverviewHTML(sel)}'));
+});
