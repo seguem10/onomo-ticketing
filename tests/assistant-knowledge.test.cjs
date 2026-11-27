@@ -12,7 +12,7 @@ test('the assistant shows related knowledge base articles, from the server and f
   assert.ok(assistant.includes('data-kb-id="${esc(article.id)}"'),'article ids are escaped');
   assert.ok(assistant.includes('kb_articles:result.kb_articles||[],kb_query:message'));
   assert.ok(assistant.includes('await Promise.race([window.KnowledgeBase?.load?.(),'),'loading articles never blocks the assistant');
-  assert.ok(assistant.indexOf('${kbHtml}${similar}${sourceHtml}')>0);
+  assert.ok(assistant.includes('${shortAnswerHtml(answer)}${kbHtml}<details class="assistant-details">'),'short answer, then the articles, then the folded diagnosis');
 });
 
 test('the server reads published articles with the caller’s rights and gives them to the model',()=>{
@@ -31,7 +31,7 @@ test('the knowledge base migrations add English versions and twenty new draft ar
   assert.ok(content.includes("select v.title, v.title_en, v.category, false, null, null, v.body, v.body_en"),'new articles are drafts');
   assert.equal((content.match(/and title_en is null;/g)||[]).length,5,'the five starter articles get an English version');
   assert.ok(!/mot de passe\s*[:=]|password\s*[:=]/i.test(content),'no credential in the articles');
-  assert.ok(html.includes('assets/js/it-assistant.js?v=20261126-search-1'));
+  assert.ok(html.includes('assets/js/it-assistant.js?v=20261127-short-1'));
 });
 
 test('a cut or unreadable AI answer is replaced by an article or the domain guide, never by the empty generic text',()=>{
