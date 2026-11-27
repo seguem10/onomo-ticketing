@@ -9,7 +9,7 @@
  const T=(group,key,title,frequency,priority,category,description)=>({group,key,title,frequency,priority,category,description});
  const TEMPLATES=[
   // Informatique
-  T('it','backup-check','Vérifier les sauvegardes (NAS)','monthly','Haute','IT / Réseau','Contrôler que les sauvegardes sont réussies (Opera, Micros/Simphony, partages de fichiers). Vérifier l’espace libre et l’état des disques du NAS Synology (SMART, alertes).'),
+  T('it','backup-check','Vérifier les sauvegardes (NAS)','monthly','Haute','IT / Réseau','Contrôler que les sauvegardes sont réussies (Micros/Simphony, partages de fichiers ; Opera Cloud est hébergé et sauvegardé par Oracle). Vérifier l’espace libre et l’état des disques du NAS Synology (SMART, alertes).'),
   T('it','backup-restore','Test de restauration d’une sauvegarde','quarterly','Haute','IT / Réseau','Restaurer un fichier ou une base de test depuis la sauvegarde et vérifier qu’il est exploitable. Noter la durée de restauration.'),
   T('it','os-updates','Mises à jour des postes et serveurs','monthly','Normale','IT / Réseau','Windows Update et antivirus à jour sur les postes et serveurs (Interface, CAPS, Pointage, VingCard). Redémarrer les serveurs en heure creuse et vérifier les services après redémarrage.'),
   T('it','firewall','Pare-feu et routeur : mises à jour et accès','quarterly','Normale','IT / Réseau','WatchGuard Firebox et Peplink : mise à jour du firmware, validité des licences, revue des comptes et accès VPN, sauvegarde de la configuration.'),
@@ -20,7 +20,7 @@
   T('it','pos','Caisses et imprimantes Micros','monthly','Normale','IT / Réseau','Caisses Micros, imprimantes tickets et imprimantes IP cuisine/bar : impression, rouleaux, nettoyage des têtes, synchronisation des menus.'),
   T('it','pabx','Téléphonie : sauvegarde de la configuration PABX','semiannual','Basse','IT / Réseau','OmniPCX : sauvegarde de la configuration, test des postes réception et chambres, numéros d’urgence.'),
   T('it','server-room','Salle informatique : propreté, température, câblage','quarterly','Normale','IT / Réseau','Température et climatisation de la salle informatique, poussière, rangement du câblage, étiquetage des baies et des switchs.'),
-  T('it','accounts','Revue des comptes utilisateurs et des accès','quarterly','Normale','IT / Réseau','Désactiver les comptes des départs (Windows, Opera, Micros, messagerie), vérifier les comptes partagés et les droits administrateur.'),
+  T('it','accounts','Revue des comptes utilisateurs et des accès','quarterly','Normale','IT / Réseau','Désactiver les comptes des départs (Windows, Opera Cloud, Micros, messagerie), vérifier les comptes partagés et les droits administrateur.'),
   T('it','licenses','Licences et garanties à renouveler','yearly','Normale','IT / Réseau','Antivirus, Microsoft 365, WatchGuard, contrats de support, garanties matériel (voir l’Inventaire) : dates d’échéance et renouvellements à prévoir.'),
   T('it','inventory','Mise à jour annuelle de l’inventaire IT','yearly','Basse','IT / Réseau','Mettre à jour l’Inventaire : nouveaux équipements, numéros de série, emplacements, matériel retiré.'),
   // Technique

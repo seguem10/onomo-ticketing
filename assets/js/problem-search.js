@@ -36,20 +36,20 @@
   'phishing hameconnage arnaque suspect spam frauduleux fraude',
   'vpn distance remote teletravail',
   'onedrive sharepoint synchronisation sync fichier file',
-  'opera pms fidelio reservation folio checkin checkout',
+  'opera pms ohip fidelio reservation folio checkin checkout',
   'virus usb cle malware',
   'mise update maj windows redemarrage restart',
   'client guest hote voyageur',
   'sage comptabilite compta ecriture comptable',
   'citrix workspace session',
   'tpe terminal paiement cb',
-  'cloture nightaudit audit',
+  'cloture nightaudit audit endofday eod',
   'onduleur ups bip batterie',
   'partager partage share lien'
  ].map(g=>g.split(/\s+/));
  const normalize=value=>String(value??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
   .replace(/([a-z0-9])-(?=[a-z0-9])/g,'$1').replace(/\bwi fi\b/g,'wifi').replace(/\bmot de passe\b/g,'motdepasse').replace(/\bsans fil\b/g,'sansfil')
-  .replace(/\b(e mail|e-mail)\b/g,'email').replace(/\bcheck (in|out)\b/g,'check$1').replace(/\bnight audit\b/g,'nightaudit');
+  .replace(/\b(e mail|e-mail)\b/g,'email').replace(/\bcheck (in|out)\b/g,'check$1').replace(/\bnight audit\b/g,'nightaudit').replace(/\bend of day\b/g,'endofday');
  // Light stemming for French and English.
  const SUFFIXES=['issements','issement','ements','ement','ations','ation','ateurs','ateur','atrice','antes','ante','ants','ant','ances','ance','ences','ence','ings','ing','ions','ion','euses','euse','eurs','eur','ables','able','ites','ite','ives','ive','ies','ers','er','ez','es','ed','ee','e','s'];
  function stem(word){

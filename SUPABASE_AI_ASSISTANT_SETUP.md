@@ -2,7 +2,7 @@
 
 ## Mode procédures guidées sans API IA
 
-L'application fournit un premier niveau de diagnostic local pour Microsoft 365, Sage 1000, Citrix, OPERA PMS, POS, réseau et maintenance. Il fonctionne même si aucun fournisseur IA n'est configuré. Les réponses sont marquées **« modèle à valider par l'IT »** : elles ne sont pas des procédures fournisseur officielles.
+L'application fournit un premier niveau de diagnostic local pour Microsoft 365, Sage 1000, Citrix, Opera Cloud, POS, réseau et maintenance. Il fonctionne même si aucun fournisseur IA n'est configuré. Les réponses sont marquées **« modèle à valider par l'IT »** : elles ne sont pas des procédures fournisseur officielles.
 
 Après `p21`, exécutez aussi `supabase/p22_it_procedure_review_workflow.sql`. Il ajoute le statut de revue et la langue aux procédures. Après contrôle par l'équipe IT, un administrateur peut approuver une procédure avec :
 

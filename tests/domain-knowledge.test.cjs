@@ -100,6 +100,25 @@ test('domain questions find the right article',()=>{
 
 test('the server favours the articles of the conversation domain',()=>{
   const fn=fs.readFileSync('supabase/functions/ai-it-assistant/index.ts','utf8');
-  assert.ok(fn.includes("sage1000:['sage 1000'],citrix:['citrix'],opera:['opera pms','serrures']"));
+  assert.ok(fn.includes("sage1000:['sage 1000'],citrix:['citrix'],opera:['opera cloud','serrures']"));
   assert.ok(fn.includes('domainCategories.has(String(article.category??\'\').toLowerCase())?3:0'));
+});
+
+test('Opera is named Opera Cloud everywhere',()=>{
+  const files=['assets/js/it-assistant.js','assets/js/locales-data.js','assets/js/knowledge-base.js','assets/js/access-requests.js','assets/js/maintenance-templates.js','supabase/functions/ai-it-assistant/index.ts'];
+  for(const f of files){
+    const text=fs.readFileSync(f,'utf8');
+    assert.ok(!/OPERA|\bOpera\b(?! Cloud)/.test(text.replace(/OPERA_|\/\b\(opera[^/]*\//g,'')),f);
+  }
+  assert.ok(fs.readFileSync('assets/js/access-requests.js','utf8').includes('<option>Opera Cloud</option>'));
+  const sql=fs.readFileSync('supabase/migrations/20261127150000_opera_cloud.sql','utf8');
+  assert.ok(sql.includes("check (system_name in ('Opera Cloud', 'Microsoft 365'))"));
+  assert.ok(sql.includes("set category = 'Opera Cloud' where category = 'OPERA PMS'"));
+  assert.equal((sql.match(/^  \('Opera /gm)||[]).length,7,'the seven Opera articles are rewritten');
+  const S=engine();
+  const A=[{id:'eod',title:'Opera Cloud : la clôture de fin de journée (End of Day / Night Audit) est bloquée'},{id:'slow',title:'Opera Cloud est lent ou figé'}];
+  const top=q=>S.rank(q,A,a=>({title:a.title,body:''}),{limit:1})[0]?.id;
+  assert.equal(top('end of day bloqué'),'eod');
+  assert.equal(top('night audit'),'eod');
+  assert.equal(top('opera rame'),'slow');
 });
