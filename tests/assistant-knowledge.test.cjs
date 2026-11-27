@@ -33,3 +33,13 @@ test('the knowledge base migrations add English versions and twenty new draft ar
   assert.ok(!/mot de passe\s*[:=]|password\s*[:=]/i.test(content),'no credential in the articles');
   assert.ok(html.includes('assets/js/it-assistant.js?v=20261126-search-1'));
 });
+
+test('a cut or unreadable AI answer is replaced by an article or the domain guide, never by the empty generic text',()=>{
+  const fn=fs.readFileSync('supabase/functions/ai-it-assistant/index.ts','utf8');
+  assert.equal((fn.match(/maxOutputTokens:8192/g)||[]).length,2,'room for thinking tokens and the full JSON');
+  assert.ok(!fn.includes('maxOutputTokens:2200'));
+  assert.ok(fn.includes("const safe={invalid:true,"));
+  assert.ok(fn.includes('const unreadable=!providerUnavailable&&answer?.invalid===true;'));
+  assert.ok(fn.includes("answer=topArticle?kbAnswer(topArticle):procedureGuide("));
+  assert.ok(fn.includes("console.error('AI answer unreadable'"),'the stop reason is logged for diagnosis');
+});

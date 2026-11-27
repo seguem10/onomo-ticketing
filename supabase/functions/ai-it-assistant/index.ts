@@ -253,7 +253,7 @@ const fallbackAnswer=(domain:string,message:string,language:string)=>{
 };
 
 function parseAnswer(raw:string){
-  const safe={answer:'La réponse IA doit être vérifiée avant toute action.',causes:['Réponse structurée incomplète du fournisseur IA'],questions:['Quel message d’erreur exact apparaît ?'],checks:['Vérifiez la connexion réseau et l’heure du poste, puis notez le résultat.'],solution:['Ne modifiez aucun paramètre de production automatiquement. Créez un ticket si le problème persiste.'],validation:['Confirmez que le service fonctionne à nouveau après une vérification autorisée.'],assumptions:['La réponse IA était invalide ou incomplète ; validation humaine requise.'],suggested_ticket:{title:'Diagnostic IT à compléter',description:'Réponse IA incomplète : compléter les vérifications dans le ticket.',category:'IT / Réseau',priority:'Normale'}};
+  const safe={invalid:true,answer:'La réponse IA doit être vérifiée avant toute action.',causes:['Réponse structurée incomplète du fournisseur IA'],questions:['Quel message d’erreur exact apparaît ?'],checks:['Vérifiez la connexion réseau et l’heure du poste, puis notez le résultat.'],solution:['Ne modifiez aucun paramètre de production automatiquement. Créez un ticket si le problème persiste.'],validation:['Confirmez que le service fonctionne à nouveau après une vérification autorisée.'],assumptions:['La réponse IA était invalide ou incomplète ; validation humaine requise.'],suggested_ticket:{title:'Diagnostic IT à compléter',description:'Réponse IA incomplète : compléter les vérifications dans le ticket.',category:'IT / Réseau',priority:'Normale'}};
   try{
     let candidate=raw.replace(/```json|```/gi,'').trim();
     for(let depth=0;depth<3;depth++){
@@ -342,7 +342,7 @@ Deno.serve(async req=>{
         imageParts.push({inlineData:{mimeType:attachment.content_type,data:toBase64(buffer)}});
       }
       const visionPrompt=`Tu es un assistant IT hôtelier. Analyse seulement les symptômes techniques visuellement observables dans les captures jointes. Ignore les visages, noms, messages privés et toute donnée personnelle ou client. Ne lis jamais ni ne répète un mot de passe, jeton, clé ou donnée bancaire. Ne déduis pas d'informations non visibles. Réponds en ${language==='ar'?'arabe':language==='en'?'anglais':'français'} avec un JSON strict : {"answer":"résumé visuel prudent","causes":["..."],"questions":["..."],"checks":["vérification — résultat attendu — action suivante"],"solution":["..."],"validation":["..."],"assumptions":["analyse visuelle à vérifier"],"suggested_ticket":{"title":"...","description":"...","category":"IT / Réseau","priority":"Normale"}}. Domaine déclaré : ${domain}.`;
-      const response=await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_VISION_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:visionPrompt},...imageParts]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:1100}})});
+      const response=await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_VISION_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:visionPrompt},...imageParts]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:4096}})});
       if(!response.ok){console.error('Gemini image analysis',response.status,(await response.text()).slice(0,500));return send(req,{error:'Analyse d’image temporairement indisponible. Réessayez ou créez un ticket.'},502);}
       const provider=await response.json();
       const providerText=provider?.candidates?.[0]?.content?.parts?.map((part:any)=>part?.text??'').join('')||'';
@@ -450,15 +450,15 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     let response=GEMINI_KEY
       // A full diagnostic contains several mandatory sections. Keep enough
       // headroom for Gemini to close its JSON object instead of truncating it.
-      ?await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:2200}})})
+      ?await requestProvider(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192}})})
       :OPENAI_KEY
-      ?await requestProvider('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1200,response_format:{type:'json_object'},messages:[{role:'system',content:'Tu réponds uniquement avec un objet JSON valide.'},{role:'user',content:prompt}]})})
-      :await requestProvider('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY!,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+      ?await requestProvider('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:2500,response_format:{type:'json_object'},messages:[{role:'system',content:'Tu réponds uniquement avec un objet JSON valide.'},{role:'user',content:prompt}]})})
+      :await requestProvider('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY!,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
     // Gemini can return 503 during high demand. Flash-Lite is also available
     // on the free tier, so use it as a no-cost failover before the safe UI
     // fallback is shown to the user.
     if(GEMINI_KEY&&!response.ok&&response.status===503&&GEMINI_MODEL!=='gemini-3.5-flash-lite'){
-      response=await requestProvider('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:2200}})});
+      response=await requestProvider('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192}})});
     }
     const providerUnavailable=!response.ok;
     const providerError=providerUnavailable?await response.text():'';
@@ -470,8 +470,16 @@ Procédures internes validées (elles seules peuvent être décrites comme valid
     // JSON produced by an external model is untrusted input. If it cannot be
     // parsed into the expected answer contract, return the safe structured
     // fallback rather than displaying provider JSON to the end user.
-    const answer=providerUnavailable?(topArticle?kbAnswer(topArticle):fallbackAnswer(domain,message,language)):parseAnswer(String(providerText));
-    const sources=providerUnavailable&&kbSources?kbSources:(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
+    let answer:any=providerUnavailable?(topArticle?kbAnswer(topArticle):fallbackAnswer(domain,message,language)):parseAnswer(String(providerText));
+    // A cut or malformed AI answer (often a reply stopped at the token limit)
+    // falls back to the best knowledge base article, otherwise to the guided
+    // diagnostic of the domain, never to an empty generic answer.
+    const unreadable=!providerUnavailable&&answer?.invalid===true;
+    if(unreadable){
+      console.error('AI answer unreadable',providerName,JSON.stringify({finish:provider?.candidates?.[0]?.finishReason??provider?.choices?.[0]?.finish_reason??provider?.stop_reason,usage:provider?.usageMetadata??provider?.usage,length:String(providerText??'').length}));
+      answer=topArticle?kbAnswer(topArticle):procedureGuide(action==='ticket'&&ticket?.categorie==='Maintenance'?'maintenance':domain,action==='ticket'?`${ticket.titre}\n${ticket.description??''}`:message,language);
+    }
+    const sources=(providerUnavailable||unreadable)&&kbSources?kbSources:unreadable?[{id:'onomo-initial-guide',title:language==='ar'?'نموذج تشخيص ONOMO':'Modèle de diagnostic ONOMO',source:language==='ar'?'مسودة للمراجعة من IT':'Brouillon à valider par l’IT',date:new Date().toISOString().slice(0,10),url:null,status:'review'}]:(procedures??[]).map(p=>({id:p.id,title:p.title,source:p.source_label,date:p.effective_date,url:p.source_url}));
     if(conversation){
       await service.from('it_ai_messages').insert([{conversation_id:conversation.id,author:'user',content:message,metadata:{}},{conversation_id:conversation.id,author:'assistant',content:answer.answer,metadata:{...answer,sources,kb_articles:kbForClient}}]);
       await service.from('it_ai_conversations').update({updated_at:new Date().toISOString()}).eq('id',conversation.id);
