@@ -93,3 +93,25 @@ test('the menu entry, the sign-in trigger and both renderView maps are wired',()
   assert.ok(override.slice(0,3000).includes('maintenance: () => globalThis.MaintenancePlans?.render()'));
   assert.ok(override.slice(0,520).includes("'assets','maintenance'];"));
 });
+
+test('plans are shown by hotel: a selector, one folded section per hotel, or one hotel only',()=>{
+  const h=load({role:'it_regional',hotels:['Onomo Dakar','Onomo Abidjan']});
+  const store={};h.ctx.localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>{store[k]=v;}};
+  h.api._set([...plans,{id:'p3',hotel:'Onomo Abidjan',title:'Wi-Fi : bornes',category:'IT / Réseau',priority:'Normale',frequency:'monthly',next_due:'2999-02-01',active:true}]);
+  h.api.render();
+  let out=h.elements.mainContent.innerHTML;
+  assert.ok(out.includes('id="mpHotelFilter"'));
+  assert.ok(out.includes('Tous les hôtels (3)'));
+  assert.ok(out.includes('Onomo Dakar (2)')&&out.includes('Onomo Abidjan (1)'));
+  assert.equal((out.match(/<details class="card mp-hotel">/g)||[]).length,2,'one section per hotel');
+  assert.ok(out.indexOf('Onomo Abidjan</span>')<out.indexOf('Onomo Dakar</span>'),'hotels in alphabetical order');
+  assert.ok(out.includes('2 tâches')&&out.includes('1 échue'));
+  assert.ok(!/<th>Hôtel<\/th>/.test(out),'no hotel column inside a hotel section');
+  h.api.setHotel('Onomo Abidjan');
+  out=h.elements.mainContent.innerHTML;
+  assert.equal(store.mpHotelFilter,'Onomo Abidjan','the choice is remembered');
+  assert.ok(out.includes('Wi-Fi : bornes')&&!out.includes('Tester les onduleurs'));
+  assert.ok(!out.includes('<details'));
+  h.api.edit('new');
+  assert.match(h.elements.mainContent.innerHTML,/<option value="Onomo Abidjan" selected/,'a new plan starts on the chosen hotel');
+});

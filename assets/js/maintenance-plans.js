@@ -11,9 +11,9 @@
  const CATEGORIES=['Maintenance','IT / Réseau','Chambres','Restauration','Guest relations','Sécurité','Ménage','Autre'];
  const PRIORITIES=['Basse','Normale','Haute','Urgente','Critique'];
  const L={
-  fr:{title:'Maintenance planifiée',intro:'Tâches récurrentes : à chaque échéance, un ticket est créé automatiquement quand un technicien de l’hôtel ouvre l’application.',add:'Nouveau plan',run:'Créer les tickets échus',hotel:'Hôtel',task:'Tâche',details:'Détails (facultatif)',category:'Catégorie',priority:'Priorité',frequency:'Fréquence',next:'Prochaine échéance',active:'Actif',lastTicket:'Dernier ticket',save:'Enregistrer',cancel:'Annuler',edit:'Modifier',remove:'Supprimer',pause:'Mettre en pause',resume:'Réactiver',paused:'En pause',overdue:'Échue',confirm:'Supprimer ce plan ? Les tickets déjà créés sont conservés.',saved:'Plan enregistré',removed:'Plan supprimé',failed:'Action impossible',required:'L’hôtel, la tâche (3 caractères minimum) et la date sont obligatoires',none:'Aucun plan de maintenance pour le moment.',loading:'Chargement…',denied:'Réservé à l’équipe IT.',created:n=>n===1?'1 ticket de maintenance créé':`${n} tickets de maintenance créés`,nothingDue:'Aucune tâche échue.',frequencies:{weekly:'Chaque semaine',monthly:'Chaque mois',quarterly:'Chaque trimestre',semiannual:'Tous les 6 mois',yearly:'Chaque année'}},
-  en:{title:'Planned maintenance',intro:'Recurring tasks: on each due date, a ticket is created automatically when a technician of the hotel opens the app.',add:'New plan',run:'Create due tickets',hotel:'Hotel',task:'Task',details:'Details (optional)',category:'Category',priority:'Priority',frequency:'Frequency',next:'Next due date',active:'Active',lastTicket:'Last ticket',save:'Save',cancel:'Cancel',edit:'Edit',remove:'Delete',pause:'Pause',resume:'Resume',paused:'Paused',overdue:'Due',confirm:'Delete this plan? Tickets already created are kept.',saved:'Plan saved',removed:'Plan deleted',failed:'Action failed',required:'Hotel, task (at least 3 characters) and date are required',none:'No maintenance plan yet.',loading:'Loading…',denied:'IT team only.',created:n=>n===1?'1 maintenance ticket created':`${n} maintenance tickets created`,nothingDue:'Nothing is due.',frequencies:{weekly:'Every week',monthly:'Every month',quarterly:'Every quarter',semiannual:'Every 6 months',yearly:'Every year'}},
-  ar:{title:'الصيانة المجدولة',intro:'مهام متكررة: عند كل موعد تُنشأ تذكرة تلقائيًا عندما يفتح فني الفندق التطبيق.',add:'خطة جديدة',run:'إنشاء التذاكر المستحقة',hotel:'الفندق',task:'المهمة',details:'تفاصيل (اختياري)',category:'الفئة',priority:'الأولوية',frequency:'التكرار',next:'الموعد القادم',active:'نشطة',lastTicket:'آخر تذكرة',save:'حفظ',cancel:'إلغاء',edit:'تعديل',remove:'حذف',pause:'إيقاف مؤقت',resume:'إعادة التفعيل',paused:'متوقفة',overdue:'مستحقة',confirm:'حذف هذه الخطة؟ تبقى التذاكر المنشأة.',saved:'تم حفظ الخطة',removed:'تم حذف الخطة',failed:'تعذر تنفيذ الإجراء',required:'الفندق والمهمة (3 أحرف على الأقل) والتاريخ مطلوبة',none:'لا توجد خطط صيانة بعد.',loading:'جارٍ التحميل…',denied:'لفريق تقنية المعلومات فقط.',created:n=>`تم إنشاء ${n} تذكرة صيانة`,nothingDue:'لا توجد مهام مستحقة.',frequencies:{weekly:'كل أسبوع',monthly:'كل شهر',quarterly:'كل ثلاثة أشهر',semiannual:'كل 6 أشهر',yearly:'كل سنة'}}
+  fr:{title:'Maintenance planifiée',intro:'Tâches récurrentes : à chaque échéance, un ticket est créé automatiquement quand un technicien de l’hôtel ouvre l’application.',add:'Nouveau plan',run:'Créer les tickets échus',hotel:'Hôtel',task:'Tâche',details:'Détails (facultatif)',category:'Catégorie',priority:'Priorité',frequency:'Fréquence',next:'Prochaine échéance',active:'Actif',lastTicket:'Dernier ticket',save:'Enregistrer',cancel:'Annuler',edit:'Modifier',remove:'Supprimer',pause:'Mettre en pause',resume:'Réactiver',paused:'En pause',overdue:'Échue',confirm:'Supprimer ce plan ? Les tickets déjà créés sont conservés.',saved:'Plan enregistré',removed:'Plan supprimé',failed:'Action impossible',required:'L’hôtel, la tâche (3 caractères minimum) et la date sont obligatoires',none:'Aucun plan de maintenance pour le moment.',loading:'Chargement…',denied:'Réservé à l’équipe IT.',created:n=>n===1?'1 ticket de maintenance créé':`${n} tickets de maintenance créés`,nothingDue:'Aucune tâche échue.',allHotels:'Tous les hôtels',tasks:n=>n===1?'1 tâche':`${n} tâches`,dueCount:n=>n===1?'1 échue':`${n} échues`,nextShort:'Prochaine',onlyHotel:'Voir uniquement cet hôtel',frequencies:{weekly:'Chaque semaine',monthly:'Chaque mois',quarterly:'Chaque trimestre',semiannual:'Tous les 6 mois',yearly:'Chaque année'}},
+  en:{title:'Planned maintenance',intro:'Recurring tasks: on each due date, a ticket is created automatically when a technician of the hotel opens the app.',add:'New plan',run:'Create due tickets',hotel:'Hotel',task:'Task',details:'Details (optional)',category:'Category',priority:'Priority',frequency:'Frequency',next:'Next due date',active:'Active',lastTicket:'Last ticket',save:'Save',cancel:'Cancel',edit:'Edit',remove:'Delete',pause:'Pause',resume:'Resume',paused:'Paused',overdue:'Due',confirm:'Delete this plan? Tickets already created are kept.',saved:'Plan saved',removed:'Plan deleted',failed:'Action failed',required:'Hotel, task (at least 3 characters) and date are required',none:'No maintenance plan yet.',loading:'Loading…',denied:'IT team only.',created:n=>n===1?'1 maintenance ticket created':`${n} maintenance tickets created`,nothingDue:'Nothing is due.',allHotels:'All hotels',tasks:n=>n===1?'1 task':`${n} tasks`,dueCount:n=>`${n} due`,nextShort:'Next',onlyHotel:'Show this hotel only',frequencies:{weekly:'Every week',monthly:'Every month',quarterly:'Every quarter',semiannual:'Every 6 months',yearly:'Every year'}},
+  ar:{title:'الصيانة المجدولة',intro:'مهام متكررة: عند كل موعد تُنشأ تذكرة تلقائيًا عندما يفتح فني الفندق التطبيق.',add:'خطة جديدة',run:'إنشاء التذاكر المستحقة',hotel:'الفندق',task:'المهمة',details:'تفاصيل (اختياري)',category:'الفئة',priority:'الأولوية',frequency:'التكرار',next:'الموعد القادم',active:'نشطة',lastTicket:'آخر تذكرة',save:'حفظ',cancel:'إلغاء',edit:'تعديل',remove:'حذف',pause:'إيقاف مؤقت',resume:'إعادة التفعيل',paused:'متوقفة',overdue:'مستحقة',confirm:'حذف هذه الخطة؟ تبقى التذاكر المنشأة.',saved:'تم حفظ الخطة',removed:'تم حذف الخطة',failed:'تعذر تنفيذ الإجراء',required:'الفندق والمهمة (3 أحرف على الأقل) والتاريخ مطلوبة',none:'لا توجد خطط صيانة بعد.',loading:'جارٍ التحميل…',denied:'لفريق تقنية المعلومات فقط.',created:n=>`تم إنشاء ${n} تذكرة صيانة`,nothingDue:'لا توجد مهام مستحقة.',allHotels:'كل الفنادق',tasks:n=>`${n} مهام`,dueCount:n=>`${n} مستحقة`,nextShort:'القادم',onlyHotel:'عرض هذا الفندق فقط',frequencies:{weekly:'كل أسبوع',monthly:'كل شهر',quarterly:'كل ثلاثة أشهر',semiannual:'كل 6 أشهر',yearly:'كل سنة'}}
  };
  const text=()=>L[document.getElementById('languageSelector-app')?.value]||L.fr;
  const escape=value=>typeof esc==='function'?esc(value):String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -27,6 +27,10 @@
  const ticketNumber=id=>{const list=typeof tickets!=='undefined'&&Array.isArray(tickets)?tickets:[];return list.find(t=>String(t.id)===String(id))?.numero||'';};
 
  let plans=[],loaded=false,loading=null,editing=null,ran=false,templating=null;
+ // Hotel shown ('' = all hotels, one section per hotel), remembered on this browser.
+ let hotelFilter=(()=>{try{return localStorage.getItem('mpHotelFilter')||'';}catch{return '';}})();
+ const planHotels=()=>[...new Set([...plans.map(p=>p.hotel).filter(Boolean),...myHotels()])].sort((a,b)=>String(a).localeCompare(String(b)));
+ const isDue=plan=>plan.active!==false&&plan.next_due<=today();
  const catalogue=()=>window.MaintenanceTemplates||globalThis.MaintenanceTemplates;
  const TPL={
   fr:{button:'Modèles prêts à l’emploi',title:'Modèles de maintenance',intro:'Cochez les tâches qui concernent l’hôtel. Chacune devient un plan modifiable ; les premières échéances sont espacées d’un jour.',hotel:'Hôtel',start:'À partir du',already:'déjà en place',all:'Tout cocher',none:'Tout décocher',create:n=>`Créer ${n} plan(s)`,created:n=>`${n} plan(s) de maintenance créé(s)`,choose:'Choisissez l’hôtel'},
@@ -82,7 +86,7 @@
   const field=(id,label,input)=>`<div class="form-g"><label class="field-lbl" for="${id}">${escape(label)}</label>${input}</div>`;
   return `<div class="card mp-form"><div class="mp-grid">
    ${field('mpTitle',t.task+' *',`<input id="mpTitle" class="field-ctrl" maxlength="150" value="${escape(plan?.title||'')}">`)}
-   ${field('mpHotel',t.hotel+' *',`<select id="mpHotel" class="field-ctrl">${options(hotelList,null,plan?.hotel||(hotelList.length===1?hotelList[0]:''),hotelList.length===1?undefined:'—')}</select>`)}
+   ${field('mpHotel',t.hotel+' *',`<select id="mpHotel" class="field-ctrl">${options(hotelList,null,plan?.hotel||(hotelList.length===1?hotelList[0]:hotelList.includes(hotelFilter)?hotelFilter:''),hotelList.length===1?undefined:'—')}</select>`)}
    ${field('mpFrequency',t.frequency,`<select id="mpFrequency" class="field-ctrl">${options(FREQUENCIES,t.frequencies,plan?.frequency||'monthly')}</select>`)}
    ${field('mpNext',t.next+' *',`<input id="mpNext" class="field-ctrl" type="date" value="${escape(plan?.next_due||today())}">`)}
    ${field('mpCategory',t.category,`<select id="mpCategory" class="field-ctrl">${options(CATEGORIES,null,plan?.category||'IT / Réseau')}</select>`)}
@@ -91,12 +95,32 @@
   <label class="mp-check"><input type="checkbox" id="mpActive"${plan?.active===false?'':' checked'}> ${escape(t.active)}</label>
   <div class="mp-actions"><button type="button" class="btn btn-outline btn-sm" onclick="MaintenancePlans.cancel()">${escape(t.cancel)}</button><button type="button" class="btn btn-gold btn-sm" onclick="MaintenancePlans.save()"><i class="ti ti-device-floppy"></i>${escape(t.save)}</button></div></div>`;
  }
- function planHtml(plan){
-  const t=text(),due=plan.active!==false&&plan.next_due<=today(),num=plan.last_ticket_id?ticketNumber(plan.last_ticket_id):'';
-  return `<tr class="${plan.active===false?'mp-paused':''}"><td><strong>${escape(plan.title)}</strong><small>${escape(plan.category)} · ${escape(plan.priority)}</small></td><td>${escape(plan.hotel)}</td><td>${escape(t.frequencies[plan.frequency]||plan.frequency)}</td>
+ function planHtml(plan,withHotel=true){
+  const t=text(),due=isDue(plan),num=plan.last_ticket_id?ticketNumber(plan.last_ticket_id):'';
+  return `<tr class="${plan.active===false?'mp-paused':''}"><td><strong>${escape(plan.title)}</strong><small>${escape(plan.category)} · ${escape(plan.priority)}</small></td>${withHotel?`<td>${escape(plan.hotel)}</td>`:''}<td>${escape(t.frequencies[plan.frequency]||plan.frequency)}</td>
    <td>${plan.active===false?`<span class="mp-badge">${escape(t.paused)}</span>`:`${escape(plan.next_due)}${due?` <span class="mp-badge mp-due">${escape(t.overdue)}</span>`:''}`}</td>
    <td>${num?`<a href="#" data-ticket-id="${escape(plan.last_ticket_id)}" onclick="event.preventDefault();openDetail(this.dataset.ticketId)">${escape(num)}</a>`:'—'}</td>
    <td class="mp-row-actions"><button type="button" title="${escape(plan.active===false?t.resume:t.pause)}" aria-label="${escape(plan.active===false?t.resume:t.pause)}" data-plan-id="${escape(plan.id)}" onclick="MaintenancePlans.toggleActive(this.dataset.planId)"><i class="ti ti-player-${plan.active===false?'play':'pause'}"></i></button><button type="button" title="${escape(t.edit)}" aria-label="${escape(t.edit)}" data-plan-id="${escape(plan.id)}" onclick="MaintenancePlans.edit(this.dataset.planId)"><i class="ti ti-edit"></i></button><button type="button" title="${escape(t.remove)}" aria-label="${escape(t.remove)}" data-plan-id="${escape(plan.id)}" onclick="MaintenancePlans.remove(this.dataset.planId)"><i class="ti ti-trash"></i></button></td></tr>`;
+ }
+ const tableHtml=list=>{const t=text();return `<table class="mp-table"><thead><tr><th>${escape(t.task)}</th><th>${escape(t.frequency)}</th><th>${escape(t.next)}</th><th>${escape(t.lastTicket)}</th><th></th></tr></thead><tbody>${list.map(p=>planHtml(p,false)).join('')}</tbody></table>`;};
+ // Plans by hotel: a selector, then one hotel's table, or one folded section
+ // per hotel with its number of tasks, tasks due and next date.
+ function hotelsHtml(){
+  const t=text(),hotels=planHotels(),byHotel=new Map(hotels.map(h=>[h,plans.filter(p=>p.hotel===h)]));
+  if(hotelFilter&&!byHotel.has(hotelFilter))hotelFilter='';
+  const select=`<div class="mp-filter"><label for="mpHotelFilter"><i class="ti ti-building"></i>${escape(t.hotel)}</label><select id="mpHotelFilter" class="field-ctrl" onchange="MaintenancePlans.setHotel(this.value)"><option value="">${escape(t.allHotels)} (${plans.length})</option>${hotels.map(h=>`<option value="${escape(h)}"${h===hotelFilter?' selected':''}>${escape(h)} (${byHotel.get(h).length})</option>`).join('')}</select></div>`;
+  const summary=(hotel,list)=>{const due=list.filter(isDue).length,next=list.filter(p=>p.active!==false).map(p=>p.next_due).sort()[0];
+   return `<span class="mp-hotel-name"><i class="ti ti-building"></i>${escape(hotel)}</span><span class="mp-hotel-meta"><span>${escape(t.tasks(list.length))}</span>${due?`<span class="mp-badge mp-due">${escape(t.dueCount(due))}</span>`:''}${next?`<span>${escape(t.nextShort)} : ${escape(next)}</span>`:''}</span>`;};
+  if(hotelFilter){
+   const list=byHotel.get(hotelFilter);
+   return `${select}<div class="card mp-table-wrap mp-hotel-one"><div class="mp-hotel-head">${summary(hotelFilter,list)}</div>${list.length?tableHtml(list):`<div class="empty-state"><p>${escape(t.none)}</p></div>`}</div>`;
+  }
+  return `${select}${hotels.filter(h=>byHotel.get(h).length).map(h=>{const list=byHotel.get(h);return `<details class="card mp-hotel"><summary>${summary(h,list)}<button type="button" class="mp-link" data-hotel="${escape(h)}" onclick="event.preventDefault();MaintenancePlans.setHotel(this.dataset.hotel)">${escape(t.onlyHotel)}</button></summary><div class="mp-table-wrap">${tableHtml(list)}</div></details>`;}).join('')}`;
+ }
+ function setHotel(hotel){
+  hotelFilter=String(hotel||'');
+  try{localStorage.setItem('mpHotelFilter',hotelFilter);}catch{}
+  render();
  }
  function pageHtml(){
   const t=text();
@@ -105,7 +129,7 @@
   if(templating)return `<div class="mp-page">${templatesHtml()}</div>`;
   const body=!loaded?`<div class="loading-state"><i class="ti ti-loader-2 spin"></i> ${escape(t.loading)}</div>`
    :!plans.length?`<div class="empty-state"><i class="ti ti-calendar-repeat"></i><p>${escape(t.none)}</p></div>`
-   :`<div class="card mp-table-wrap"><table class="mp-table"><thead><tr><th>${escape(t.task)}</th><th>${escape(t.hotel)}</th><th>${escape(t.frequency)}</th><th>${escape(t.next)}</th><th>${escape(t.lastTicket)}</th><th></th></tr></thead><tbody>${plans.map(planHtml).join('')}</tbody></table></div>`;
+   :hotelsHtml();
   return `<div class="mp-page"><div class="mp-top"><p>${escape(t.intro)}</p><div class="mp-actions">${catalogue()?`<button type="button" class="btn btn-outline" onclick="MaintenancePlans.openTemplates()"><i class="ti ti-template"></i>${escape(tpl().button)}</button>`:''}<button type="button" class="btn btn-outline" onclick="MaintenancePlans.runDue()"><i class="ti ti-player-play"></i>${escape(t.run)}</button><button type="button" class="btn btn-gold" onclick="MaintenancePlans.edit('new')"><i class="ti ti-plus"></i>${escape(t.add)}</button></div></div>${body}</div>`;
  }
  function render(){
@@ -170,7 +194,7 @@
  function openTemplates(){
   if(!catalogue())return;
   const hotels=myHotels();
-  templating={hotel:hotels.length===1?hotels[0]:'',start:today(),selected:new Set(catalogue().TEMPLATES.filter(x=>x.group==='it').map(x=>x.key)),busy:false};
+  templating={hotel:hotels.length===1?hotels[0]:hotels.includes(hotelFilter)?hotelFilter:'',start:today(),selected:new Set(catalogue().TEMPLATES.filter(x=>x.group==='it').map(x=>x.key)),busy:false};
   render();
   if(!loaded)load().then(()=>{if(templating)render();});
  }
@@ -190,5 +214,5 @@
   }catch(error){console.error('Maintenance planifiée',error);if(templating)templating.busy=false;render();toast(t.failed,'err');return false;}
  }
 
- window.MaintenancePlans={load,render,runDue,runOnce,edit,cancel,save,toggleActive,remove,openTemplates,closeTemplates,setTemplateField,toggleTemplate,selectGroup,applyTemplates,title:()=>text().title,_set:value=>{plans=value;loaded=true;},_templating:()=>templating};
+ window.MaintenancePlans={load,render,setHotel,runDue,runOnce,edit,cancel,save,toggleActive,remove,openTemplates,closeTemplates,setTemplateField,toggleTemplate,selectGroup,applyTemplates,title:()=>text().title,_set:value=>{plans=value;loaded=true;},_templating:()=>templating};
 })();
