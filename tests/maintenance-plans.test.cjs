@@ -150,3 +150,13 @@ test('due plans also become tickets every morning, in the name of an IT account 
   const h=load();h.api._set(plans);h.api.render();
   assert.ok(h.elements.mainContent.innerHTML.includes('chaque matin'));
 });
+
+test('maintenance tickets are assigned to the hotel technician, else the regional IT',()=>{
+  const sql=require('node:fs').readFileSync('supabase/migrations/20261127180000_maintenance_plans_assign.sql','utf8');
+  assert.ok(sql.includes('create or replace function private.maintenance_assignee(hotel_name text)'));
+  assert.ok(sql.includes("order by case lower(trim(coalesce(u.role, ''))) when 'it_hotel' then 1 else 2 end"));
+  assert.ok(sql.includes('and private.ticket_assignee_is_eligible(u.auth_user_id, hotel_name)'));
+  assert.equal((sql.match(/assignee := private\.maintenance_assignee\(plan\.hotel\);/g)||[]).length,2,'both the sign-in run and the daily job assign');
+  assert.ok(sql.includes('if assignee is not null and not private.assignment_actor_can_manage_hotel(actor, plan.hotel) then'));
+  assert.ok(sql.includes('revoke all on function private.maintenance_assignee(text) from public, anon, authenticated;'));
+});
