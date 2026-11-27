@@ -139,3 +139,14 @@ test('the hotel PDF lists every plan of the hotel, due and paused ones flagged',
   const html=require('node:fs').readFileSync('index.html','utf8');
   assert.ok(html.includes("if(type==='hotel'&&hotelFilter)html += (globalThis.MaintenancePlans?.hotelPdfHtml?.(hotelFilter)||'') + (globalThis.AssetInventory?.hotelPdfHtml?.(hotelFilter)||'');"));
 });
+
+test('due plans also become tickets every morning, in the name of an IT account of the hotel',()=>{
+  const sql=require('node:fs').readFileSync('supabase/migrations/20261127170000_maintenance_plans_daily.sql','utf8');
+  assert.ok(sql.includes('create or replace function private.run_scheduled_maintenance_plans()'));
+  assert.ok(sql.includes("revoke all on function private.run_scheduled_maintenance_plans() from public, anon, authenticated;"));
+  assert.ok(sql.includes("cron.schedule('onomo-maintenance-plans', '0 5 * * *'"));
+  assert.ok(/when 'it_hotel' then 1 when 'it_regional' then 2 else 3/.test(sql),'hotel technician first, then regional IT, then an administrator');
+  assert.ok(sql.includes("perform set_config('request.jwt.claim.sub', '', true);"),'the creator is cleared after the run');
+  const h=load();h.api._set(plans);h.api.render();
+  assert.ok(h.elements.mainContent.innerHTML.includes('chaque matin'));
+});
